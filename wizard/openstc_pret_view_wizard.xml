@@ -1,4 +1,23 @@
 <?xml version="1.0" ?>
+<!--
+    OpenSTC Interventions - Openerp Module to manage Cityhall technical department
+    Copyright (C) 2013 Siclic www.siclic.fr
+
+    This file is part of OpenSTC Interventions.
+
+    OpenSTC Interventions is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    OpenSTC Interventions is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with OpenSTC Interventions.  If not, see <http://www.gnu.org/licenses/>.
+-->
 <openerp>
 	<data>
 		<!-- wizard de gestion des emprunts à l'extèrieur -->
@@ -8,7 +27,7 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="Emprunter des Ressources auprès de Collectivités extérieures">
-					<field name="emprunt_line" nolabel="1" colspan="4" required="1" on_change="onchange_emprunt_line(emprunt_line, context)">
+					<field name="emprunt_line" nolabel="1" colspan="4" required="1">
 						<tree string="Lignes d'emprunt" editable="top">
 							<field name="product_id" context="{'default_openstc_reservable':'1','default_purchase_ok':False}"/>
 							<field name="partner_id" domain="[('supplier','=',True)]"/>
@@ -91,71 +110,7 @@
 			</field>
 		</record>
 
-		<record model="ir.ui.view" id="view_openstc_pret_deliver_products_wizard">
-			<field name="name">openstc.pret.deliver.products.wizard</field>
-			<field name="model">openstc.pret.deliver.products.wizard</field>
-			<field name="type">form</field>
-			<field name="arch" type="xml">
-				<form string="Comment mettre les articles à disposition">
-				    <label colspan="4" string="Pour mettre les articles à dispositions, voulez-vous créer une intervention de livraison ou le demandeur vient les chercher sur place ?" />
-				    <newline />
-				    <field name="deliver_line" colspan="4" nolabel="1">
-				    	<tree editable="top" string="Interventions pouvant être générées">
-				    	    <field name="motif"/>
-				    	    <field name="product_id" context="{'default_openstc_reservable':'1','default_purchase_ok':False}"/>
-				    	    <field name="qte_reserves"/>
-				    	    <field name="service_id"/>
-				    	    <field name="site_details"/>
-				    	    <field name="to_generate"/>
-				    	</tree>
-				    </field>
-					<button icon="gtk-go-back" colspan="1" string="Retour" special="cancel"/>
-					<button icon="gtk-ok" colspan="1" name="put_in_use_with_intervention" type="object" string="Générer une intervention"/>
-					<button icon="gtk-go-forward" colspan="1" string="Ne pas générer d'intervention" type="object" name="put_in_use_without_intervention"/>
-				</form>
-			</field>
-		</record>
 
-		<!-- Wizard précédent l'état in_use d'une résa, permettant de choisir si l'on livre la résa ou si le demandeur passe la prendre -->
-		<record model="ir.actions.act_window" id="action_view_openstc_pret_deliver_products_wizard">
-			<field name="name">Mise a dispo des produits</field>
-			<field name="res_model">openstc.pret.deliver.products.wizard</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">form</field>
-			<field name="target">new</field>
-			<field name="context">{'active_id':active_id}</field>
-		</record>
-
-		<record model="ir.actions.act_window" id="action_view_openstc_pret_create_inter_wizard">
-			<field name="name">Assistant de réservation pour générer une intervention</field>
-			<field name="res_model">openstc.pret.create.inter.wizard</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">form</field>
-			<field name="target">new</field>
-			<field name="context">{'active_id':active_id}</field>
-		</record>
-		
-				
-		<record model="ir.ui.view" id="openstc_pret_create_inter_wizard_form">
-		    <field name="name">openstc.pret.create.inter.wizard.form</field>
-		    <field name="model">openstc.pret.create.inter.wizard</field>
-		    <field name="type">form</field>
-		    <field name="arch" type="xml">
-		        <form>
-		            <group colspan="2" col="2">
-		                <separator string="Générer l'intervention" colspan="2"/>
-		            	<field name="service_id"/>
-		            </group>
-		            <group colspan="2" col="2">
-		            	<separator string="Paramétrer la tâche" colspan="2"/>
-		                <field name="time_planned"/>
-			            <field name="categ_id"/>
-		            </group>
-		            <button special="cancel" string="Annuler" icon="gtk-cancel"/>
-					<button name="validate" icon="gtk-go-forward" type="object" string="Valider"/>
-		        </form>
-		    </field>
-		</record>
 
 	</data>
 </openerp>

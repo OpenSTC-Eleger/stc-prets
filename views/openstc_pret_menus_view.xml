@@ -1,4 +1,23 @@
-<?xml version="1.0" ?>
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    OpenSTC Interventions - Openerp Module to manage Cityhall technical department
+    Copyright (C) 2013 Siclic www.siclic.fr
+
+    This file is part of OpenSTC Interventions.
+
+    OpenSTC Interventions is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    OpenSTC Interventions is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with OpenSTC Interventions.  If not, see <http://www.gnu.org/licenses/>.
+-->
 <openerp>
 	<data>
 	    
@@ -123,25 +142,8 @@
 			action="action_openstock_view_reservation_cancel" name="Réservations Annulées"
 			parent="menu_action_view_reservations" sequence="9" /> -->
 
-		<!-- Groupe Factice pour cacher les menus aux utilisateurs (sauf l'admin) -->
-		<record id="group_view_all_menus" model="res.groups">
-			<field name="name">Voir tous les menus</field>
-		</record>
-
-		<menuitem id="hotel.hotel_management_menu" name="Hotel Management"
-			groups="group_view_all_menus" />
-		
-		<record id="account.menu_finance" model="ir.ui.menu">
-		    <field name="groups_id" eval="[(6,0,[ref('group_view_all_menus')])]"/>
-		</record>
-		<record id="base.menu_base_partner" model="ir.ui.menu">
-		    <field name="groups_id" eval="[(6,0,[ref('group_view_all_menus')])]"/>
-		</record>
-		<record id="stock.menu_stock_root" model="ir.ui.menu">
-		    <field name="groups_id" eval="[(6,0,[ref('group_view_all_menus')])]"/>
-		</record>
-		<record id="base.menu_purchase_root" model="ir.ui.menu">
-		    <field name="groups_id" eval="[(6,0,[ref('group_view_all_menus')])]"/>
+		<record model="ir.ui.menu" id="hotel.hotel_management_menu">
+		    <field name="groups_id" eval="[(6,0,[ref('openbase.group_view_all_menus')])]"/>
 		</record>
 	</data>
 </openerp>

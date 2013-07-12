@@ -94,7 +94,7 @@ class openstc_pret_checkout_wizard(osv.osv):
                 'res_model':'purchase.order',
                 }
     
-    def generer_actions(self, cr, uid, ids, context):
+    def generer_actions(self, cr, uid, ids, context=None):
         #TODO: Gérer le cas où des produits n'ont pas le même fournisseur, groupe les produits ayant un fournisseur en commun
         default_location_id = self.pool.get("stock.location").search(cr, uid, [('name','=','Stock')])[0]
         for checkout in self.browse(cr, uid, ids):
@@ -118,7 +118,7 @@ class openstc_pret_checkout_wizard(osv.osv):
                 self.remove_prods_from_stock(cr, uid, prod_dicts, context=context)
             #if there is at least one purchase to do
             if line_values:
-                values = {'invoice_method':'manual',
+                values = {'invoice_method':'order',
                   'location_id':default_location_id,
                   'partner_id':checkout.partner_id.id,
                   'order_line':line_values,

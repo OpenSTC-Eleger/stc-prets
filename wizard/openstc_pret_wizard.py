@@ -216,38 +216,22 @@ class openstc_pret_envoie_mail_annulation_wizard(osv.osv_memory):
         email_tmpl_id = 0
         print("envoyer mail pour résa annulée")
         email_tmpl_id = email_obj.search(cr, uid, [('model','=','hotel.reservation'),('name','ilike','annulée')])
-        if not email_tmpl_id:
-            print("création email_template pour résa annulée")
-            ir_model = self.pool.get("ir.model").search(cr, uid, [('model','=','hotel.reservation')])
-            email_tmpl_id = email_obj.create(cr, uid, {
-                                        'name':'modèle de mail pour résa annulée', 
-                                        'name':'Réservation Annulée',
-                                        'model_id':ir_model[0],
-                                        'subject':'Votre Réservation du ${object.checkin} au ${object.checkout} a été annulée',
-                                        'email_from':'bruno.plancher@gmail.com',
-                                        'email_to':'bruno.plancher@gmail.com',
-                                        'body_text':"Votre Réservation normalement prévue du ${object.checkin} au \
-                                        ${object.checkout} dans le cadre de votre manifestation : ${object.name} a été annulée,\
-                                        pour plus d'informations, veuillez contacter la mairie de Pont L'abbé au : 0240xxxxxx",
-                                        'body_html':"Votre Réservation normalement prévue du ${object.checkin} au \
-                                        ${object.checkout} dans le cadre de votre manifestation : ${object.name} a été annulée,\
-                                        pour plus d'informations, veuillez contacter la mairie de Pont L'abbé au : 0240xxxxxx"
-                                       })
-        else:
-            email_tmpl_id = email_tmpl_id[0]
-        mail_values = email_obj.generate_email(cr, uid, email_tmpl_id, id, context)
-        #TODO: ajouter les attachments au mail, voir sources de email.message
-        attachments = mail_values.pop('attachments') or {}
-        ret['body_html'] = mail_values['body_html']
-        ret['email_template'] = email_tmpl_id
-        return ret
-
+        if email_tmpl_id:
+            if isinstance(email_tmpl_id, list):
+                email_tmpl_id = email_tmpl_id[0]
+            mail_values = email_obj.generate_email(cr, uid, email_tmpl_id, id, context)
+            #TODO: ajouter les attachments au mail, voir sources de email.message
+            attachments = mail_values.pop('attachments') or {}
+            ret['body_html'] = mail_values['body_html']
+            ret['email_template'] = email_tmpl_id
+            return ret
+        return {}
     #Bouton Pour Annuler Résa : Affiche le mail pré-rempli à envoyer à l'association pour signifier l'annulation
     def do_cancel(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
             ids = ids[0]
         wizard = self.browse(cr, uid, ids)
-        mail_id = self.pool.get("email.template").send_mail(cr, uid, wizard.email_template, context['active_id'], False, context)
+        mail_id = self.pool.get("email.template").send_mail(cr, uid, wizard.email_template, context['active_id'], True, context)
         self.pool.get("mail.message").write(cr, uid, mail_id, {'body_html':wizard.body_html})
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(uid, 'hotel.reservation', context['active_id'], 'cancel', cr)
@@ -270,160 +254,160 @@ openstc_pret_envoie_mail_annulation_wizard()
 
 
 
-class openstc_pret_create_inter_wizard(osv.osv_memory):
-    
-    def _default_service_id_value(self, cr, uid, context=None):
-        service_ids = self.pool.get("openstc.service").search(cr, uid, [('name','in',('Voirie','voirie'))], context=context)
-        return service_ids and service_ids[0] or False
-    
-    _name = "openstc.pret.create.inter.wizard"
-    _columns = {
-        'service_id':fields.many2one('openstc.service', 'Service concerné', required=True),
-        'time_planned':fields.float('Heures planifiées',digits=(2,1), required=True),
-        'categ_id':fields.many2one('openstc.task.category','Catégorie de la tâche', required=True),
-        }
-    
-    _defaults = {
-        'service_id':_default_service_id_value,
-        }
-    
-    def validate(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        resa_id = context.get('active_id', False)
-        if resa_id:
-            wizard = self.browse(cr, uid, ids, context=None)
-            if wizard.time_planned <= 0.0:
-                raise osv.except_osv(_('Error'),_('You can\'t plan a task with a non-positive length'))
-            self.pool.get("hotel.reservation").put_in_use_with_intervention(cr, uid, [resa_id], task_values={'planned_hours':wizard.time_planned,
-                                                                                                             'category_id':wizard.categ_id.id},
-                                                                             service_id=wizard.service_id.id, context=context)
-        return {'type':'ir.actions.act_window.close'}
+#class openstc_pret_create_inter_wizard(osv.osv_memory):
+#    
+#    def _default_service_id_value(self, cr, uid, context=None):
+#        service_ids = self.pool.get("openstc.service").search(cr, uid, [('name','in',('Voirie','voirie'))], context=context)
+#        return service_ids and service_ids[0] or False
+#    
+#    _name = "openstc.pret.create.inter.wizard"
+#    _columns = {
+#        'service_id':fields.many2one('openstc.service', 'Service concerné', required=True),
+#        'time_planned':fields.float('Heures planifiées',digits=(2,1), required=True),
+#        'categ_id':fields.many2one('openstc.task.category','Catégorie de la tâche', required=True),
+#        }
+#    
+#    _defaults = {
+#        'service_id':_default_service_id_value,
+#        }
+#    
+#    def validate(self, cr, uid, ids, context=None):
+#        if isinstance(ids, list):
+#            ids = ids[0]
+#        resa_id = context.get('active_id', False)
+#        if resa_id:
+#            wizard = self.browse(cr, uid, ids, context=None)
+#            if wizard.time_planned <= 0.0:
+#                raise osv.except_osv(_('Error'),_('You can\'t plan a task with a non-positive length'))
+#            self.pool.get("hotel.reservation").put_in_use_with_intervention(cr, uid, [resa_id], task_values={'planned_hours':wizard.time_planned,
+#                                                                                                             'category_id':wizard.categ_id.id},
+#                                                                             service_id=wizard.service_id.id, context=context)
+#        return {'type':'ir.actions.act_window.close'}
+#
+#openstc_pret_create_inter_wizard()
 
-openstc_pret_create_inter_wizard()
 
 
-
-#Pop-up permettant de savoir si, pour mettre à disposition les articles, on fait une livraison ou le demandeur vient les chercher
-class openstc_pret_deliver_products_wizard(osv.osv_memory):
-    _name = "openstc.pret.deliver.products.wizard"
-    _columns = {
-                'deliver_line':fields.one2many('openstc.pret.deliver.products.line.wizard','wizard_id','Interventions A Générer'),
-                }
-    
-    def default_get(self, cr, uid, field_names, context=None):
-        if 'active_id' in context:
-            line_values = []
-            resa = self.pool.get("hotel.reservation").browse(cr, uid, context['active_id'])
-            #prepare supply intervention
-            service_id = self.pool.get("openstc.service").search(cr, uid, [('name','like','Voirie')])
-            if isinstance(service_id, list):
-                service_id = service_id[0]
-            line_values.append({'to_generate':True, 'service_id':service_id,'motif':'supply', 'site_details':''.join(_(x.reserve_product.name_template + ' : ' + x.infos) for x in resa.reservation_line if x.infos)})
-            #prepare technical interventions if needed
-            for line in resa.reservation_line:
-                if line.reserve_product.service_technical_id:
-                    line_values.append({'service_id':line.reserve_product.service_technical_id.id,
-                                        'motif':'technical',
-                                        'site_details':line.infos,
-                                        'product_id':line.reserve_product.id,
-                                        'to_generate':True,
-                                        'qte_reserves':line.qte_reserves})
-        return {'deliver_line':[(0,0,x) for x in line_values]}
-    
-    #Résa mise à "en cours d'utilisation" avec création d'une intervention
-    def put_in_use_with_intervention(self, cr, uid, ids, context=None):
-        if 'active_id' in context:
-            resa = self.pool.get("hotel.reservation").browse(cr, uid, context['active_id'])
-            if isinstance(ids, list):
-                ids = ids[0]
-            wizard = self.browse(cr, uid, ids, context)
-            lines = [x for x in wizard.deliver_line if x.to_generate]
-            #Générer intervention de livraison et interventions optionnelles
-            checkin = datetime.strptime(resa.checkin, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
-            checkout = datetime.strptime(resa.checkout, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
-            checkin_str = checkin.astimezone(pytz.timezone('Europe/Paris')).strftime('%x à %H:%M')
-            checkout_str = checkout.astimezone(pytz.timezone('Europe/Paris')).strftime('%x à %H:%M')
-            user = self.pool.get("res.users").browse(cr, uid, uid, context=context)
-            partner = user.company_id.partner_id        
-            inter_ask = []
-            
-            for line in lines:
-                if line.motif == u'supply':
-                    site_infos = ''
-                    description = u'Une livraison est nécessaire pour la réservation %s sur le site %s du %s au %s, il faut livrer les ressources suivantes : \n' % (resa.name, resa.site_id and resa.site_id.name or 'inconnu', checkin_str, checkout_str)
-                    for x in resa.reservation_line:
-                        #computes site_infos according to each line and infos_supp field
-                        if x.infos:
-                            site_infos += _(x.reserve_product.name_template + ' : ' + x.infos + '\n')
-                        #computes description field content
-                        description += str(x.qte_reserves) + ' ' + x.reserve_product.name_template + '\n'
-
-                    service_id = line.service_id.id
-                    values = {'name':'Livraison pour la Réservation : ' + resa.name, 
-                              'site_details':site_infos,
-                              'description':description,
-                              'partner_id':partner.id, 
-                              'partner_address':partner.address[0].id,
-                              'partner_type':partner.type_id and partner.type_id.id or False,
-                              'partner_type_code':partner.type_id and partner.type_id.code or False,
-                              'site1':resa.site_id.id,
-                              'service_id':service_id,
-                              'state':'wait',
-                              }
-                    inter_ask.append(self.pool.get("openstc.ask").create(cr, uid, values, context=context))
-                else:
-                    #Générer intervention(s) selon le champs "service_id" du produit
-                    service_id = line.service_id.id
-                    values = {'name':'Mise en place de %s %s sur le site %s' % (str(line.qte_reserves) ,line.product_id.name_template, resa.site_id and resa.site_id.name or 'inconnu'), 
-                              'site_details':line.site_details,
-                              'description':'Mise en place de %s %s sur le site %s dans le cadre de l\'événement "%s" car l\'installation de cette ressource sur site nécessite une manipulation technique' %(str(line.qte_reserves) ,line.product_id.name_template , resa.name,resa.site_id and resa.site_id.name or 'inconnu'),
-                              'partner_id':partner.id, 
-                              'partner_address':partner.address[0].id,
-                              'partner_type':partner.type_id and partner.type_id.id or False,
-                              'partner_type_code':partner.type_id and partner.type_id.code or False,
-                              'site1':resa.site_id.id,
-                              'service_id':service_id,
-                              'state':'wait',
-                              }
-                    inter_ask.append(self.pool.get("openstc.ask").create(cr, uid, values, context=context))
-                
-            if len(inter_ask) == len(lines):
-                wf_service = netsvc.LocalService('workflow')
-                wf_service.trg_validate(uid, 'hotel.reservation', resa.id, 'put_in_use', cr)
-            else:
-                #print for debug
-                print(values)
-                raise osv.except_osv('Erreur','Une erreur est survenue lors de la génération des interventions')
-        return {'type':'ir.actions.act_window_close'}
-    
-    def put_in_use_without_intervention(self, cr, uid, ids,context=None):
-        if 'active_id' in context:
-            resa = self.pool.get("hotel.reservation").browse(cr, uid, context['active_id'])
-            wf_service = netsvc.LocalService('workflow')
-            wf_service.trg_validate(uid, 'hotel.reservation', resa.id, 'put_in_use', cr)
-        return {'type':'ir.actions.act_window_close'}
-    
-openstc_pret_deliver_products_wizard()
-
-class openstc_pret_deliver_products_line_wizard(osv.osv_memory):
-    _name = 'openstc.pret.deliver.products.line.wizard'
-    
-    _AVAILABLE_MOTIF_VALUES = [('supply','Livraison'),('technical','Installation Technique')]
-    
-    _columns = {
-        'wizard_id':fields.many2one('openstc.pret.deliver.products.wizard', 'Wizard parent'),
-        'service_id':fields.many2one('openstc.service','Service Concerné'),
-        'motif':fields.selection(_AVAILABLE_MOTIF_VALUES, 'Motif de l\'Intervention',size=128),
-        'to_generate':fields.boolean('A Générer ?'),
-        'product_id':fields.many2one('product.product', 'Ressource concernée'),
-        'site_details':fields.char('Détails du Site',size=128),
-        'qte_reserves':fields.integer('Quantité de la Ressource'),
-        }
-    
-    _defaults = {
-        'to_generate':lambda *a: 1,
-        }
-openstc_pret_deliver_products_line_wizard()
+##Pop-up permettant de savoir si, pour mettre à disposition les articles, on fait une livraison ou le demandeur vient les chercher
+#class openstc_pret_deliver_products_wizard(osv.osv_memory):
+#    _name = "openstc.pret.deliver.products.wizard"
+#    _columns = {
+#                'deliver_line':fields.one2many('openstc.pret.deliver.products.line.wizard','wizard_id','Interventions A Générer'),
+#                }
+#    
+#    def default_get(self, cr, uid, field_names, context=None):
+#        if 'active_id' in context:
+#            line_values = []
+#            resa = self.pool.get("hotel.reservation").browse(cr, uid, context['active_id'])
+#            #prepare supply intervention
+#            service_id = self.pool.get("openstc.service").search(cr, uid, [('name','like','Voirie')])
+#            if isinstance(service_id, list):
+#                service_id = service_id[0]
+#            line_values.append({'to_generate':True, 'service_id':service_id,'motif':'supply', 'site_details':''.join(_(x.reserve_product.name_template + ' : ' + x.infos) for x in resa.reservation_line if x.infos)})
+#            #prepare technical interventions if needed
+#            for line in resa.reservation_line:
+#                if line.reserve_product.service_technical_id:
+#                    line_values.append({'service_id':line.reserve_product.service_technical_id.id,
+#                                        'motif':'technical',
+#                                        'site_details':line.infos,
+#                                        'product_id':line.reserve_product.id,
+#                                        'to_generate':True,
+#                                        'qte_reserves':line.qte_reserves})
+#        return {'deliver_line':[(0,0,x) for x in line_values]}
+#    
+#    #Résa mise à "en cours d'utilisation" avec création d'une intervention
+#    def put_in_use_with_intervention(self, cr, uid, ids, context=None):
+#        if 'active_id' in context:
+#            resa = self.pool.get("hotel.reservation").browse(cr, uid, context['active_id'])
+#            if isinstance(ids, list):
+#                ids = ids[0]
+#            wizard = self.browse(cr, uid, ids, context)
+#            lines = [x for x in wizard.deliver_line if x.to_generate]
+#            #Générer intervention de livraison et interventions optionnelles
+#            checkin = datetime.strptime(resa.checkin, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
+#            checkout = datetime.strptime(resa.checkout, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
+#            checkin_str = checkin.astimezone(pytz.timezone('Europe/Paris')).strftime('%x à %H:%M')
+#            checkout_str = checkout.astimezone(pytz.timezone('Europe/Paris')).strftime('%x à %H:%M')
+#            user = self.pool.get("res.users").browse(cr, uid, uid, context=context)
+#            partner = user.company_id.partner_id        
+#            inter_ask = []
+#            
+#            for line in lines:
+#                if line.motif == u'supply':
+#                    site_infos = ''
+#                    description = u'Une livraison est nécessaire pour la réservation %s sur le site %s du %s au %s, il faut livrer les ressources suivantes : \n' % (resa.name, resa.site_id and resa.site_id.name or 'inconnu', checkin_str, checkout_str)
+#                    for x in resa.reservation_line:
+#                        #computes site_infos according to each line and infos_supp field
+#                        if x.infos:
+#                            site_infos += _(x.reserve_product.name_template + ' : ' + x.infos + '\n')
+#                        #computes description field content
+#                        description += str(x.qte_reserves) + ' ' + x.reserve_product.name_template + '\n'
+#
+#                    service_id = line.service_id.id
+#                    values = {'name':'Livraison pour la Réservation : ' + resa.name, 
+#                              'site_details':site_infos,
+#                              'description':description,
+#                              'partner_id':partner.id, 
+#                              'partner_address':partner.address[0].id,
+#                              'partner_type':partner.type_id and partner.type_id.id or False,
+#                              'partner_type_code':partner.type_id and partner.type_id.code or False,
+#                              'site1':resa.site_id.id,
+#                              'service_id':service_id,
+#                              'state':'wait',
+#                              }
+#                    inter_ask.append(self.pool.get("openstc.ask").create(cr, uid, values, context=context))
+#                else:
+#                    #Générer intervention(s) selon le champs "service_id" du produit
+#                    service_id = line.service_id.id
+#                    values = {'name':'Mise en place de %s %s sur le site %s' % (str(line.qte_reserves) ,line.product_id.name_template, resa.site_id and resa.site_id.name or 'inconnu'), 
+#                              'site_details':line.site_details,
+#                              'description':'Mise en place de %s %s sur le site %s dans le cadre de l\'événement "%s" car l\'installation de cette ressource sur site nécessite une manipulation technique' %(str(line.qte_reserves) ,line.product_id.name_template , resa.name,resa.site_id and resa.site_id.name or 'inconnu'),
+#                              'partner_id':partner.id, 
+#                              'partner_address':partner.address[0].id,
+#                              'partner_type':partner.type_id and partner.type_id.id or False,
+#                              'partner_type_code':partner.type_id and partner.type_id.code or False,
+#                              'site1':resa.site_id.id,
+#                              'service_id':service_id,
+#                              'state':'wait',
+#                              }
+#                    inter_ask.append(self.pool.get("openstc.ask").create(cr, uid, values, context=context))
+#                
+#            if len(inter_ask) == len(lines):
+#                wf_service = netsvc.LocalService('workflow')
+#                wf_service.trg_validate(uid, 'hotel.reservation', resa.id, 'put_in_use', cr)
+#            else:
+#                #print for debug
+#                print(values)
+#                raise osv.except_osv('Erreur','Une erreur est survenue lors de la génération des interventions')
+#        return {'type':'ir.actions.act_window_close'}
+#    
+#    def put_in_use_without_intervention(self, cr, uid, ids,context=None):
+#        if 'active_id' in context:
+#            resa = self.pool.get("hotel.reservation").browse(cr, uid, context['active_id'])
+#            wf_service = netsvc.LocalService('workflow')
+#            wf_service.trg_validate(uid, 'hotel.reservation', resa.id, 'put_in_use', cr)
+#        return {'type':'ir.actions.act_window_close'}
+#    
+#openstc_pret_deliver_products_wizard()
+#
+#class openstc_pret_deliver_products_line_wizard(osv.osv_memory):
+#    _name = 'openstc.pret.deliver.products.line.wizard'
+#    
+#    _AVAILABLE_MOTIF_VALUES = [('supply','Livraison'),('technical','Installation Technique')]
+#    
+#    _columns = {
+#        'wizard_id':fields.many2one('openstc.pret.deliver.products.wizard', 'Wizard parent'),
+#        'service_id':fields.many2one('openstc.service','Service Concerné'),
+#        'motif':fields.selection(_AVAILABLE_MOTIF_VALUES, 'Motif de l\'Intervention',size=128),
+#        'to_generate':fields.boolean('A Générer ?'),
+#        'product_id':fields.many2one('product.product', 'Ressource concernée'),
+#        'site_details':fields.char('Détails du Site',size=128),
+#        'qte_reserves':fields.integer('Quantité de la Ressource'),
+#        }
+#    
+#    _defaults = {
+#        'to_generate':lambda *a: 1,
+#        }
+#openstc_pret_deliver_products_line_wizard()
     
     
