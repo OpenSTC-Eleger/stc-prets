@@ -76,14 +76,14 @@
 -
   !record {model: res.partner, id: openstc_prets_tests_partner1, view: false}:
     name: Association 1
-    type_id: openstc_prets_partner_type_asso
+    type_id: openbase.openstc_prets_partner_type_asso
     customer: True
 -
   Partner 2
 -
   !record {model: res.partner, id: openstc_prets_tests_partner2, view: false}:
     name: Association 2
-    type_id: openstc_prets_partner_type_asso
+    type_id: openbase.openstc_prets_partner_type_asso
     customer: True
 -
   Partner 1 address
@@ -107,7 +107,7 @@
   creating resa used for this test session
 -
 
-  !record {model: hotel.reservation, id: openstc_prets_tests_resa1, forcecreate: true}:
+  !record {model: hotel.reservation, id: openstc_prets_tests_resa1, forcecreate: true, view: False}:
     name: Reservation 1
     checkin: "2013-06-01 08:00:00"
     checkout: "2013-06-02 10:00:00"
@@ -154,7 +154,7 @@
   create a second correct resa
 -
 
-  !record {model: hotel.reservation, id: openstc_prets_tests_resa2, forcecreate: true}:
+  !record {model: hotel.reservation, id: openstc_prets_tests_resa2, forcecreate: true, view: False}:
     name: Reservation 2
     checkin: "2013-06-01 08:00:00"
     checkout: "2013-06-02 10:00:00"
@@ -239,7 +239,7 @@
 
   !record {model: openstc.pret.envoie.mail.annulation.wizard, id: openstc_prets_tests_annulation1}:
     body_html: Automated Test
-    email_template: openstc.openstc_pret_email_template_resa_cancelled
+    email_template: openstc_pret_email_template_resa_cancelled
 -
   and i validate the wizard to cancel resa
 -
