@@ -37,7 +37,7 @@ import logging
 import openerp
 import os
 import tools
-
+from datetime import datetime
 #----------------------------------------------------------
 # Fournitures
 #----------------------------------------------------------
@@ -177,14 +177,18 @@ class hotel_reservation_line(osv.osv):
         ret = {}
         weekday_to_str = {0:'Lundi',1:'Mardi',2:'Mercredi',3:'Jeudi',4:'Vendredi',5:'Samedi',6:'Dimanche'}
         for line in self.browse(cr, uid, ids, context=context):
-            weekday_start = calendar.weekday(int(line.checkin[:4]), int(line.checkin[5:7]), int(line.checkin[8:10]))
-            weekday_end = calendar.weekday(int(line.checkout[:4]), int(line.checkout[5:7]), int(line.checkout[8:10]))
+            dt_checkin = fields.datetime.context_timestamp(cr, uid, datetime.strptime(line.checkin,'%Y-%m-%d %H:%M:%S'), context=context)
+            dt_checkout = fields.datetime.context_timestamp(cr, uid, datetime.strptime(line.checkout,'%Y-%m-%d %H:%M:%S'), context=context)
+            checkin = dt_checkin.strftime('%Y-%m-%d %H:%M:%S')
+            checkout = dt_checkout.strftime('%Y-%m-%d %H:%M:%S')
+            weekday_start = calendar.weekday(int(checkin[:4]), int(checkin[5:7]), int(checkin[8:10]))
+            weekday_end = calendar.weekday(int(checkout[:4]), int(checkout[5:7]), int(checkout[8:10]))
             date_str = ''
             #if weekday_start == weekday_end:
                 #date_str = '%s %s-%s : ' %(weekday_to_str[weekday_start],line.checkin[11:16],line.checkout[11:16])
                 
             if weekday_start <> weekday_end:
-                date_str = '%s %s - %s %s : ' % (weekday_to_str[weekday_start][:3],line.checkin[11:16],weekday_to_str[weekday_end][:3],line.checkout[11:16])
+                date_str = '%s %s - %s %s : ' % (weekday_to_str[weekday_start][:3],checkin[11:16],weekday_to_str[weekday_end][:3],checkout[11:16])
             ret[line.id] = '%s %d x %s (%s)' %(date_str,line.qte_reserves, line.reserve_product.name_template, line.partner_id.name)
         return ret
     
