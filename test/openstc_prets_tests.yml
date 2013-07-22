@@ -53,20 +53,20 @@
     self.change_product_qty(cr, uid,[wizard1],{'active_id':ref("openstc_prets_tests_mat01")})
     self.change_product_qty(cr, uid,[wizard2],{'active_id':ref("openstc_prets_tests_mat02")})
 
--
-  Site init (and site type associated)
--
-  Site Type
--
-  !record {model: openstc.site.type, id: openstc_prets_tests_site_type1, forcecreate: true}:
-    name: Type test 1
-    code: TEST1
--
-  Site 1
--
-  !record {model: openstc.site, id: openstc_prets_tests_site1, forcecreate: true}:
-    name: Site test 1
-    type: openstc_prets_tests_site_type1
+#-
+#  Site init (and site type associated)
+#-
+#  Site Type
+#-
+#  !record {model: openstc.site.type, id: openstc_prets_tests_site_type1, forcecreate: true}:
+#    name: Type test 1
+#    code: TEST1
+#-
+#  Site 1
+#-
+#  !record {model: openstc.site, id: openstc_prets_tests_site1, forcecreate: true}:
+#    name: Site test 1
+#    type: openstc_prets_tests_site_type1
     
 
 -
