@@ -338,9 +338,9 @@ class hotel_reservation(osv.osv):
         return ret
 
     def _get_prods_reserved(self, cr, uid, ids, name, args, context=None):
-        ret = {}
-        for resa in self.browse(cr, uid, ids, context=context):
-            ret[resa.id] = [(line.reserve_product.id, line.reserve_product.name) for line in resa.reservation_line]            
+        ret = {}.fromkeys(ids,False)
+        #for resa in self.browse(cr, uid, ids, context=context):
+        #    ret[resa.id] = [(line.reserve_product.id, line.reserve_product.name) for line in resa.reservation_line]            
         return ret
 
     _columns = {
@@ -360,7 +360,7 @@ class hotel_reservation(osv.osv):
                 'amount_total':fields.function(_get_amount_total, type='float', string='Amount Total', method=True, multi="resa",
                                                help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
                 'all_dispo':fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
-                #'reserve_product':fields.function(_get_prods_reserved, type='many2many', relation='product.product',string='prods reserved'),
+                #'reserve_product':fields.function(_get_prods_reserved, , type='many2many', relation='product.product',string='prods reserved'),
         }
     _defaults = {
                  'in_option': lambda *a :0,
