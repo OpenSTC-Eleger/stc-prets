@@ -448,6 +448,7 @@ msgstr ""
 #: field:openstc.pret.checkout,partner_id:0
 msgid "Demandeur"
 msgstr ""
+
 #. module: openresa
 #: model:ir.ui.menu,name:openstc.menu_action_view_reservations
 msgid "Gestion des Réservations"
