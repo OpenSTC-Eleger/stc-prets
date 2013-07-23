@@ -64,6 +64,35 @@ msgstr ""
 msgid "Prix (si tarifé)"
 msgstr ""
 
+#. module: openresa
+#: field:hotel.reservation,checkin:0
+msgid "Expected-Date-Arrival"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,checkout:0
+msgid "Expected-Date-Departure"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,date_order:0
+msgid "Date Ordered"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,partner_shipping_id:0
+msgid "Shipping Address"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,reservation_no:0
+msgid "Reservation No"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,pricelist_id:0
+msgid "Pricelist"
+msgstr ""
 
 #. module: openresa
 #: view:hotel.folio:0
