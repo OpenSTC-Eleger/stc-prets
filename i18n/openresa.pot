@@ -1,0 +1,1631 @@
+# Translation of OpenERP Server.
+# This file contains the translation of the following modules:
+#	* openresa
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenERP Server 6.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-06-05 07:55+0000\n"
+"PO-Revision-Date: 2013-06-05 07:55+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: openresa
+#: model:email.template,body_html:openstc.openstc_pret_email_template_resa_en_attente
+msgid "\n"
+"			    <h2>Message Automatique</h2>\n"
+"			    \n"
+"			    <p>Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. </p>\n"
+"			    <p>Récapitulatif de votre Réservation : </p>\n"
+"			    <ul>\n"
+"			    <li>Libellé : ${object.name or ''}</li>\n"
+"			    <%\n"
+"				import pytz\n"
+"				from datetime import datetime\n"
+"				my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"				my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"			    %>\n"
+"			    <li>Dates : ${my_checkin_str} - ${my_checkout_str}</li>\n"
+"			    <li>Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}</li>\n"
+"			    <li><u>Ressources Réservées :</u> \n"
+"			    <ul>\n"
+"			    % for line in object.reservation_line:\n"
+"			    <li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>\n"
+"			    % endfor\n"
+"			    </ul>\n"
+"			    </li>\n"
+"			    </ul>\n"
+"			    <br />\n"
+"			    Toutefois, veuillez noter que, même si votre réservation n'est pas encore validée, les ressources qu'elle concerne vous sont mis de côté à partir de maintenant. \n"
+"			    <br />\n"
+"			    <p>Cordialement,</p>\n"
+"			    <br />\n"
+"			    <p>${object.shop_id.company_id.name or ''}</p>\n"
+"			    <br />\n"
+"			    <img src=\"data:image/png;base64,${object.shop_id.company_id.logo or ''}\"/>\n"
+"			    <br />\n"
+"			    <p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>\n"
+"			    \n"
+"			    "
+msgstr ""
+
+
+#. module: openresa
+#: field:hotel_reservation.line,amount:0
+msgid "Prix (si tarifé)"
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Reserved products"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.emprunt.line.wizard,date_expected:0
+msgid "Date de livraison"
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Generate Interventions"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,qte_to_repair:0
+msgid "Qty to repair"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_warning_dispo_wizard
+msgid "openstc.pret.warning.dispo.wizard"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_openstc_pret_resa_semaine_view
+msgid "Réservations de la semaine à traiter"
+msgstr ""
+
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:904
+#: code:addons/openstc/openstc_pret.py:921
+#, python-format
+msgid "[Evenemential] supply of %s ont the site %s"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Faisant l'objet d'un rachat"
+msgstr ""
+
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_openstock_view_fournitures
+msgid "Ressources"
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Unit price"
+msgstr ""
+
+
+#. module: openresa
+#: field:hotel_reservation.line,complete_name:0
+msgid "Complete Name"
+msgstr ""
+
+
+#. module: openresa
+#: selection:hotel_reservation.line,action:0
+msgid "Pas d'intervention"
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "n'affiche que les réservations concernant une salle"
+msgstr ""
+
+#. module: openresa
+#: selection:openstc.pret.checkout,state:0
+msgid "Cloturé"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Validate infos written and reserve selected products.Reservation will be visible on calendar and claimer will be emailed (if email written)."
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Terminées"
+msgstr ""
+
+
+#. module: openresa
+#: selection:openstc.pret.checkout.line,state:0
+msgid "Non Planifié"
+msgstr ""
+
+
+#. module: openresa
+#: model:product.template,name:openstc.openstc_prets_tests_mat1_product_template
+msgid "matériel 1 tests"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:973
+#: code:addons/openstc/openstc_pret.py:974
+#, python-format
+msgid "bruno.plancher@gmail.com"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_view_openstc_pret_create_envoi_mail_annulation_wizard
+msgid "Envoi du mail d'annulation de la réservation"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Etats des Lieux dont un rachat et/ou une réparation en interne sont à générer."
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.create.inter.wizard:0
+msgid "Générer l'intervention"
+msgstr ""
+
+#. module: openresa
+#: constraint:openstc.pret.checkout.line:0
+msgid "Qty to purchase + Qty to repair is greater than qty resereved, please change them."
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Reserved Products"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,body_html:openstc.openstc_pret_email_template_resa_cancelled
+msgid "\n"
+"	<h2>Message Automatique</h2>\n"
+"	<%\n"
+"	from datetime import datetime\n"
+"	import pytz\n"
+"	my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"	my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"	my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"	my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"	%>\n"
+"	\n"
+"	<p>Votre Réservation normalement prévue du ${my_checkin_str} au ${my_checkout_str} dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :</p> \n"
+"	<p<i>Saisir ici la raison de votre refus</i></p>\n"
+"	<br />\n"
+"	<p>Cordialement,</p>\n"
+"	<br />\n"
+"	<p>${object.shop_id.company_id.name or ''}</p>\n"
+"	<br />\n"
+"	<img src=\"data:image/png;base64,${object.shop_id.company_id.logo or ''}\"/>\n"
+"	<br />\n"
+"	<p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>\n"
+"   \n"
+"			    "
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout,user_id:0
+msgid "Saisie par"
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Cancel Folio"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Lignes d'Etat des lieux"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,infos:0
+msgid "Informations supplémentaires"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Réservations cloturées"
+msgstr ""
+
+#. module: openresa
+#: help:purchase.order,is_emprunt:0
+msgid "Indique qu'il s'agit d'une demande d'emprunt aurpès d'une mairie extèrieure et non d'un bon de commande"
+msgstr ""
+
+#. module: openresa
+#: field:openstock.qte.dispo.reserve.report,product:0
+msgid "article réservé"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Procurement Corrected"
+msgstr ""
+
+#. module: openresa
+#: selection:hotel.reservation,in_option:0
+msgid "Réservation En Option"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,qte_reserves:0
+msgid "Qté désirée"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Guest Name"
+msgstr ""
+
+#. module: openresa
+#: field:product.product,bloquant:0
+msgid "\"Non disponibilité\" bloquante"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout,name:0
+#: field:openstc.pret.checkout,reservation:0
+msgid "Réservation Associée"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Integrate Invoicing"
+msgstr ""
+
+#. module: openresa
+#: view:purchase.order:0
+msgid "Cancel Purchase Order"
+msgstr ""
+
+#. module: openresa
+#: selection:hotel.reservation,in_option:0
+msgid "Réservation bloquée"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:396
+#: code:addons/openstc/openstc_pret.py:456
+#, python-format
+msgid "Your resa is blocked because your expected date is too early so that we can not supply your products at time"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Faisant l'objet d'une réparation"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.emprunt.wizard,origin:0
+msgid "Document d'origine"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Ligne de réservation"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,subject:openstc.openstc_pret_email_template_resa_cancelled
+msgid "Votre Réservation: ${object.name or 'inconnu'} a été annulée"
+msgstr ""
+
+#. module: openresa
+#: field:openstock.qte.dispo.reserve.report,checkin:0
+#: field:openstock.qte.dispo.reserve.report,checkout:0
+msgid "Début réservation"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_openstock_view_reservation_new
+msgid "Créer une nouvelle réservation"
+msgstr ""
+
+#. module: openresa
+#: field:product.product,checkout_lines:0
+msgid "Lignes Etat des Lieux"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.warning.dispo.wizard:0
+msgid "Commencer l'emprunt"
+msgstr ""
+
+
+#. module: openresa
+#: model:email.template,subject:openstc.openstc_pret_email_template_resa_validee
+msgid "Votre Réservation: ${object.name or 'inconnu'} est validée"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Planifiées"
+msgstr ""
+
+#: field:openstc.pret.create.inter.wizard,categ_id:0
+msgid "Catégorie de la tâche"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_view_openstc_pret_create_inter_wizard
+msgid "Assistant de réservation pour générer une intervention"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.emprunt.wizard:0
+msgid "Emprunter des Ressources auprès de Collectivités extérieures"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,dispo:0
+msgid "Disponible"
+msgstr ""
+
+#. module: openresa
+#: sql_constraint:hotel.folio:0
+msgid "Check in Date Should be lesser than the Check Out Date!"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Checkout and end of resa"
+msgstr ""
+
+#. module: openresa
+#: view:purchase.order:0
+msgid "Annuler emprunt"
+msgstr#. module: openresa
+#: model:ir.model,name:openstc.model_openstock_qte_dispo_reserve_report
+msgid "Réservation des produits"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_hotel_folio
+msgid "hotel folio new"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+#: field:hotel.reservation,openstc_partner_id:0
+#: view:openstc.ask:0
+#: field:openstc.pret.checkout,partner_id:0
+msgid "Demandeur"
+msgstr ""
+#. module: openresa
+#: model:ir.ui.menu,name:openstc.menu_action_view_reservations
+msgid "Gestion des Réservations"
+msgstr ""
+
+
+#. module: openresa
+#: view:openstc.pret.envoie.mail.annulation.wizard:0
+msgid "Ne pas envoyer le mail"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:896
+#, python-format
+msgid "you must specified a service for this product : %s"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.emprunt.line.wizard,product_id:0
+msgid "Ressource à Emprunter"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.emprunt.line.wizard,qte:0
+msgid "Quantité empruntée"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_openstock_pret_location_view_product
+msgid "Prêts / Locations"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:387
+#: constraint:hotel.reservation:0
+#, python-format
+msgid "Your checkin is greater than your checkout, please modify them"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_openstc_pret_voir_emprunts_ext
+msgid "Emprunts aux mairies extérieures encore à retourner"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+#: model:ir.model,name:openstc.model_hotel_reservation
+msgid "Reservation"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,subject:openstc.openstc_pret_email_template_resa_done
+msgid "Facture concernant votre Réservation: ${object.name or 'inconnu'}"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.deliver.products.wizard:0
+msgid "Ne pas générer d'intervention"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:263
+#, python-format
+msgid "Intervention associated no longer exist or have been deleted, can not open it"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.warning.dispo.wizard:0
+msgid "Attention, certains des articles que vous voulez réserver ne sont pas disponibles."
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.envoie.mail.annulation.wizard:0
+msgid "Envoi du mail d'annulation"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,body_text:openstc.openstc_pret_email_template_resa_validee
+msgid "\n"
+"			    Message Automatique\n"
+"			    \n"
+"			    Votre Réservation a bien été enregistrée.\n"
+"			    Récapitulatif de votre Réservation :\n"
+"			    \n"
+"			    Libellé : ${object.name or ''}\n"
+"			    <%\n"
+"				from datetime import datetime\n"
+"				import pytz\n"
+"				my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"				my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"			   %>\n"
+"			    Dates : ${my_checkin_str} - ${my_checkout_str}\n"
+"			    Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}\n"
+"			    % for line in object.reservation_line:\n"
+"			    ${line.reserve_product.name or ''} : ${line.qte_reserves or 0}\n"
+"			    % endfor\n"
+"			    \n"
+"			    \n"
+"			    % if object.folio_id:\n"
+"			    	Votre Réservation fait l'objet d'une facturation, vous pouvez voir en pièce jointe le Bon de Commande associé A votre Réservation.\n"
+"			    	Une facture vous sera envoyée à la restitution des ressources réservées une fois votre Evénement terminé.\n"
+"			    % endif\n"
+"			    \n"
+"			    Cordialement,\n"
+"			    \n"
+"			    ${object.shop_id.company_id.name or ''}\n"
+"			    \n"
+"			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.\n"
+"		    "
+msgstr ""
+
+#. module: openresa
+#: selection:openstc.pret.deliver.products.line.wizard,motif:0
+msgid "Livraison"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,product_id:0
+msgid "Article"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout,purchase_id:0
+msgid "Facture associée"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.emprunt.wizard:0
+msgid "Emprunter"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:975
+#: code:addons/openstc/openstc_pret.py:978
+#, python-format
+msgid "Votre Réservation normalement prévue du ${object.checkin} au         ${object.checkout} dans le cadre de votre manifestation : ${object.name} a été annulée,        pour plus d'informations, veuillez contacter la mairie de Pont L'abbé au : 0240xxxxxx"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Ayant des actions à générer"
+msgstr ""
+
+#. module: openresa
+#: model:product.template,name:openstc.openstc_prets_tests_mat2_product_template
+msgid "matériel 2 tests"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Validate la Reservation (manager)"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Abandonnées"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.emprunt.wizard:0
+#: field:openstc.pret.emprunt.wizard,emprunt_line:0
+msgid "Lignes d'emprunt"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,partner_mail:0
+msgid "Email Demandeur"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.deliver.products.line.wizard,qte_reserves:0
+msgid "Quantité de la Ressource"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.deliver.products.line.wizard,product_id:0
+msgid "Ressource concernée"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Claimer infos"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Mettre en Brouillon"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,amount_total:0
+msgid "Amount Total"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout,date_order:0
+msgid "Date de l'Etat des lieux"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.emprunt.line.wizard,partner_id:0
+msgid "Collectivité prêtant"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,checkin:0
+#: field:hotel_reservation.line,checkout:0
+#: field:hotel_reservation.line,partner_id:0
+#: field:hotel_reservation.line,resa_name:0
+#: field:hotel_reservation.line,state:0
+#: field:openstc.pret.emprunt.line.wizard,line_id:0
+msgid "unknown"
+msgstr ""
+
+
+#. module: openresa
+#: model:ir.ui.menu,name:openstc.menu_action_openstc_pret_voir_emprunts_ext
+msgid "Nos Emprunts externes à retourner"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,body_text:openstc.openstc_pret_email_template_resa_done
+msgid "\n"
+"			    Message Automatique\n"
+"			    \n"
+"			    ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}\n"
+"			    \n"
+"			    Votre Réservation de ressources est terminée.\n"
+"			    % if object.folio_id:\n"
+"				Ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.\n"
+"				% endif\n"
+"			    Récapitulatif de votre Réservation :\n"
+"			    \n"
+"			    Libellé : ${object.name or ''}\n"
+"			    <%\n"
+"				from datetime import datetime\n"
+"				import pytz\n"
+"				my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"				my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"				%>\n"
+"			    Dates : ${my_checkin_str} - ${my_checkout_str}\n"
+"			    Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}\n"
+"			    % for line in object.reservation_line:\n"
+"			    ${line.reserve_product.name or ''} : ${line.qte_reserves or 0}\n"
+"			    % endfor\n"
+"			    \n"
+"			    Cordialement,\n"
+"			    \n"
+"			    ${object.shop_id.company_id.name or ''}\n"
+"			    \n"
+"			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.\n"
+"		    "
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,all_dispo:0
+msgid "All Dispo"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.deliver.products.line.wizard,service_id:0
+msgid "Service Concerné"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Filtrer les Etat des Lieux"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:906
+#: code:addons/openstc/openstc_pret.py:923
+#, python-format
+msgid "supply of %s on the site %s for the event \"%s\" planned from %s to %s"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_deliver_products_line_wizard
+msgid "openstc.pret.deliver.products.line.wizard"
+msgstr ""
+
+#. module: openresa
+#: help:product.product,seuil_confirm:0
+msgid "Qté Maximale avant laquelle une étape de validation par un responsable est nécessaire"
+msgstr ""
+
+#. module: openresa
+#: selection:hotel.reservation,in_option:0
+msgid "Rien à Signaler"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Annuler Folio"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "En cours de Confirmation"
+msgstr ""
+
+#. module: openresa
+#: view:product.product:0
+msgid "Résumé des détériorations (Etat des Lieux)"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.emprunt.wizard:0
+msgid "Cancel"
+msgstr ""
+
+
+#. module: openresa
+#: field:openstc.pret.emprunt.line.wizard,qty_needed:0
+msgid "Quantité Minimale nécessaire pour la réservation"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_openstock_qte_dispo_calendar
+#: model:ir.actions.act_window,name:openstc.action_openstock_qte_dispo_graph
+#: view:openstock.qte.dispo.report:0
+#: view:openstock.qte.dispo.reserve.report:0
+msgid "Verif Dispo"
+msgstr ""
+
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Booking Contact"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Create Invoice"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Qty reserved"
+msgstr ""
+
+#. module: openresa
+#: selection:openstc.pret.checkout,state:0
+msgid "Brouillon"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_view_openstc_pret_deliver_products_wizard
+msgid "Mise a dispo des produits"
+msgstr ""
+
+#. module: openresa
+#: selection:openstc.pret.checkout.line,state:0
+msgid "En cours de Traitement"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+#: view:openstc.pret.create.inter.wizard:0
+msgid "Valider"
+msgstr ""
+
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_envoie_mail_annulation_wizard
+msgid "openstc.pret.envoie.mail.annulation.wizard"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Folio No"
+msgstr ""
+
+#. module: openresa
+#: model:product.uom,name:openstc.openstc_pret_uom_day
+msgid "Day (Reservation)"
+msgstr ""
+
+#. module: openresa
+#: help:hotel.reservation,openstc_partner_id:0
+msgid "Personne demandant la réservation."
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Date de fin Réservation"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:433
+#: code:addons/openstc/openstc_pret.py:442
+#: code:addons/openstc/openstc_pret.py:470
+#, python-format
+msgid "Not available"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Recreate Procurement"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,date_order:0
+msgid "Date Etat des Lieux"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Recreate Invoice"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,qte_dispo:0
+msgid "Qté Dispo"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "See calendar"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Set to Draft"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_deliver_products_wizard
+msgid "openstc.pret.deliver.products.wizard"
+msgstr ""
+
+#. module: openresa
+#: field:openstock.qte.dispo.report,jour_dispo:0
+msgid "Journée"
+msgstr ""
+
+#. module: openresa
+#: field:product.product,need_infos_supp:0
+msgid "Nécessite Infos Supp ?"
+msgstr ""
+
+#. module: openresa
+#: field:purchase.order,is_emprunt:0
+msgid "Demande d'emprunt"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Etat des lieux"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.deliver.products.wizard:0
+msgid "Générer une intervention"
+msgstr ""
+
+#. module: openresa
+#: help:product.product,bloquant:0
+msgid "Un produit dont la non dispo est bloquante empêche la réservation de se poursuivre (elle reste en Brouillon)"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_create_inter_wizard
+msgid "openstc.pret.create.inter.wizard"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Claimer"
+msgstr ""
+
+#. module: openresa
+#: view:product.product:0
+msgid "Summup of degradations"
+msgstr ""
+
+#. module: openresa
+#: model:ir.ui.menu,name:openstc.menu_action_view_fournitures
+msgid "Catalogue des ressources"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:617
+#, python-format
+msgid "You have to write at least one reservation line"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.deliver.products.wizard:0
+msgid "Interventions pouvant être générées"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout,checkout_lines:0
+msgid "Ressources empruntées"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:433
+#: code:addons/openstc/openstc_pret.py:442
+#: code:addons/openstc/openstc_pret.py:470
+#, python-format
+msgid "Not all of your products are available on those quantities for this period"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.deliver.products.wizard,deliver_line:0
+msgid "Interventions A Générer"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Réservations en cours de traitement, elles sont soit en Brouillon, soit en attente de validation."
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Voir facture associée"
+msgstr ""
+
+#. module: openresa
+#: field:openstock.qte.dispo.reserve.report,reservation_no:0
+msgid "Numéro"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.deliver.products.wizard:0
+msgid "Comment mettre les articles à disposition"
+msgstr ""
+
+#. module: openresa
+#: help:hotel.reservation,amount_total:0
+msgid "Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done."
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Réservation confirmée et visible sur le planning, les ressources sont réservées pour le demandeur."
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout,state:0
+#: field:product.product,etat:0
+msgid "Etat"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.deliver.products.line.wizard,wizard_id:0
+msgid "Wizard parent"
+msgstr ""
+
+#. module: openresa
+#: selection:openstc.pret.checkout.line,state:0
+msgid "Remis en Etat"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.create.inter.wizard,time_planned:0
+msgid "Heures planifiées"
+msgstr ""
+
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:969
+#, python-format
+msgid "modèle de mail pour résa annulée"
+msgstr ""
+
+#. module: openresa
+#: model:product.uom,name:openstc.openstc_pret_uom_hour
+msgid "Hour (Reservation)"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,action:0
+msgid "Action"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,resa_checkout_id:0
+msgid "Etat des Lieux associé"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,checkout_id:0
+msgid "Etat des Lieux"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Voir seulement les Salles"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:883
+#: code:addons/openstc/openstc_pret.py:884
+#, python-format
+msgid "%x at %H:%M"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,qte_reservee:0
+msgid "Qté prêtée"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_view_openstc_pret_create_emprunt_wizard
+#: model:ir.actions.act_window,name:openstc.action_view_openstc_pret_emprunt_wizard
+#: model:ir.ui.menu,name:openstc.menu_action_view_emprunt_ext
+msgid "Emprunter des Ressources à l'extérieur"
+msgstr ""
+
+
+#. module: openresa
+#: field:product.product,seuil_confirm:0
+msgid "Qté Max sans Validation"
+msgstr ""
+
+#. module: openresa
+#: field:openstock.qte.dispo.reserve.report,qte:0
+msgid "Quantité réservée"
+msgstr ""
+
+
+#. module: openresa
+#: view:openstc.pret.create.inter.wizard:0
+#: view:openstc.pret.warning.dispo.wizard:0
+msgid "Annuler"
+msgstr ""
+
+#. module: openresa
+#: field:openstock.qte.dispo.report,qte_dispo:0
+msgid "Quantité Disponible"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Validate reservation"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Invoice Corrected"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Reservation Lines"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,body_text:openstc.openstc_pret_email_template_resa_en_attente
+msgid "\n"
+"			    Message Automatique\n"
+"			    \n"
+"			    Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. \n"
+"			    Récapitulatif de votre Réservation : \n"
+"			    \n"
+"			    Libellé : ${object.name or ''}\n"
+"				<%\n"
+"				import pytz\n"
+"				from datetime import datetime\n"
+"				my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"				my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"				my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"				my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"			    	%>\n"
+"			    Dates : ${my_checkin_str} - ${my_checkout_str}\n"
+"			    Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}\n"
+"			    % for line in object.reservation_line:\n"
+"			    ${line.reserve_product.name or ''} : ${line.qte_reserves or 0}\n"
+"			    % endfor\n"
+"			    \n"
+"			    Toutefois, veuillez noter que, même si votre réservation n'est pas encore validée, les ressources qu'elle concerne vous sont mis de côté à partir de maintenant. \n"
+"			    \n"
+"			    Cordialement,\n"
+"			    \n"
+"			    ${object.shop_id.company_id.name or ''}\n"
+"			    \n"
+"			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.\n"
+"		    "
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret_checkout.py:75
+#, python-format
+msgid "Loss of product (from reservation)"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,inter_ask_id:0
+msgid "Demande d'intervention associée"
+msgstr ""
+
+#. module: openresa
+#: field:product.product,openstc_reservable:0
+msgid "Reservable"
+msgstr ""
+
+#. module: openresa
+#: model:ir.ui.menu,name:openstc.menu_action_view_articles
+msgid "Gestion des Ressources"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_checkout_line
+msgid "openstc.pret.checkout.line"
+msgstr ""
+
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstock_qte_dispo_report
+msgid "Disponibilités des Produits"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Confirmer Folio"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:703
+#, python-format
+msgid "An error has occured, please notify following error to your supplier : \n"
+" prod_ids paramater of get_prods_available method  has an incorrect form"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_open_pret_location_reservation_create_form
+msgid "Réserver article(s)"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_hotel_reservation_line
+msgid "Reservation Line"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+#: view:hotel.reservation:0
+msgid "Start date of reservation"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Confirm Folio"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,in_option:0
+msgid "En Option"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+#: field:hotel.reservation,prod_id:0
+msgid "Ressource"
+msgstr ""
+
+#. module: openresa
+#: help:product.product,empruntable:0
+msgid "indique si l'on peut emprunter cette ressource à des collectivités extèrieures"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "N° Folio"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Reservation infos"
+msgstr ""
+
+#. module: openresa
+#: selection:hotel_reservation.line,action:0
+msgid "Intervention générée"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Branch"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/wizard/openstc_pret_wizard.py:281
+#, python-format
+msgid "You can't plan a task with a non-positive length"
+msgstr ""
+
+
+#. module: openresa
+#: view:openstc.pret.envoie.mail.annulation.wizard:0
+msgid "Envoyer le mail"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,name:0
+msgid "Libellé"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,inter_id:0
+msgid "Livraison associée"
+msgstr ""
+
+#. module: openresa
+#: view:purchase.order:0
+msgid "Return products to collectivity"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,subject:openstc.openstc_pret_email_template_resa_en_attente
+msgid "Votre Réservation: ${object.name or 'inconnu'} est en attente de Validation"
+msgstr ""
+
+#. module: openresa
+#: help:product.product,openstc_reservable:0
+msgid "Indicates if this ressource can be reserved or not by tiers"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "reservation number"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_emprunt_wizard
+msgid "openstc.pret.emprunt.wizard"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Check dispo products"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+#: view:hotel_reservation.line:0
+#: model:ir.actions.act_window,name:openstc.action_openstock_view_reservation_calendar
+#: model:ir.actions.act_window,name:openstc.action_openstock_view_reservation_calendar_popup
+#: model:ir.ui.menu,name:openstc.menu_action_openstock_view_reservation_calendar
+msgid "Planning des Réservations"
+msgstr ""
+
+
+#. module: openresa
+#: help:product.product,service_technical_id:0
+msgid "Si renseigné, indique que cette ressource nécessite une manipulation technique pour être installée sur site, cette ressource est donc susceptible de générer une intervention sur ce service."
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "General Infos"
+msgstr ""
+
+#. module: openresa
+#: model:product.uom.categ,name:openstc.openstc_pret_uom_categ_resa
+msgid "Temporel"
+msgstr ""
+
+
+#. module: openresa
+#: field:hotel_reservation.line,inter_id:0
+msgid "Intervention associée"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,body_html:openstc.openstc_pret_email_template_resa_validee
+msgid "\n"
+"	<h2>Message Automatique</h2>\n"
+"	\n"
+"	<p>Votre Réservation a bien été enregistrée.  </p>\n"
+"	<p>Récapitulatif de votre Réservation : </p>\n"
+"	<ul>\n"
+"	<li>Libellé : ${object.name or ''}</li>\n"
+"	<%\n"
+"	from datetime import datetime\n"
+"	import pytz\n"
+"	my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime((\"%x %Hh%M\").encode('utf-8'))\n"
+"	my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime((\"%x %Hh%M\").encode('utf-8'))\n"
+"	my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"	my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"	%>\n"
+"	<li>Dates : ${my_checkin_str} - ${my_checkout_str}</li>\n"
+"	<li>Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}</li>\n"
+"	<li><u>Ressources Réservées :</u> \n"
+"	<ul>\n"
+"	% for line in object.reservation_line:\n"
+"	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>\n"
+"	% endfor\n"
+"	</ul>\n"
+"	</li>\n"
+"	</ul>\n"
+"   \n"
+"   % if object.folio_id:\n"
+"   	<p>Votre Réservation fait l'objet d'une facturation, vous pouvez voir en pièce jointe le Bon de Commande associé A votre Réservation.<br/>\n"
+"   	Une facture vous sera envoyée à la restitution des ressources réservées une fois votre Evénement terminé.</p>\n"
+"   % endif\n"
+"   <br />\n"
+"   <p>Cordialement,</p>\n"
+"   <br />\n"
+"   <p>${object.shop_id.company_id.name or ''}</p>\n"
+"   <br />\n"
+"   <img src=\"data:image/png;base64,${object.shop_id.company_id.logo or ''}\"/>\n"
+"   <br />\n"
+"   <p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>\n"
+"   \n"
+"			    "
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Sales linked (if priced)"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Magasin"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_checkout
+msgid "openstc.pret.checkout"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Claimer Infos"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Réservations annulées ou bloquées pour cause de non disponibilité des articles"
+msgstr ""
+
+#. module: openresa
+#: selection:product.product,etat:0
+msgid "Bon"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.deliver.products.line.wizard,site_details:0
+msgid "Détails du Site"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+#: model:ir.actions.act_window,name:openstc.action_openstock_view_reservation
+#: model:ir.ui.menu,name:openstc.menu_action_openstock_view_reservation
+msgid "Réservations"
+msgstr ""
+
+#. module: openresa
+#: help:product.product,need_infos_supp:0
+msgid "Indiquer si, pour une Réservation, cette ressource nécessite des infos supplémentaires A saisir par le demandeur."
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.warning.dispo.wizard:0
+msgid "Des articles ne sont pas dispo"
+msgstr ""
+
+#. module: openresa
+#: field:product.product,empruntable:0
+msgid "Se fournir à l'extérieur"
+msgstr ""
+
+#. module: openresa
+#: model:product.uom,name:openstc.openstc_pret_uom_half_day
+msgid "Half-Day (Reservation)"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,body_html:openstc.openstc_pret_email_template_resa_done
+msgid "\n"
+"	<h2>Message Automatique</h2>\n"
+"	\n"
+"	<p> ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''} </p>\n"
+"	\n"
+"	<p>Votre Réservation de ressources est terminée\n"
+"	% if object.folio_id:\n"
+"	, ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.\n"
+"	% endif\n"
+"	</p>\n"
+"	<p>Récapitulatif de votre Réservation : </p>\n"
+"	<ul>\n"
+"	<li>Libellé : ${object.name or ''}</li>\n"
+"	<%\n"
+"	from datetime import datetime\n"
+"	import pytz\n"
+"	my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"	my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"	my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"	my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"	%>\n"
+"	<li>Dates : ${my_checkin_str} - ${my_checkout_str}</li>\n"
+"	<li>Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}</li>\n"
+"	<li><u>Ressources Réservées :</u> \n"
+"	<ul>\n"
+"	% for line in object.reservation_line:\n"
+"	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>\n"
+"	% endfor\n"
+"	</ul>\n"
+"	</li>\n"
+"	</ul>\n"
+"	\n"
+"	Nous vous remercions d'avoir utilisé nos services de réservations en ligne.\n"
+"	\n"
+"   <br />\n"
+"   <p>Cordialement,</p>\n"
+"   <br />\n"
+"   <p>${object.shop_id.company_id.name or ''}</p>\n"
+"   <br />\n"
+"   <img src=\"data:image/png;base64,${object.shop_id.company_id.logo or ''}\"/>\n"
+"   <br />\n"
+"   <p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>\n"
+"   \n"
+"			    "
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Terminate reservation and free products. A checkout will be generated to point products state after use."
+msgstr ""
+
+#. module: openresa
+#: view:hotel_reservation.line:0
+msgid "Linked reservation"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,is_recur:0
+msgid "Issue d'une Récurrence"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Products reservation"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Compute"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,uom_qty:0
+msgid "Qté de Référence pour Facturation"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.reservation:0
+msgid "Cancel reservation"
+msgstr ""
+
+#. module: openresa
+#: field:hotel.reservation,site_id:0
+msgid "Site (Lieu)"
+msgstr ""
+
+#. module: openresa
+#: code:addons/openstc/openstc_pret.py:263
+#: code:addons/openstc/openstc_pret.py:396
+#: code:addons/openstc/openstc_pret.py:456
+#: code:addons/openstc/openstc_pret.py:617
+#: code:addons/openstc/openstc_pret.py:703
+#: code:addons/openstc/openstc_pret.py:896
+#: code:addons/openstc/wizard/openstc_pret_wizard.py:281
+#, python-format
+msgid "Error"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.envoie.mail.annulation.wizard,body_html:0
+msgid "Message du mail notifiant l'annulation"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+#: view:openstc.pret.deliver.products.wizard:0
+#: view:openstc.pret.envoie.mail.annulation.wizard:0
+msgid "Retour"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_openstc_pret_view_checkout
+msgid "Voir Etats des Lieux"
+msgstr ""
+
+#. module: openresa
+#: view:openstc.pret.checkout:0
+msgid "Etats des lieux"
+msgstr ""
+
+#. module: openresa
+#: model:ir.ui.menu,name:openstc.menu_action_openstc_pret_view_checkout
+msgid "Voir Etats des lieux retour d'articles"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Date de début Réservation"
+msgstr ""
+
+#. module: openresa
+#: field:openstock.qte.dispo.report,name:0
+msgid "Description"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,qte_to_purchase:0
+msgid "Qty to purchase"
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+#: view:hotel.reservation:0
+msgid "End date of reservation"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,prix_unitaire:0
+#: field:openstc.pret.emprunt.line.wizard,price_unit:0
+msgid "Prix Unitaire"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,partner_id:0
+msgid "Emprunteur concerné"
+msgstr ""
+
+#. module: openresa
+#: field:product.product,openstc_maintenance:0
+msgid "Maintenance ?"
+msgstr ""
+
+#. module: openresa
+#: model:email.template,body_text:openstc.openstc_pret_email_template_resa_cancelled
+msgid "\n"
+"	Message Automatique\n"
+"	\n"
+"	<%\n"
+"	from datetime import datetime\n"
+"	import pytz\n"
+"	my_checkin = datetime.strptime(str(object.checkin),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkout = datetime.strptime(str(object.checkout),\"%Y-%m-%d %H:%M:%S\").replace(tzinfo=pytz.utc)\n"
+"	my_checkin_str = my_checkin.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"	my_checkout_str = my_checkout.astimezone(pytz.timezone(\"Europe/Paris\")).strftime(\"%x %Hh%M\".encode('utf-8'))\n"
+"	my_checkin_str = my_checkin_str.decode('utf-8')\n"
+"	my_checkout_str = my_checkout_str.decode('utf-8')\n"
+"	%>\n"
+"	\n"
+"	Votre Réservation normalement prévue du ${my_checkin_str} au ${my_checkout_str} dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante : \n"
+"	<pSaisir ici la raison de votre refus\n"
+"	\n"
+"	Cordialement,\n"
+"	\n"
+"	${object.shop_id.company_id.name or ''}\n"
+"	\n"
+"	Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.\n"
+"		    "
+msgstr ""
+
+#. module: openresa
+#: view:hotel.folio:0
+msgid "Service Line"
+msgstr ""
+
+#. module: openresa
+#: field:openstc.pret.checkout.line,infos_supp:0
+msgid "Infos Supplémentaires"
+msgstr ""
+
+#. module: openresa
+#: help:hotel.reservation,in_option:0
+msgid "Une réservation mise en option signifie que votre demande est prise en compte mais                                             dont on ne peut pas garantir la livraison à la date prévue.                                            Une réservation bloquée signifie que la réservation n'est pas prise en compte car nous ne pouvons pas                                             garantir la livraison aux dates indiquées"
+msgstr ""
+
+#. module: openresa
+#: model:ir.actions.act_window,name:openstc.action_view_openstc_pret_create_checkout
+msgid "Générer Etat des lieux"
+msgstr ""
+
+#. module: openresa
+#: field:hotel_reservation.line,reserve_product:0
+msgid "Article réservé"
+msgstr ""
+
+#. module: openresa
+#: model:ir.model,name:openstc.model_openstc_pret_emprunt_line_wizard
+msgid "openstc.pret.emprunt.line.wizard"
+msgstr ""
+
+
+
