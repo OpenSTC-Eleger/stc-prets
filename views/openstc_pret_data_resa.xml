@@ -362,5 +362,8 @@
 	Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
 		    ]]></field>
 		</record> 
-	</data>
+ 		 <record model="res.groups" id="hotel.group_hotel_manager">
+	    	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
+		 </record>
+	</data>	
 </openerp>
