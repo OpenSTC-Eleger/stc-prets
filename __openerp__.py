@@ -8,7 +8,7 @@
 {
     "name": "OpenResa",
     "version": "0.1",
-    "depends": ['web','web_calendar','base','openbase','purchase','stock','hotel','email_template'],
+    "depends": ['web','web_calendar','base','openbase','purchase','stock','hotel','hotel_reservation','email_template'],
     "author": "BP",
     "category": "SICLIC",
     "description": """
