@@ -965,9 +965,11 @@ class hotel_reservation(osv.osv):
             for (cle, data) in part_vals['value'].items():
                 vals[cle] = data"""
         if 'checkin' in vals:
-            vals['checkin'] = vals['checkin'][:-5] + '00:00'
+            if len(vals['checkin']) > 10:
+                vals['checkin'] = vals['checkin'][:-3] + ':00'
         if 'checkout' in vals:
-            vals['checkout'] = vals['checkout'][:-5] + '00:00'
+            if len(vals['checkout']) >10:
+                vals['checkout'] = vals['checkout'][:-3] + ':00'
         return super(hotel_reservation, self).create(cr, uid, vals, context)
         #TOCHECK: Vérif utilité, supprimer puis tester si tout fonctionne
 
@@ -976,9 +978,11 @@ class hotel_reservation(osv.osv):
         if context == None:
             context = {}
         if 'checkin' in vals:
-            vals['checkin'] = vals['checkin'][:-5] + '00:00'
+            if len(vals['checkin']) > 10:
+                vals['checkin'] = vals['checkin'][:-3] + ':00'
         if 'checkout' in vals:
-            vals['checkout'] = vals['checkout'][:-5] + '00:00'
+            if len(vals['checkout']) >10:
+                vals['checkout'] = vals['checkout'][:-3] + ':00'
         res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
         #if 'checkin' in vals or 'checkout' in vals:
         #    self.trigger_reserv_modified(cr, uid, ids, context)
