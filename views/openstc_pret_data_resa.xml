@@ -364,6 +364,10 @@
 		</record> 
  		 <record model="res.groups" id="hotel.group_hotel_manager">
 	    	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
+	    	 <field name="code">HOTEL_MANA</field>
+		 </record>
+		 <record model="res.groups" id="hotel.group_hotel_user">
+	    	 <field name="code">HOTEL_USER</field>
 		 </record>
 	</data>	
 </openerp>
