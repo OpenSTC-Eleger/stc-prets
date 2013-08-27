@@ -117,7 +117,7 @@
 						        </group>
 						        <group col="2" colspan="2" string="Claimer Infos">
 						            <field name="openstc_partner_id" required="1" on_change="onchange_openstc_partner_id(openstc_partner_id)"
-						                attrs="{'readonly':[('state','&lt;&gt;','remplir')]}" domain="[('customer','=',True),('technical_service_id','=',False),('technical_site_id','=',False)]"/>
+						                attrs="{'readonly':[('state','&lt;&gt;','remplir')]}" domain="[('customer','=',True)]"/>
 						            <field name="partner_id" invisible="1" on_change="onchange_partner_id(partner_id)"
 						                attrs="{'readonly':[('state','&lt;&gt;','remplir')]}"/>
 						            <field name="partner_shipping_id" on_change="onchange_partner_shipping_id(partner_shipping_id)"

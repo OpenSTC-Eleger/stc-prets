@@ -957,7 +957,7 @@ class hotel_reservation(osv.osv):
         #Si on vient de créer une nouvelle réservation et qu'on veut la sauvegarder (cas où l'on appuie sur
         #"vérifier disponibilités" juste après la création (openERP force la sauvegarde)
         #Dans ce cas, on mets des valeurs par défauts pour les champs obligatoires
-        print(vals)
+        #print(vals)
         if not 'state' in vals or vals['state'] == 'remplir':
             vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
             """vals['partner_id'] = self.pool.get("res.partner").search(cr, uid, [], limit=1)[0]
