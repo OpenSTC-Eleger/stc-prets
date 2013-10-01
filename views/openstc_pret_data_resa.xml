@@ -370,4 +370,24 @@
 	    	 <field name="code">HOTEL_USER</field>
 		 </record>
 	</data>	
+	<data>
+	<record model="res.groups" id="openresa_api_group">
+        <field name="name">API Reservation Group</field>
+        <field name="code">APIRESA</field>
+        <field name="category_id" ref="base.module_category_project_management"/>
+	</record>
+	
+	
+	
+    <record model="ir.rule" id="openresa_partner_type_rule">
+        <field name="name">Partner Type Rule</field>
+        <field name="model_id" ref="openbase.model_openstc_partner_type"/>
+        <field name="domain_force">[('code','in',['PARTICULIER','ASSOCIATION'])]</field>
+        <field eval="[(6,0,[ref('openresa_api_group')])]" name="groups"/>
+        <field eval="1" name="perm_unlink"/>
+        <field eval="1" name="perm_write"/>
+        <field eval="1" name="perm_read"/>
+        <field eval="1" name="perm_create"/>
+    </record>
+	</data>
 </openerp>
