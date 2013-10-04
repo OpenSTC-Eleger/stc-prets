@@ -133,7 +133,7 @@
 						        </group>
 						        <group col="2" colspan="2" string="Reservation infos">
 						            <field name="name" required="1" attrs="{'readonly':[('state','&lt;&gt;','remplir')]}"/>
-							        <field name="site_id" required="1" attrs="{'readonly':[('state','&lt;&gt;','remplir')]}"/>
+							        <field name="site_id" attrs="{'readonly':[('state','&lt;&gt;','remplir')]}"/>
 					                <group colspan="2" col="4">
 					                    <field name="checkin" required="1" attrs="{'readonly':[('state','&lt;&gt;','remplir')]}"/>
 					            		<field name="checkout" required="1" attrs="{'readonly':[('state','&lt;&gt;','remplir')]}"/>
