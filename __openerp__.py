@@ -34,7 +34,7 @@
         "workflow/openstc_pret_workflow.xml",
         'workflow/purchase_workflow.xml',
 
-        "test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
+        #"test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
         
         ],
     "js":['static/src/js/calendar_inherit.js'],

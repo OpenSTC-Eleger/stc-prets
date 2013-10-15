@@ -86,7 +86,48 @@ class product_product(osv.osv):
         'seuil_confirm': 0,
         'need_infos_supp': lambda *a:0,
     }
-
+    
+    """
+    @param claimer_user_id: the user who wants to reserve something
+    @param claimer_partner_id: the partner who wants to reserve something
+    @return: list of prod_ids reservable by user / partner
+    @attention: may not work if both claimer_user_id and claimer_partner_id are supplied (raise Error)
+    """
+    def get_bookables(self, cr, uid, claimer_user_id=False, claimer_partner_id=False, context=None):
+        prod_ids = []
+        equipment_obj = self.pool.get("openstc.equipment")
+        site_obj = self.pool.get("openstc.site")
+        equipments = []
+        sites = []
+        domain = []
+        #if it's an user, prod_ids are filtered according to 'internal' reservable rights
+        if claimer_user_id and not claimer_partner_id:
+            user = self.pool.get("res.users").read(cr, uid, claimer_user_id, ['service_ids'],context=context)
+            domain = [('internal_booking','=',True),'|',
+                      ('service_bookable_ids.id','child_of',[service_id for service_id in user['service_ids']]),
+                      ('service_bookable_ids','=',False)]
+        #else, if it's a partner, prod_ids are filtered according to 'external' reservable rights
+        elif not claimer_user_id and claimer_partner_id:
+            partner = self.pool.get('res.partner').read(cr, uid, claimer_partner_id, ['type_id'],context=context)
+            domain = [('external_booking','=',True),'|',
+                      ('partner_type_bookable_ids','child_of',partner['type_id'] and partner['type_id'][0] or []),
+                      ('partner_type_bookable_ids','=',False)]
+        #else, if both partner and user id are supplied, or no one of them, raise an error 
+        else:
+            osv.except_osv(_('Error'),_('Incorrect values, you have to supply one and only one between claimer_user_id or claimer_partner_id, not both'))
+        
+        #retrieve values for equipments and sites authorized
+        equipment_ids = equipment_obj.search(cr, uid, domain, context=context)
+        equipments = equipment_obj.read(cr, uid, equipment_ids, ['product_product_id'], context=context)
+        site_ids = site_obj.search(cr, uid, domain, context=context)
+        sites = site_obj.read(cr, uid, site_ids, ['product_id'], context=context)
+        
+        #finally, compute results by merging 'product.product' many2ones of 
+        #records from tables openstc.equipment and openstc.site
+        prod_ids.extend([elt['product_product_id'] for elt in equipments if elt['product_product_id']])
+        prod_ids.extend([elt['product_id'] for elt in sites if elt['product_id']])
+        return prod_ids
+    
 product_product()
 
 
