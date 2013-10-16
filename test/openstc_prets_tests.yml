@@ -17,7 +17,7 @@
 -
   !record {model: openstc.service, id: openstc_prets_tests_service_voirie, view: false}:
     name: Voirie
-    code: VOIRIE
+    code: VOIRIE1
 -
   Products init and their stock qty
 -
