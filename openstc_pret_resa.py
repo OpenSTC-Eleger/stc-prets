@@ -335,6 +335,67 @@ class hotel_reservation(osv.osv):
     _constraints = [(_check_dates, _("Your checkin is greater than your checkout, please modify them"), ['checkin','checkout'])]
 
 
+    def create(self, cr, uid, vals, context=None):
+        #Si on vient de créer une nouvelle réservation et qu'on veut la sauvegarder (cas où l'on appuie sur
+        #"vérifier disponibilités" juste après la création (openERP force la sauvegarde)
+        #Dans ce cas, on mets des valeurs par défauts pour les champs obligatoires
+        #print(vals)
+        if not 'state' in vals or vals['state'] == 'remplir':
+            vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
+        if 'checkin' in vals:
+            if len(vals['checkin']) > 10:
+                vals['checkin'] = vals['checkin'][:-3] + ':00'
+        if 'checkout' in vals:
+            if len(vals['checkout']) >10:
+                vals['checkout'] = vals['checkout'][:-3] + ':00'
+        return super(hotel_reservation, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        #if dates are modified, we uncheck all dispo to force user to re check all lines
+        if context == None:
+            context = {}
+        if 'checkin' in vals:
+            if len(vals['checkin']) > 10:
+                vals['checkin'] = vals['checkin'][:-3] + ':00'
+        if 'checkout' in vals:
+            if len(vals['checkout']) >10:
+                vals['checkout'] = vals['checkout'][:-3] + ':00'
+        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        #if 'checkin' in vals or 'checkout' in vals:
+        #    self.trigger_reserv_modified(cr, uid, ids, context)
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        if not isinstance(ids, list):
+            ids = [ids]
+        line_ids = []
+        for resa in self.browse(cr, uid, ids, context):
+            line_ids.extend([x.id for x in resa.reservation_line])
+        self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
+        return super(hotel_reservation, self).unlink(cr, uid, ids, context)
+
+    def onchange_in_option(self, cr, uid, ids, in_option=False, state=False, context=None):
+        #TOREMOVE:
+        #if in_option:
+            #Affichage d'un wizard pour simuler une msgbox
+        if in_option:
+            return {'warning':{'title':'Réservation mise en option', 'message': '''Attention, Votre réservation est "hors délai"
+            , nous ne pouvons pas vous assurer que nous pourrons vous livrer.'''}}
+
+        return {'value':{}}
+
+    def onchange_openstc_partner_id(self, cr, uid, ids, openstc_partner_id=False):
+        return {'value':{'partner_id':openstc_partner_id}}
+
+        
+    def onchange_partner_shipping_id(self, cr, uid, ids, partner_shipping_id=False):
+        email = False
+        if partner_shipping_id:
+            email = self.pool.get("res.partner.address").browse(cr, uid, partner_shipping_id).email
+        return {'value':{'partner_mail':email,'partner_invoice_id':partner_shipping_id,'partner_order_id':partner_shipping_id}}
+    
+
+
     def confirmed_reservation(self,cr,uid,ids):
         for resa in self.browse(cr, uid, ids):
             if self.is_all_dispo(cr, uid, ids[0]):
@@ -591,9 +652,8 @@ class hotel_reservation(osv.osv):
     #param record: browse_record hotel.reservation.line
     #if product uom refers to a resa time, we compute uom according to checkin, checkout
     def get_prod_uom_qty(self, cr, uid, ids, record, length, context=None):
-        #if re.search(u"[Rr]{1}[ée]{1}servation", record.reserve_product.uom_id.category_id.name):
         if re.search(u"([Tt]emporel|[Rr][ée]servation)", record.reserve_product.uom_id.category_id.name):
-            #uom factor refers to journey, to have uom factor refering to hours, we have to adjust ratio
+            #uom factor refers to day, to have uom factor refering to hours, we have to adjust ratio
             factor = 24.0 / record.reserve_product.uom_id.factor
             res = length / factor
             #round to direct superior int
@@ -714,65 +774,46 @@ class hotel_reservation(osv.osv):
     
         return
 
-    def create(self, cr, uid, vals, context=None):
-        #Si on vient de créer une nouvelle réservation et qu'on veut la sauvegarder (cas où l'on appuie sur
-        #"vérifier disponibilités" juste après la création (openERP force la sauvegarde)
-        #Dans ce cas, on mets des valeurs par défauts pour les champs obligatoires
-        #print(vals)
-        if not 'state' in vals or vals['state'] == 'remplir':
-            vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
-        if 'checkin' in vals:
-            if len(vals['checkin']) > 10:
-                vals['checkin'] = vals['checkin'][:-3] + ':00'
-        if 'checkout' in vals:
-            if len(vals['checkout']) >10:
-                vals['checkout'] = vals['checkout'][:-3] + ':00'
-        return super(hotel_reservation, self).create(cr, uid, vals, context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        #if dates are modified, we uncheck all dispo to force user to re check all lines
-        if context == None:
-            context = {}
-        if 'checkin' in vals:
-            if len(vals['checkin']) > 10:
-                vals['checkin'] = vals['checkin'][:-3] + ':00'
-        if 'checkout' in vals:
-            if len(vals['checkout']) >10:
-                vals['checkout'] = vals['checkout'][:-3] + ':00'
-        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
-        #if 'checkin' in vals or 'checkout' in vals:
-        #    self.trigger_reserv_modified(cr, uid, ids, context)
-        return res
-
-    def unlink(self, cr, uid, ids, context=None):
-        if not isinstance(ids, list):
-            ids = [ids]
-        line_ids = []
-        for resa in self.browse(cr, uid, ids, context):
-            line_ids.extend([x.id for x in resa.reservation_line])
-        self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
-        return super(hotel_reservation, self).unlink(cr, uid, ids, context)
-
-    def onchange_in_option(self, cr, uid, ids, in_option=False, state=False, context=None):
-        #TOREMOVE:
-        #if in_option:
-            #Affichage d'un wizard pour simuler une msgbox
-        if in_option:
-            return {'warning':{'title':'Réservation mise en option', 'message': '''Attention, Votre réservation est "hors délai"
-            , nous ne pouvons pas vous assurer que nous pourrons vous livrer.'''}}
-
-        return {'value':{}}
-
-    def onchange_openstc_partner_id(self, cr, uid, ids, openstc_partner_id=False):
-        return {'value':{'partner_id':openstc_partner_id}}
-
+    """
+    @param prod_dict: [{prod_id:id,qty_desired:qty}] a dict mapping prod and corresponding qty desired to check
+    @param checkin: str containg begining date of the range of the check
+    @param checkout: str containg ending date of the range of the check
+    @return: list of dates of unaivalability : [('checkin1','checkout1'),('checkin2','checkout2')]
+    @note: to be used in xmlrpc context only
+    """
+    def get_unaivailable_dates(self, cr, uid, prod_dict, checkin, checkout,context=None):
+        #first, get reservation belonging to prod_ids and being in the range (checkin,chekout)
+        prod_ids = [item['prod_id'] for item in prod_dict]
+        resa_ids = self.search(cr, uid, [('reservation_line.reserve_product.id','in',prod_ids),'|',
+                                             '&',('checkin','>=',checkin),('checkin','<=',checkout),
+                                             '&',('checkout','>=',checkin),('checkout','<=',checkout)],order='checkin',context=context)
         
-    def onchange_partner_shipping_id(self, cr, uid, ids, partner_shipping_id=False):
-        email = False
-        if partner_shipping_id:
-            email = self.pool.get("res.partner.address").browse(cr, uid, partner_shipping_id).email
-        return {'value':{'partner_mail':email,'partner_invoice_id':partner_shipping_id,'partner_order_id':partner_shipping_id}}
-    
+        #i store all checkin - checkout in dates_limit, i order this list, 
+        #and then, i'll have all dates delimiting (checkin-checkout) checks of qty 
+        dates_limit = []
+        for resa in self.read(cr, uid, resa_ids, ['checkin','checkout']):
+            if resa['checkin'] not in dates_limit:
+                dates_limit.append(resa['checkin'])
+            if resa['checkout'] not in dates_limit:
+                dates_limit.append(resa['checkout'])
+        dates_limit.sort()
+        dates_check = []
+        #now, i generate all (checkin-checkout) couple to test
+        #for example: dates_limit=[date_a,date_b,date_c] => dates_check=[(date_a,date_b),(dateb,date_c)]
+        for i in range(len(dates_limit) - 1):
+            dates_check.append((dates_limit[i],dates_limit[i+1]))
+        #and i get prod_qty for each date_check, 
+        #if, for one prod_id, qty is not sufficient, add date_check to the returned value
+        ret = []
+        for checkin,checkout in dates_check:
+            prod_reserved = self.get_prods_available_and_qty(cr, uid, checkin, checkout, prod_ids=prod_ids, context=None)
+            for item in prod_dict:
+                if item['qty_desired'] > prod_reserved[item['prod_id']]:
+                    ret.append((checkin,checkout))
+                    #date computed as unavailable, we can skip other prod_id tests for this date
+                    break
+        return ret
+
 
 hotel_reservation()
 
@@ -899,4 +940,26 @@ class account_invoice(osv.osv):
     
 account_invoice()
     
+class res_partner(osv.osv):
+    _inherit = "res.partner"
     
+    """
+    @param prod_ids_and_qties: list of tuples containing each prod_id - qty to retrieve their prices
+    @param pricelist_id: id of the pricelist to retrieve prices
+    @return: list of dict [{'prod_id':id, price:float_price}] according to pricelist_id correctly formated
+    (instead of original methods of this nasty OpenERP)
+    """
+    def get_bookable_prices(self, cr, uid, partner_id, prod_ids_and_qties, pricelist_id=False, context=None):
+        if not pricelist_id:
+            pricelist_id = self.pool.get("res.partner").read(cr, uid, partner_id, ['property_product_pricelist'], context=context)['property_product_pricelist'][0]
+        pricelist_obj = self.pool.get('product.pricelist')
+        values = [(item[0],item[1], partner_id)for item in prod_ids_and_qties]
+        #get prices from pricelist_obj
+        res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], values, context=context)
+        #format return to be callable by xmlrpc (because dict with integer on keys raises exceptions)
+        ret = {}
+        for key,val in res.items():
+            ret.update({str(key):val[pricelist_id]})
+        return ret
+        
+res_partner()
