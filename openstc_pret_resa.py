@@ -233,19 +233,25 @@ class hotel_reservation_line(osv.osv):
             ret[line.id] = '%s %d x %s (%s)' %(date_str,line.qte_reserves, line.reserve_product.name_template, line.partner_id.name)
         return ret
 
+    ''' get conflicting lines for each reservation 's line'''
     def _get_conflicting_lines(self, cr, uid, ids, name, args, context=None):
         conflicting_lines = {}
+        #for each line
         for line in self.browse(cr, uid, ids, context=context):
             conflicting_lines[line.id] = []
             temp_lines = []
             sum_qty = 0
             if line.line_id.id != False and line.reserve_product.id != False and line.checkin!=False and line.checkout!=False:
+                #get product for line reservation
                 prod_obj = self.pool.get("product.product").browse(cr, uid, line.reserve_product.id)
+                #Get conflicting lines on line 's product
                 results = self.get_lines_by_prod(cr, line.reserve_product.id, line.checkin, line.checkout, where_optionnel='and hr.id <> ' + str(line.line_id.id)).fetchall()
                 if len(results)> 0 :
+                    #sum quantity of product request on all conflicting lines
                     for line_id, qty_reserved  in results :
                         sum_qty += qty_reserved
                         temp_lines.append(line_id)
+                    #If there is not enough quantiy of product set conflicting lines for this line
                     if (prod_obj.virtual_available - sum_qty) < line.qte_reserves :
                             conflicting_lines[line.id] = temp_lines
 
@@ -308,6 +314,7 @@ class hotel_reservation_line(osv.osv):
         self.write(cr, uid, ids, {'action':'nothing'})
         return {'type':'ir.actions.act_window.close'}
 
+    '''' Get conflicting lines by product '''
     def get_lines_by_prod(self, cr, prod, checkin, checkout, states=['remplir'], where_optionnel=""):
         cr.execute("select hrl.id, hrl.qte_reserves \
                     from hotel_reservation_line as hrl \
