@@ -43,25 +43,6 @@ from datetime import datetime
 #----------------------------------------------------------
 class product_product(osv.osv):
 
-    def _calc_qte_dispo_now(self, cr, uid, ids, name, args, context=None):
-        #print("début calcul qté dispo now")
-        cr.execute("""select hrl.reserve_product as prod_id, sum(hrl.qte_reserves) as qte_reserves
-        from hotel_reservation as hr, hotel_reservation_line as hrl
-        where hr.id = hrl.line_id
-        and hrl.reserve_product in %s
-        and hr.state in ('draft','confirm','in_use')
-        group by hrl.reserve_product;""", (tuple(ids),))
-        list_prod_reserved = cr.fetchall()
-        stock_prod = self._product_available(cr, uid, ids, ['virtual_available'])
-        ret = {}
-        #Par défaut, on indique la qté max pour chaque produit
-        for id in ids:
-            ret[id] = stock_prod[id]['virtual_available']
-        #Puis pour les articles réservés, on en retranche le nombre réservés
-        for prod in list_prod_reserved:
-            ret[prod[0]] -= prod[1]
-        print(ret)
-        return ret
 
     AVAILABLE_ETATS = (("neuf", "Neuf"), ("bon", "Bon"), ("moyen", "Moyen"), ("mauvais", "Mauvais"), ("inutilisable", "Inutilisable"))
 
@@ -71,7 +52,6 @@ class product_product(osv.osv):
 
 
     _columns = {
-        #"qte_dispo": fields.function(_calc_qte_dispo_now, method=True, string="Disponible Aujourd'hui", type="integer"),
         "etat": fields.selection(AVAILABLE_ETATS, "Etat"),
         "seuil_confirm":fields.integer("Qté Max sans Validation", help="Qté Maximale avant laquelle une étape de validation par un responsable est nécessaire"),
         "bloquant":fields.boolean("\"Non disponibilité\" bloquante", help="Un produit dont la non dispo est bloquante empêche la réservation de se poursuivre (elle reste en Brouillon)"),
@@ -142,37 +122,20 @@ class hotel_reservation_line(osv.osv):
         for line in self.browse(cr, uid, ids, context):
             ret.append((line.id,'%s %s' % (line.qte_reserves, line.reserve_product)))
         return ret
-
+    #@tocheck: useless ?
     #Ligne valide si (infos XOR no_infos)
     def _calc_line_is_valid(self, cr, uid, ids, name, args, context=None):
         ret = {}
         for line in self.browse(cr, uid, ids):
             ret.update({line.id: (line.infos and not line.no_infos) or (not line.infos and line.no_infos)})
         return ret
-
+    #@tocheck: useless ?
     def _get_line_to_valide(self, cr, uid, ids, context=None):
         return ids
 
     def _get_state_line(self, cr, uid, context=None):
         res = self.pool.get("hotel.reservation").fields_get(cr, uid, 'state', context=context)
         return res['state']['selection']
-
-    def _get_resa_id(self, cr, uid, ids, context=None):
-        line_ids = []
-        for resa in self.pool.get("hotel.reservation").browse(cr, uid, ids, context):
-            #std case, in which user modify checkin or checkout
-            if resa.state == 'remplir':
-                return [x.id for x in resa.reservation_line]
-            #if a resa is cancelled, terminated or confirmed, we re-check all resa with same products
-            elif resa.state in ('cancle','done','confirm'):
-                line_recompute_ids = self.pool.get("hotel_reservation.line").search(cr, uid, [('reserve_product','in',[x.reserve_product.id for x in resa.reservation_line]),('line_id.state','in',('remplir','draft','wait_confirm'))])
-                return line_recompute_ids
-        return line_ids
-
-    def _get_resa_via_prods(self, cr, uid, ids, context=None):
-        prod_ids = [x.product_id.id for x in self.pool.get("stock.inventory.line").browse(cr, uid, ids, context=context) if x.product_id]
-        line_ids = self.pool.get("hotel_reservation.line").search(cr, uid, [('line_id.state','=','remplir'),('reserve_product','in',prod_ids)])
-        return line_ids
 
     def _calc_qte_dispo(self, cr, uid, ids, name, args, context=None):
         prod_id_to_line = {}
@@ -198,12 +161,6 @@ class hotel_reservation_line(osv.osv):
         elif 'dispo' in name:
             for line in self.browse(cr, uid, ids):
                 ret.update({line.id:{'dispo':line.qte_dispo >= line.qte_reserves}})
-        return ret
-
-    def _calc_dispo(self, cr, uid, ids, name, args, context=None):
-        ret = {}
-        for line in self.browse(cr, uid, ids, context):
-            ret[line.id] = line.qte_dispo >= line.qte_reserves
         return ret
 
     def _get_amount(self, cr, uid, ids, name, args, context=None):
@@ -262,33 +219,22 @@ class hotel_reservation_line(osv.osv):
         "reserve_product": fields.many2one("product.product", "Article réservé", domain=[('openstc_reservable','=',True)]),
         "qte_reserves":fields.float("Qté désirée", digits=(3,2)),
         "prix_unitaire": fields.float("Prix Unitaire", digit=(4,2)),
-        #"dispo":fields.boolean("Disponible"),
         'dispo':fields.function(_calc_qte_dispo, string="Disponible", method=True, multi="dispo", type='boolean'),
-#        store={'hotel.reservation':[_get_resa_id, ['state','checkin','checkout'], 10],
-#        'hotel_reservation.line':[lambda self,cr,uid,ids,ctx:ids,['reserve_product','qte_dispo','qte_reserves'],11]}
         "infos":fields.char("Informations supplémentaires",size=256),
-        #"no_infos":fields.boolean("Ne sais pas"),
-        #"valide":fields.function(_calc_line_is_valid, method=True, type="boolean",
-        #                         store={'hotel_reservation.line':(_get_line_to_valide, ['infos','no_infos'], 10),},
-        #                         string="Ligne Valide"),
         "name":fields.char('Libellé', size=128),
         'state':fields.related('line_id','state', type='selection',string='Etat Résa', selection=_get_state_line, readonly=True),
         'uom_qty':fields.float('Qté de Référence pour Facturation',digit=(2,1)),
         'amount':fields.function(_get_amount, string="Prix (si tarifé)", type="float", method=True),
         'qte_dispo':fields.function(_calc_qte_dispo, method=True, string='Qté Dispo', multi="dispo", type='float'),
         'action':fields.selection(_AVAILABLE_ACTION_VALUES, 'Action'),
-        #'inter_ask_id':fields.many2one('openstc.ask','Demande d\'intervention associée'),
-        #'inter_id':fields.many2one('project.project','Intervention associée'),
         'state':fields.related('line_id','state', type='char'),
         'partner_id':fields.related('line_id','partner_id', type="many2one", relation="res.partner"),
         'checkin':fields.related('line_id','checkin', type="datetime"),
         'checkout':fields.related('line_id','checkout', type="datetime"),
         'resa_name':fields.related('line_id','name',type="char"),
         'complete_name':fields.function(_get_complete_name, type="char", string='Complete Name', size=128),
-#        store={'hotel.reservation':[_get_resa_id, ['state','checkin','checkout'], 10],
-#        'hotel_reservation.line':[lambda self,cr,uid,ids,ctx:ids, ['reserve_product'], 11],
-#        'stock.inventory.line':[_get_resa_via_prods,['product_id','product_qty','inventory_id','location_id'],12]}
         'conflicting_lines':fields.function(_get_conflicting_lines, type='many2many', relation='hotel.reservation.lines',string='Conflicting rows'),
+
 
         }
 
@@ -298,18 +244,11 @@ class hotel_reservation_line(osv.osv):
      'action':'nothing',
         }
 
-    def write(self, cr, uid, ids, vals, context=None):
-        res = super(hotel_reservation_line, self).write(cr, uid, ids, vals, context=context)
-        if 'reserve_product' in vals or 'qte_reserves' in vals:
-            resa_ids = self.read_group(cr, uid, [('id','in',ids),('line_id','<>',False)], ['line_id'], ['line_id'],context=context)
-            self.pool.get("hotel.reservation").trigger_reserv_modified(cr, uid, [x['line_id'][0] for x in resa_ids], context)
-        return res
-
-
+    #@TOCHECK: useless ?
     def plan_inter(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'action':'inter'})
         return {'type':'ir.actions.act_window.close'}
-
+    #@TOCHECK: useless ?
     def unplan_inter(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'action':'nothing'})
         return {'type':'ir.actions.act_window.close'}
@@ -324,20 +263,6 @@ class hotel_reservation_line(osv.osv):
                     and (hr.checkin, hr.checkout) overlaps ( timestamp %s, timestamp %s ) \
                     " + where_optionnel , (prod, tuple(states), checkin, checkout))
         return cr
-
-#    def open_inter(self, cr, uid, ids, context=None):
-#        if isinstance(ids, list):
-#            ids = ids[0]
-#        line = self.browse(cr, uid, ids, context)
-#        if not line.inter_ask_id:
-#            raise osv.except_osv(_("Error"),_("Intervention associated no longer exist or have been deleted, can not open it"))
-#        return {
-#            'type':'ir.actions.act_window',
-#            'target':'new',
-#            'res_model':'openstc.ask',
-#            'res_id':line.inter_ask_id.id,
-#            'view_mode':'form',
-#        }
 
 hotel_reservation_line()
 
@@ -371,7 +296,7 @@ class hotel_reservation(osv.osv):
             seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
 
         return seq
-
+    #@tocheck: useless ?
     def _calc_in_option(self, cr, uid, ids, name, args, context=None):
         print("start calc_in_option method")
         ret = {}
@@ -414,7 +339,6 @@ class hotel_reservation(osv.osv):
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         return ret
 
-
     _columns = {
                 'state': fields.selection(_get_state_values, 'Etat',readonly=True),
                 'in_option':fields.function(_calc_in_option, string="En Option", selection=AVAILABLE_IN_OPTION_LIST, type="selection", method = True, store={'hotel.reservation':(get_resa_modified,['checkin','reservation_line'],10)},
@@ -451,10 +375,8 @@ class hotel_reservation(osv.osv):
 
 
     def confirmed_reservation(self,cr,uid,ids):
-        #self.write(cr, uid, ids, {'state':'confirm'})
         for resa in self.browse(cr, uid, ids):
             if self.is_all_dispo(cr, uid, ids[0]):
-                #if self.is_all_valid(cr, uid, ids[0]):
                 if resa.in_option == 'block':
                     raise osv.except_osv(_("Error"),_("""Your resa is blocked because your expected date is too early so that we can not supply your products at time"""))
 
@@ -487,11 +409,6 @@ class hotel_reservation(osv.osv):
                 self.envoyer_mail(cr, uid, ids, {'state':'validated'}, attach_ids=attach_sale_id)
                 self.write(cr, uid, ids, {'state':'confirm'})
                 return True
-                #else:
-                #    raise osv.except_osv("""Il manque des informations""","""Erreur, Vous devez soit fournir des précisions
-                #    pour les articles réservés (lieu où les livrer et combien) soit cocher la case "ne sais pas".
-                #    Si vous avez rempli les infos supplémentaires et coché la case "ne sais pas", veuillez la décocher. """)
-                #    return False
             else:
                 raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
                 return False
@@ -504,17 +421,15 @@ class hotel_reservation(osv.osv):
             return True
         raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
         return False
+
     #Mettre à l'état cancle et retirer les mouvements de stocks (supprimer mouvement ou faire le mouvement inverse ?)
     def cancelled_reservation(self, cr, uid, ids):
-        self.write(cr, uid, ids, {'state':'cancle', 'reservation_line':self.uncheck_all_dispo(cr, uid, ids)})
-
+        self.write(cr, uid, ids, {'state':'cancle'})
         return True
-
 
     def drafted_reservation(self, cr, uid, ids):
         for resa in self.browse(cr, uid, ids):
             if self.is_all_dispo(cr, uid, ids[0]):
-                #if self.is_all_valid(cr, uid, ids[0]):
                 if resa.in_option == 'block':
                     raise osv.except_osv(_("Error"),_("""Your resa is blocked because your expected date is too early so that we can not supply your products at time"""))
                 if not resa.reservation_line:
@@ -524,18 +439,9 @@ class hotel_reservation(osv.osv):
                 if resa.openstc_partner_id:
                     self.compute_lines_price(cr, uid, [resa.id])
                 return True
-                #else:
-                #    raise osv.except_osv("""Il manque des informations""","""Erreur, Vous devez soit fournir des précisions
-                #    pour les articles réservés (lieu où les livrer et combien) soit cocher la case "ne sais pas".
-                #    Si vous avez rempli les infos supplémentaires et coché la case "ne sais pas", veuillez la décocher. """)
-                #    return False
             else:
                 raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
                 return False
-        return True
-
-    def to_uncheck_reservation_lines(self, cr, uid, ids):
-        self.write(cr, uid, ids, {'reservation_line':self.uncheck_all_dispo(cr, uid, ids)})
         return True
 
     def redrafted_reservation(self, cr, uid, ids):
@@ -584,13 +490,14 @@ class hotel_reservation(osv.osv):
 
     def is_not_drafted(self, cr, uid, ids):
         return not self.is_drafter
-
+    #@todo: change openstc_manager for hotel.group_manager group
     def need_confirm(self, cr, uid, ids):
         reservations = self.browse(cr, uid, ids)
         etape_validation = False
         #if group == "Responsable", no need confirm
         group_manager_id = self.pool.get("ir.model.data").get_object_reference(cr, uid, 'openbase','openstc_manager')
         #@TODO: if not found, perharps groups has been deleted, have to make an assert
+        #@TODO: check group_manager_id with user['groups_id'] instead of using a loop (optimize)
         if group_manager_id:
             for group in self.pool.get('res.users').browse(cr, uid, uid).groups_id:
                 if group.id == group_manager_id[1]:
@@ -604,21 +511,13 @@ class hotel_reservation(osv.osv):
                         etape_validation = True
         return etape_validation
         #return True
-
+    #@tocheck: useless ?
     def not_need_confirm(self, cr, uid, ids):
         return not self.need_confirm(cr, uid, ids)
 
     def ARemplir_reservation(self, cr, uid, ids):
         #TOCHECK: Voir quand il faut mettre la résa à l'état "in_option" : Clique sur Suivant malgré non dispo ?
         self.write(cr, uid, ids, {'state':'remplir'})
-        return True
-
-    #Cette fonction déclenche le signal "reserv_modified" du wkf pour indiquer qu'il faut refaire
-    #l'étape de validation de dispo (on revient à l'état "A Remplir" Pour valider les modifs.
-    def trigger_reserv_modified(self, cr, uid, ids, context=None):
-        wf_service = netsvc.LocalService('workflow')
-        for id in ids:
-            wf_service.trg_validate(uid, 'hotel.reservation', id, 'reserv_modified', cr)
         return True
 
     #Fonction (liée à une action) permettant de pré-remplir la fiche de réservation en fonction des infos du ou des articles sélectionnés
@@ -645,7 +544,6 @@ class hotel_reservation(osv.osv):
         return res
 
     def get_nb_prod_reserved(self, cr, prod_list, checkin, checkout, states=['cancle','done','remplir'], where_optionnel=""):
-        #print("start get_nb_prod_reserved method")
         cr.execute("select reserve_product, sum(qte_reserves) as qte_reservee \
                     from hotel_reservation as hr, \
                     hotel_reservation_line as hrl \
@@ -655,122 +553,7 @@ class hotel_reservation(osv.osv):
                     and (hr.checkin, hr.checkout) overlaps ( timestamp %s, timestamp %s ) \
                     " + where_optionnel + " \
                     group by reserve_product; ", (tuple(prod_list), tuple(states), checkin, checkout))
-        """line_ids = self.pool.get("hotel_reservation.line").search(cr, uid, [('reserve_product','in',prod_list), 'line_id.state','in',('confirm','in_use'),
-                                                                 '|','|','&',('checkin','<=',checkout),('checkout','>=',checkout),
-                                                                 '&',('checkin','<=',checkin),('checkout','>=',checkin),
-                                                                 '&',('checkin','>',checkin),('checkout','<',checkout)])
-        """
         return cr
-
-    #@deprecated: use get_prods_available_and_qty instead of this one
-    def check_dispo(self, cr, uid, id=0, default_checkin=False, default_checkout=False, prod_dict=None, context=None):
-        reservation = self.browse(cr, uid, id)
-        if not prod_dict:
-            prod_dict = {}
-        if isinstance(reservation, list):
-            reservation = reservation[0]
-        checkin = default_checkin or reservation.checkin
-        checkout = default_checkout or reservation.checkout
-        reserv_vals = {} if prod_dict else reservation.reservation_line
-        demande_prod = prod_dict
-        prod_list = prod_dict.keys() or []
-        prod_list_all = prod_dict.keys() or []
-        my_where_optionnel = ""
-        if id:
-            my_where_optionnel = "and hr.id <> " + str(id)
-        if not (demande_prod or reserv_vals):
-            raise osv.except_osv(_("Error"),_("You have to write at least one reservation line"))
-
-        #Parcours des lignes de réservation pour
-        for line in reserv_vals:
-            #Récup des produits à réserver
-            prod_list.append(line.reserve_product.id)
-            prod_list_all.append(line.reserve_product.id)
-            demande_prod[line.reserve_product.id] = line.qte_reserves
-
-        #Vérif dispo pour chaque produit
-        ok = True
-        #On vérifie que l'on a récupéré au moins un produit
-        #Dictionnaire des qtés totales de chaque produit de la demande en cours
-        stock_prod = self.pool.get("product.product")._product_available(cr, uid, prod_list, ['virtual_available'])
-        #Liste des produits non disponibles
-        print(stock_prod)
-        dict_error_prod = {}
-        #NOTES:chaque produit que l'on récupère de la requête sql indique que ce produit a été loué au moins une fois
-        #Ainsi, si un produit figure dans la demande en cours mais non présent dans le résultat sql, c'est qu'on n'a jamais réservé ce produit
-        results = self.get_nb_prod_reserved(cr, prod_list, checkin, checkout, where_optionnel=my_where_optionnel).fetchall()
-        ok = results and ok or False
-        print(ok)
-        #Vérif dispo : Cas d'un produit déjà loué
-        for data in results:
-            qte_total_prod = stock_prod[data[0]]['virtual_available']
-            qte_voulue = demande_prod[data[0]]
-            #Si l'un des produits n'est pas dispo, on annule la réservation des articles
-            #TOCHECK:la réservation reste à l'état draft
-            #on vérifie si le produit est dispo en quantité suffisante : stock total - qtés déjà résevées - qtés voulues
-            if qte_total_prod < data[1] + qte_voulue:
-                ok = False
-                dict_error_prod[data[0]] = [qte_voulue, qte_total_prod - data[1]]
-            prod_list.remove(data[0])
-        #Vérif dispo : Cas où on réserve un produit pour la première fois, autrement dit, s'il reste des occurences dans prod_list
-        for prod_id in prod_list:
-             ok = True
-             qte_total_prod = stock_prod[prod_id]['virtual_available']
-             qte_voulue = demande_prod[prod_id]
-             if qte_total_prod < qte_voulue:
-                 ok = False
-                 dict_error_prod[prod_id] = [qte_voulue, qte_total_prod]
-        print(ok)
-
-        return dict_error_prod, prod_list_all
-
-    #Bouton pour vérif résa, mets à jour les champs dispo de chaque ligne de résa
-    def verif_dispo(self,cr ,uid, ids, context=None):
-        context['update_line_dispo'] = 1
-        list_prod_error = {}
-        ok = True
-        for id in ids:
-            list_prod_error, prod_list_all = self.check_dispo(cr, uid, id, context=context)
-            if list_prod_error:
-                ok = False
-        #S'il y a une erreur de dispo, on affiche un wizard donnant accès à l'action d'emprunt des articles ou de visualisation du planning
-        if not ok:
-           ret = {'view_mode':'form',
-                   'res_model':'openstc.pret.warning.dispo.wizard',
-                   'type':'ir.actions.act_window',
-                   'context':{'prod_error_ids':list_prod_error,
-                              'reservation_id':id,
-                              'all_prods':prod_list_all},
-                  'target':'new',
-                  }
-
-           return ret
-        #S'il n'y a pas d'erreurs dans la réservation, on poursuit le processus normal
-        return {'view_mode': 'form,tree',
-                'res_model': 'hotel.reservation',
-                'type': 'ir.actions.act_window',
-                'res_id':ids[0]
-                }
-
-    def get_prods_available(self, cr, uid, checkin, checkout, prod_ids=[], context=None):
-        #TODO: add alternative return, which indicates qty of prod_available (useful for multi-qty reservation)
-        if not context:
-            context = {}
-        prod_dict = {}
-        if isinstance(prod_ids, list):
-            for id in prod_ids:
-                prod_dict.update({id:1})
-        elif isinstance(prod_ids, dict):
-            prod_dict = prod_ids
-        else:
-            #Print for log errors
-            print("prod_ids error : " + prod_ids)
-            raise osv.except_osv(_("Error"),_("An error has occured, please notify following error to your supplier : \n prod_ids paramater of get_prods_available method  has an incorrect form"))
-        #Get availability of prods : (dict_error, all_prods)
-        res = self.check_dispo(cr, uid, 0, checkin, checkout, prod_dict, context)
-        #Format result to return only prods available
-        ret = [id for id in res[1] if id not in res[0].keys()]
-        return ret
 
     #main method to control availability of products : returns availability of each prod : {prod_id:qty} matching dates
     def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', context=None):
@@ -803,16 +586,6 @@ class hotel_reservation(osv.osv):
                 return False
         return True
 
-    #Renvoies actions bdd permettant de mettre toutes les dispo de la résa à False
-    #Ne renvoie que les actions de mises à jours des lignes déjà enregistrées dans la réservation
-    #@TOREMOVE
-    def uncheck_all_dispo(self, cr, uid, ids, context=None):
-        line_ids = self.pool.get("hotel_reservation.line").search(cr, uid, [('line_id','in',ids)])
-        reservation_line = []
-        for line in line_ids:
-            reservation_line.append((1,line,{'dispo':False, 'valide':False}))
-        return reservation_line
-
     #polymorphism of _create_folio
     def create_folio(self, cr, uid, ids, context=None):
         for reservation in self.browse(cr,uid,ids):
@@ -843,13 +616,6 @@ class hotel_reservation(osv.osv):
             cr.execute('insert into hotel_folio_reservation_rel (order_id,invoice_id) values (%s,%s)', (reservation.id, folio))
 
         return folio
-        """return {
-                'view_mode': 'form,tree',
-                'res_model': 'hotel.folio',
-                'type': 'ir.actions.act_window',
-                'res_id':folio,
-                'target':'new'
-                }"""
 
     #param record: browse_record hotel.reservation.line
     def get_prod_price(self, cr, uid, ids, record, context=None):
@@ -942,8 +708,6 @@ class hotel_reservation(osv.osv):
 
     #Vals: Dict containing "to" (deprecated) and "state" in ("error","draft", "confirm") (required)
     def envoyer_mail(self, cr, uid, ids, vals=None, attach_ids=[], context=None):
-        #TOREMOVE: model.template A déplacer vers un fichier init.xml
-        #TOREMOVE: Si le modèle n'existe pas, on le crée à la volée
         #TODO: check if company wants to send email (info not(opt_out) in partner)
         #We keep only resa where partner have not opt_out checked
         resa_ids_notif = []
@@ -955,22 +719,6 @@ class hotel_reservation(osv.osv):
             if 'state' in vals.keys():
                 if vals['state'] == "error":
                     email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','annulée')])
-                    if not email_tmpl_id:
-                        ir_model = self.pool.get("ir.model").search(cr, uid, [('model','=',self._name)])
-                        email_tmpl_id = email_obj.create(cr, uid, {
-                                                    'name':_('modèle de mail pour résa annulée'),
-                                                    'name':'Réservation Annulée',
-                                                    'model_id':ir_model[0],
-                                                    'subject':_('Votre Réservation du ${object.checkin} au ${object.checkout} a été annulée'),
-                                                    'email_from':_('bruno.plancher@gmail.com'),
-                                                    'email_to':_('bruno.plancher@gmail.com'),
-                                                    'body_text':_("Votre Réservation normalement prévue du ${object.checkin} au \
-        ${object.checkout} dans le cadre de votre manifestation : ${object.name} a été annulée,\
-        pour plus d'informations, veuillez contacter la mairie de Pont L'abbé au : 0240xxxxxx"),
-                                                    'body_html':_("Votre Réservation normalement prévue du ${object.checkin} au \
-        ${object.checkout} dans le cadre de votre manifestation : ${object.name} a été annulée,\
-        pour plus d'informations, veuillez contacter la mairie de Pont L'abbé au : 0240xxxxxx")
-                                                   })
                 elif vals['state'] == 'validated':
                     email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Valid%')])
                     #Search for product attaches to be added to email
@@ -1005,25 +753,6 @@ class hotel_reservation(osv.osv):
 
         return
 
-    #Surcharge methode pour renvoyer uniquement les resas a traiter jusqu'au vendredi prochain, si on veut la vue associee aux resas a traiter par le responsable
-    def search(self, cr, uid,args, offset=0, limit=None, order=None, context=None, count=False):
-        #datetime.datetime.now() + datetime.timedelta(days=int(datetime.datetime.now().weekday()) / 4) * (7 - int(datetime.datetime.now().weekday())) + (4 - int(datetime.datetime.now().weekday()) * (1 - int(datetime.datetime.now().weekday()) / 4))
-        if context and 'resa_semaine' in context:
-            now = datetime.now()
-            delta_day = 0
-            if now.weekday() >= 4:
-                #Si on dépasse jeudi, on fait les calculs pour retomber sur lundi prochain
-                #7 - now.weekday() pour tomber sur lundi, +4 pour tomber sur vendredi à chaque fois
-                delta_day = 7 + 4 - now.weekday()
-            else:
-                #Sinon, c'est qu'on est inférieur à jeudi, on reste dans la meme semaine
-                delta_day = 4 - now.weekday()
-            end_date = now + timedelta(days=delta_day)
-            args.extend(['|',('checkout','<=',str(end_date)),('checkin','<=',str(end_date))])
-            del context['resa_semaine']
-        ret = super(hotel_reservation,self).search(cr, uid,args, offset, limit, order, context, count)
-        return ret
-
     def create(self, cr, uid, vals, context=None):
         #Si on vient de créer une nouvelle réservation et qu'on veut la sauvegarder (cas où l'on appuie sur
         #"vérifier disponibilités" juste après la création (openERP force la sauvegarde)
@@ -1031,10 +760,6 @@ class hotel_reservation(osv.osv):
         #print(vals)
         if not 'state' in vals or vals['state'] == 'remplir':
             vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
-            """vals['partner_id'] = self.pool.get("res.partner").search(cr, uid, [], limit=1)[0]
-            part_vals = self.onchange_partner_id( cr, uid, [], vals['partner_id'])
-            for (cle, data) in part_vals['value'].items():
-                vals[cle] = data"""
         if 'checkin' in vals:
             if len(vals['checkin']) > 10:
                 vals['checkin'] = vals['checkin'][:-3] + ':00'
@@ -1042,7 +767,6 @@ class hotel_reservation(osv.osv):
             if len(vals['checkout']) >10:
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
         return super(hotel_reservation, self).create(cr, uid, vals, context)
-        #TOCHECK: Vérif utilité, supprimer puis tester si tout fonctionne
 
     def write(self, cr, uid, ids, vals, context=None):
         #if dates are modified, we uncheck all dispo to force user to re check all lines
