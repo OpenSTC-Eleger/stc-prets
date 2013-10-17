@@ -852,65 +852,6 @@ class hotel_reservation(osv.osv):
                     #date computed as unavailable, we can skip other prod_id tests for this date
                     break
         return ret
-    def create(self, cr, uid, vals, context=None):
-        #Si on vient de créer une nouvelle réservation et qu'on veut la sauvegarder (cas où l'on appuie sur
-        #"vérifier disponibilités" juste après la création (openERP force la sauvegarde)
-        #Dans ce cas, on mets des valeurs par défauts pour les champs obligatoires
-        #print(vals)
-        if not 'state' in vals or vals['state'] == 'remplir':
-            vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
-        if 'checkin' in vals:
-            if len(vals['checkin']) > 10:
-                vals['checkin'] = vals['checkin'][:-3] + ':00'
-        if 'checkout' in vals:
-            if len(vals['checkout']) >10:
-                vals['checkout'] = vals['checkout'][:-3] + ':00'
-        return super(hotel_reservation, self).create(cr, uid, vals, context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        #if dates are modified, we uncheck all dispo to force user to re check all lines
-        if context == None:
-            context = {}
-        if 'checkin' in vals:
-            if len(vals['checkin']) > 10:
-                vals['checkin'] = vals['checkin'][:-3] + ':00'
-        if 'checkout' in vals:
-            if len(vals['checkout']) >10:
-                vals['checkout'] = vals['checkout'][:-3] + ':00'
-        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
-        #if 'checkin' in vals or 'checkout' in vals:
-        #    self.trigger_reserv_modified(cr, uid, ids, context)
-        return res
-
-    def unlink(self, cr, uid, ids, context=None):
-        if not isinstance(ids, list):
-            ids = [ids]
-        line_ids = []
-        for resa in self.browse(cr, uid, ids, context):
-            line_ids.extend([x.id for x in resa.reservation_line])
-        self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
-        return super(hotel_reservation, self).unlink(cr, uid, ids, context)
-
-    def onchange_in_option(self, cr, uid, ids, in_option=False, state=False, context=None):
-        #TOREMOVE:
-        #if in_option:
-            #Affichage d'un wizard pour simuler une msgbox
-        if in_option:
-            return {'warning':{'title':'Réservation mise en option', 'message': '''Attention, Votre réservation est "hors délai"
-            , nous ne pouvons pas vous assurer que nous pourrons vous livrer.'''}}
-
-        return {'value':{}}
-
-    def onchange_openstc_partner_id(self, cr, uid, ids, openstc_partner_id=False):
-        return {'value':{'partner_id':openstc_partner_id}}
-
-
-    def onchange_partner_shipping_id(self, cr, uid, ids, partner_shipping_id=False):
-        email = False
-        if partner_shipping_id:
-            email = self.pool.get("res.partner.address").browse(cr, uid, partner_shipping_id).email
-        return {'value':{'partner_mail':email,'partner_invoice_id':partner_shipping_id,'partner_order_id':partner_shipping_id}}
-
 
 hotel_reservation()
 
