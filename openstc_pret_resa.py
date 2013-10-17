@@ -50,7 +50,7 @@ class product_product(osv.osv):
     _inherit = "product.product"
     _description = "Produit"
 
-    
+
     _columns = {
         "etat": fields.selection(AVAILABLE_ETATS, "Etat"),
         "seuil_confirm":fields.integer("Qté Max sans Validation", help="Qté Maximale avant laquelle une étape de validation par un responsable est nécessaire"),
@@ -66,7 +66,7 @@ class product_product(osv.osv):
         'seuil_confirm': 0,
         'need_infos_supp': lambda *a:0,
     }
-    
+
     """
     @param claimer_user_id: the user who wants to reserve something
     @param claimer_partner_id: the partner who wants to reserve something
@@ -92,22 +92,22 @@ class product_product(osv.osv):
             domain = [('external_booking','=',True),'|',
                       ('partner_type_bookable_ids','child_of',partner['type_id'] and partner['type_id'][0] or []),
                       ('partner_type_bookable_ids','=',False)]
-        #else, if both partner and user id are supplied, or no one of them, raise an error 
+        #else, if both partner and user id are supplied, or no one of them, raise an error
         else:
             osv.except_osv(_('Error'),_('Incorrect values, you have to supply one and only one between claimer_user_id or claimer_partner_id, not both'))
-        
+
         #retrieve values for equipments and sites authorized
         equipment_ids = equipment_obj.search(cr, uid, domain, context=context)
         equipments = equipment_obj.read(cr, uid, equipment_ids, ['product_product_id'], context=context)
         site_ids = site_obj.search(cr, uid, domain, context=context)
         sites = site_obj.read(cr, uid, site_ids, ['product_id'], context=context)
-        
-        #finally, compute results by merging 'product.product' many2ones of 
+
+        #finally, compute results by merging 'product.product' many2ones of
         #records from tables openstc.equipment and openstc.site
         prod_ids.extend([elt['product_product_id'] for elt in equipments if elt['product_product_id']])
         prod_ids.extend([elt['product_id'] for elt in sites if elt['product_id']])
         return prod_ids
-    
+
 product_product()
 
 
@@ -136,7 +136,7 @@ class hotel_reservation_line(osv.osv):
     def _get_state_line(self, cr, uid, context=None):
         res = self.pool.get("hotel.reservation").fields_get(cr, uid, 'state', context=context)
         return res['state']['selection']
-    
+
     def _calc_qte_dispo(self, cr, uid, ids, name, args, context=None):
         prod_id_to_line = {}
         if not context:
@@ -170,7 +170,7 @@ class hotel_reservation_line(osv.osv):
             ret[line.id] = amount
             #TOCHECK: is there any taxe when collectivity invoice people ?
         return ret
-    
+
     def _get_complete_name(self, cr, uid, ids, name, args, context=None):
         ret = {}
         weekday_to_str = {0:'Lundi',1:'Mardi',2:'Mercredi',3:'Jeudi',4:'Vendredi',5:'Samedi',6:'Dimanche'}
@@ -184,12 +184,36 @@ class hotel_reservation_line(osv.osv):
             date_str = ''
             #if weekday_start == weekday_end:
                 #date_str = '%s %s-%s : ' %(weekday_to_str[weekday_start],line.checkin[11:16],line.checkout[11:16])
-                
+
             if weekday_start <> weekday_end:
                 date_str = '%s %s - %s %s : ' % (weekday_to_str[weekday_start][:3],checkin[11:16],weekday_to_str[weekday_end][:3],checkout[11:16])
             ret[line.id] = '%s %d x %s (%s)' %(date_str,line.qte_reserves, line.reserve_product.name_template, line.partner_id.name)
         return ret
-    
+
+    ''' get conflicting lines for each reservation 's line'''
+    def _get_conflicting_lines(self, cr, uid, ids, name, args, context=None):
+        conflicting_lines = {}
+        #for each line
+        for line in self.browse(cr, uid, ids, context=context):
+            conflicting_lines[line.id] = []
+            temp_lines = []
+            sum_qty = 0
+            if line.line_id.id != False and line.reserve_product.id != False and line.checkin!=False and line.checkout!=False:
+                #get product for line reservation
+                prod_obj = self.pool.get("product.product").browse(cr, uid, line.reserve_product.id)
+                #Get conflicting lines on line 's product
+                results = self.get_lines_by_prod(cr, line.reserve_product.id, line.checkin, line.checkout, where_optionnel='and hr.id <> ' + str(line.line_id.id)).fetchall()
+                if len(results)> 0 :
+                    #sum quantity of product request on all conflicting lines
+                    for line_id, qty_reserved  in results :
+                        sum_qty += qty_reserved
+                        temp_lines.append(line_id)
+                    #If there is not enough quantiy of product set conflicting lines for this line
+                    if (prod_obj.virtual_available - sum_qty) < line.qte_reserves :
+                            conflicting_lines[line.id] = temp_lines
+
+        return conflicting_lines
+
     _columns = {
         'categ_id': fields.many2one('product.category','Type d\'article'),
         "reserve_product": fields.many2one("product.product", "Article réservé", domain=[('openstc_reservable','=',True)]),
@@ -209,6 +233,8 @@ class hotel_reservation_line(osv.osv):
         'checkout':fields.related('line_id','checkout', type="datetime"),
         'resa_name':fields.related('line_id','name',type="char"),
         'complete_name':fields.function(_get_complete_name, type="char", string='Complete Name', size=128),
+        'conflicting_lines':fields.function(_get_conflicting_lines, type='many2many', relation='hotel.reservation.lines',string='Conflicting rows'),
+
 
         }
 
@@ -217,6 +243,7 @@ class hotel_reservation_line(osv.osv):
      'state':'remplir',
      'action':'nothing',
         }
+
     #@TOCHECK: useless ?
     def plan_inter(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'action':'inter'})
@@ -225,6 +252,18 @@ class hotel_reservation_line(osv.osv):
     def unplan_inter(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'action':'nothing'})
         return {'type':'ir.actions.act_window.close'}
+
+    '''' Get conflicting lines by product '''
+    def get_lines_by_prod(self, cr, prod, checkin, checkout, states=['remplir'], where_optionnel=""):
+        cr.execute("select hrl.id, hrl.qte_reserves \
+                    from hotel_reservation_line as hrl \
+                    join hotel_reservation as hr  on hr.id = hrl.line_id \
+                    where reserve_product = %s \
+                    and hr.state  in%s \
+                    and (hr.checkin, hr.checkout) overlaps ( timestamp %s, timestamp %s ) \
+                    " + where_optionnel , (prod, tuple(states), checkin, checkout))
+        return cr
+
 hotel_reservation_line()
 
 class hotel_reservation(osv.osv):
@@ -235,7 +274,7 @@ class hotel_reservation(osv.osv):
 
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
-    
+
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'resa.number',context)
         user = self.pool.get("res.users").browse(cr, uid, uid)
@@ -251,11 +290,11 @@ class hotel_reservation(osv.osv):
                 if prog.search(group.name):
                     if isinstance(user.service_ids, list) and not service:
                         service = user.service_ids and user.service_ids[0] or False
-                    
+
         if service:
             #If sequence is configured to have service info, we write it
             seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
-                
+
         return seq
     #@tocheck: useless ?
     def _calc_in_option(self, cr, uid, ids, name, args, context=None):
@@ -325,13 +364,13 @@ class hotel_reservation(osv.osv):
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
         }
     _order = "checkin, in_option"
-    
+
     def _check_dates(self, cr, uid, ids, context=None):
         for resa in self.browse(cr, uid, ids, context):
             if resa.checkin >= resa.checkout:
                 return False
         return True
-     
+
     _constraints = [(_check_dates, _("Your checkin is greater than your checkout, please modify them"), ['checkin','checkout'])]
 
 
@@ -443,7 +482,7 @@ class hotel_reservation(osv.osv):
             return True
         raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
         return False
-    
+
     #Mettre à l'état cancle et retirer les mouvements de stocks (supprimer mouvement ou faire le mouvement inverse ?)
     def cancelled_reservation(self, cr, uid, ids):
         self.write(cr, uid, ids, {'state':'cancle'})
@@ -576,7 +615,7 @@ class hotel_reservation(osv.osv):
                     " + where_optionnel + " \
                     group by reserve_product; ", (tuple(prod_list), tuple(states), checkin, checkout))
         return cr
-    
+
     #main method to control availability of products : returns availability of each prod : {prod_id:qty} matching dates
     def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', context=None):
         #if no prod_ids put, we check all prods
@@ -592,7 +631,7 @@ class hotel_reservation(osv.osv):
         for prod_id, qty_reserved in results:
             prod_dispo[prod_id] -= qty_reserved
         return prod_dispo
-    
+
     #Vérifies les champs dispo de chaque ligne de résa pour dire si oui ou non la résa est OK pour la suite
     #TODO: Voir comment gérer le cas de la reprise d'une résa à revalider / incomplète où des champs dispo sont à True
     #=> Problème lorsque quelqu'un d'autre réserve un même produit
@@ -638,7 +677,7 @@ class hotel_reservation(osv.osv):
             cr.execute('insert into hotel_folio_reservation_rel (order_id,invoice_id) values (%s,%s)', (reservation.id, folio))
 
         return folio
-    
+
     #param record: browse_record hotel.reservation.line
     def get_prod_price(self, cr, uid, ids, record, context=None):
         pricelist_obj = self.pool.get("product.pricelist")
@@ -748,7 +787,7 @@ class hotel_reservation(osv.osv):
                         prod_ids.extend([line.reserve_product.id for line in resa.reservation_line])
                     cr.execute("select id, res_id from ir_attachment where res_id in %s and res_model=%s order by res_id", (tuple(prod_ids), 'product.product'))
                     #format sql return to concat attaches with each prod_id
-                    
+
                     for item in cr.fetchall():
                         prod_attaches.setdefault(item[1],[])
                         prod_attaches[item[1]].append(item[0])
@@ -771,7 +810,7 @@ class hotel_reservation(osv.osv):
                         mail_id = email_obj.send_mail(cr, uid, email_tmpl_id, resa.id)
                         self.pool.get("mail.message").write(cr, uid, [mail_id], {'attachment_ids':attach_values})
                         self.pool.get("mail.message").send(cr, uid, [mail_id])
-    
+
         return
 
     """
@@ -813,6 +852,64 @@ class hotel_reservation(osv.osv):
                     #date computed as unavailable, we can skip other prod_id tests for this date
                     break
         return ret
+    def create(self, cr, uid, vals, context=None):
+        #Si on vient de créer une nouvelle réservation et qu'on veut la sauvegarder (cas où l'on appuie sur
+        #"vérifier disponibilités" juste après la création (openERP force la sauvegarde)
+        #Dans ce cas, on mets des valeurs par défauts pour les champs obligatoires
+        #print(vals)
+        if not 'state' in vals or vals['state'] == 'remplir':
+            vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
+        if 'checkin' in vals:
+            if len(vals['checkin']) > 10:
+                vals['checkin'] = vals['checkin'][:-3] + ':00'
+        if 'checkout' in vals:
+            if len(vals['checkout']) >10:
+                vals['checkout'] = vals['checkout'][:-3] + ':00'
+        return super(hotel_reservation, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        #if dates are modified, we uncheck all dispo to force user to re check all lines
+        if context == None:
+            context = {}
+        if 'checkin' in vals:
+            if len(vals['checkin']) > 10:
+                vals['checkin'] = vals['checkin'][:-3] + ':00'
+        if 'checkout' in vals:
+            if len(vals['checkout']) >10:
+                vals['checkout'] = vals['checkout'][:-3] + ':00'
+        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        #if 'checkin' in vals or 'checkout' in vals:
+        #    self.trigger_reserv_modified(cr, uid, ids, context)
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        if not isinstance(ids, list):
+            ids = [ids]
+        line_ids = []
+        for resa in self.browse(cr, uid, ids, context):
+            line_ids.extend([x.id for x in resa.reservation_line])
+        self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
+        return super(hotel_reservation, self).unlink(cr, uid, ids, context)
+
+    def onchange_in_option(self, cr, uid, ids, in_option=False, state=False, context=None):
+        #TOREMOVE:
+        #if in_option:
+            #Affichage d'un wizard pour simuler une msgbox
+        if in_option:
+            return {'warning':{'title':'Réservation mise en option', 'message': '''Attention, Votre réservation est "hors délai"
+            , nous ne pouvons pas vous assurer que nous pourrons vous livrer.'''}}
+
+        return {'value':{}}
+
+    def onchange_openstc_partner_id(self, cr, uid, ids, openstc_partner_id=False):
+        return {'value':{'partner_id':openstc_partner_id}}
+
+
+    def onchange_partner_shipping_id(self, cr, uid, ids, partner_shipping_id=False):
+        email = False
+        if partner_shipping_id:
+            email = self.pool.get("res.partner.address").browse(cr, uid, partner_shipping_id).email
+        return {'value':{'partner_mail':email,'partner_invoice_id':partner_shipping_id,'partner_order_id':partner_shipping_id}}
 
 
 hotel_reservation()
@@ -851,7 +948,7 @@ class purchase_order(osv.osv):
             for picking in purchase.picking_ids:
                 wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_cancel', cr)
             wf_service.trg_write(uid, 'purchase.order', purchase.id, cr)
-            
+
         return {
                 'res_model':'purchase.order',
                 'type:':'ir.actions.act_window',
@@ -898,10 +995,10 @@ sale_order()
 class account_invoice(osv.osv):
     _inherit = "account.invoice"
     _name = "account.invoice"
-    
+
     _columns = {
         }
-    
+
         #TODO: create custom jasper report instead of classic pdf report
     def _create_report_attach(self, cr, uid, record, context=None):
         #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
@@ -930,14 +1027,14 @@ class account_invoice(osv.osv):
                                                                       context=context)
                 ret = ir_attachment
         return ret
-    
+
     #override to force creation of pdf report (base function (ir.actions.server) was unlinked and replaced by this one)
     def action_number(self, cr, uid, ids, context=None):
         res = super(account_invoice, self).action_number(cr, uid, ids, context)
         for inv in self.browse(cr, uid, ids, context):
             report_attach = self._create_report_attach(cr, uid, inv, context)
         return res
-    
+
 account_invoice()
     
 class res_partner(osv.osv):
