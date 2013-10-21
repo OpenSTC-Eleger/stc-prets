@@ -58,8 +58,7 @@ class product_product(osv.osv):
         "empruntable":fields.boolean("Se fournir à l'extérieur", help="indique si l'on peut emprunter cette ressource à des collectivités extèrieures"),
         "checkout_lines":fields.one2many('openstc.pret.checkout.line', 'product_id', string="Lignes Etat des Lieux"),
         'need_infos_supp':fields.boolean('Nécessite Infos Supp ?', help="Indiquer si, pour une Réservation, cette ressource nécessite des infos supplémentaires A saisir par le demandeur."),
-        #TOCHECK: Is service_technical_id usefull now ?
-        'service_technical_id':fields.many2one('openstc.service', 'Service Technique associé',help='Si renseigné, indique que cette ressource nécessite une manipulation technique pour être installée sur site, cette ressource est donc susceptible de générer une intervention sur ce service.'),
+        'max_bookable_qty':fields.integer('Max Bookable qty', help='Qty max of this bookable authorized for one booking'),
         }
 
     _defaults = {
@@ -264,6 +263,18 @@ class hotel_reservation_line(osv.osv):
                     " + where_optionnel , (prod, tuple(states), checkin, checkout))
         return cr
 
+    #check lines (for non manager user only) : if product has max_qty, lines must not reserve more than max_qty of this product
+    def _check_max_qties(self, cr, uid, ids, context=None):
+        is_manager = self.pool.get("res.users").search(cr, uid, [('id','=',uid),('groups_id.code','=','HOTEL_MANA')])
+        if not is_manager:
+            for line in self.browse(cr, uid, ids, context=context):
+                #if one line does not match criteria, return False and raise exception
+                if line.reserve_product.max_bookable_qty and line.qte_reserves > line.reserve_product.max_bookable_qty:
+                    return False
+        return True
+
+    _constraints = [(_check_max_qties, _('You can not reserve more than qty max for your product'), ['reserve_product','qte_reserves'])]
+
 hotel_reservation_line()
 
 class hotel_reservation(osv.osv):
@@ -356,6 +367,7 @@ class hotel_reservation(osv.osv):
                 'amount_total':fields.function(_get_amount_total, type='float', string='Amount Total', method=True, multi="resa",
                                                help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
                 'all_dispo':fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
+                'date_choices':fields.one2many('openresa.reservation.choice','reservation_id','Choices of dates'),
         }
     _defaults = {
                  'in_option': lambda *a :0,
@@ -855,6 +867,41 @@ class hotel_reservation(osv.osv):
 
 hotel_reservation()
 
+class openresa_reservation_choice(osv.osv):
+    _name = "openresa.reservation.choice"
+    _columns = {
+        'checkin':fields.datetime('Checkin', required=True),
+        'checkout':fields.datetime('Checkout', required=True),
+        'sequence':fields.integer('Sequence', required=True),
+        'state':fields.selection([('waiting','Available choice'),('choosen','Choosen choice'),('refused','Refused choice')]),
+        'reservation_id':fields.many2one('hotel.reservation','Reservation'),
+        }
+    _order = "sequence"
+    _defaults = {
+            'state':lambda *a: 'waiting',
+        }
+    
+    #override create method to force seconds of dates to '00'
+    def create(self, cr, uid, vals, context=None):
+        if 'checkin' in vals:
+            if len(vals['checkin']) > 16:
+                vals['checkin'] = vals['checkin'][0:16] + ':00'
+        if 'checkout' in vals:
+            if len(vals['checkout']) > 16:
+                vals['checkout'] = vals['checkout'][0:16] + ':00'
+        return super(openstc_reservation_choice,self).create(cr, uid, vals, context=context)
+    
+    #override write method to force seconds of dates to '00'    
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'checkin' in vals:
+            if len(vals['checkin']) > 16:
+                vals['checkin'] = vals['checkin'][0:16] + ':00'
+        if 'checkout' in vals:
+            if len(vals['checkout']) > 16:
+                vals['checkout'] = vals['checkout'][0:16] + ':00'
+        return super(openstc_reservation_choice, self).write(cr, uid, ids, vals, context=context)
+    
+openresa_reservation_choice()
 
 class product_category(osv.osv):
     _name = "product.category"

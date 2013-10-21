@@ -45,7 +45,7 @@
 			<field name="arch" type="xml">
 				<field name="type_prod" position="before">
 					<field name="seuil_confirm" required="1"/>
-					<field name="service_technical_id"/>
+					<field name="max_bookable_qty"/>
 				</field>
 			</field>
 		</record>
@@ -176,6 +176,16 @@
 				       		</page>
 				       		<page string="Sales linked (if priced)">
 	 				      		<field name="folio_id" nolabel="1"/>
+	 				   		</page>
+	 				   		<page string="Choix de Dates">
+	 				   		    <field name="date_choices" nolabel="1">
+	 				   		    	<tree editable="top" string="Choix de Dates" colors="green:state=='choosen';grey:state=='refused'">
+	 				   		    	    <field name="sequence"/>
+	 				   		    	    <field name="checkin"/>
+	 				   		    	    <field name="checkout"/>
+	 				   		    	    <field name="state"/>
+	 				   		    	</tree>
+	 				   		    </field>
 	 				   		</page>
 			       		</notebook>
 			       	</form>

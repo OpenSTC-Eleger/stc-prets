@@ -73,7 +73,6 @@
 			<field name="domain">[('is_emprunt','=',True)]</field>
 		</record>
 		
-	<!-- Menus Mouvements Internes -->
 		<menuitem icon="terp-project" id="base.menu_main_openstock" 
 		    name="Prêt - Location" sequence="10" />
 

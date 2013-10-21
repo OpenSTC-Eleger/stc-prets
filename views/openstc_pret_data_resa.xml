@@ -362,16 +362,17 @@
 	Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
 		    ]]></field>
 		</record> 
- 		 <record model="res.groups" id="hotel.group_hotel_manager">
-	    	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
-	    	 <field name="code">HOTEL_MANA</field>
-		 </record>
-		 <record model="res.groups" id="hotel.group_hotel_user">
-	    	 <field name="code">HOTEL_USER</field>
-		 </record>
 	</data>	
 	<data>
 	
+	 <record model="res.groups" id="hotel.group_hotel_manager">
+    	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
+    	 <field name="code">HOTEL_MANA</field>
+	 </record>
+	 <record model="res.groups" id="hotel.group_hotel_user">
+    	 <field name="code">HOTEL_USER</field>
+	 </record>
+	    
 	<record model="res.groups" id="openresa_api_group">
         <field name="name">API Reservation Group</field>
         <field name="code">APIRESA</field>
