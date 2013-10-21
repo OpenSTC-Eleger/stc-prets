@@ -198,20 +198,35 @@ class hotel_reservation_line(osv.osv):
             temp_lines = []
             sum_qty = 0
             if line.line_id.id != False and line.reserve_product.id != False and line.checkin!=False and line.checkout!=False:
-                #get product for line reservation
-                prod_obj = self.pool.get("product.product").browse(cr, uid, line.reserve_product.id)
-                #Get conflicting lines on line 's product
-                results = self.get_lines_by_prod(cr, line.reserve_product.id, line.checkin, line.checkout, where_optionnel='and hr.id <> ' + str(line.line_id.id)).fetchall()
-                if len(results)> 0 :
-                    #sum quantity of product request on all conflicting lines
-                    for line_id, qty_reserved  in results :
-                        sum_qty += qty_reserved
-                        temp_lines.append(line_id)
-                    #If there is not enough quantiy of product set conflicting lines for this line
-                    if (prod_obj.virtual_available - sum_qty) < line.qte_reserves :
-                            conflicting_lines[line.id] = temp_lines
+                #get reservation
+                resa_obj = self.pool.get("hotel.reservation").browse(cr, uid, line.line_id.id)
+                if rsa_obj.state == "remplir":
+                    #get product for line reservation
+                    prod_obj = self.pool.get("product.product").browse(cr, uid, line.reserve_product.id)
+                    #Get conflicting lines on line 's product
+                    results = self.get_lines_by_prod(cr, line.reserve_product.id, line.checkin, line.checkout, where_optionnel='and hr.id <> ' + str(line.line_id.id)).fetchall()
+                    if len(results)> 0 :
+                        #sum quantity of product request on all conflicting lines
+                        for line_id, qty_reserved  in results :
+                            sum_qty += qty_reserved
+                            temp_lines.append(line_id)
+                        #If there is not enough quantiy of product set conflicting lines for this line
+                        if (prod_obj.virtual_available - sum_qty) < line.qte_reserves :
+                                conflicting_lines[line.id] = temp_lines
 
         return conflicting_lines
+
+#    def _calculate_lines(self, cr, uid, stock_move_ids, context=None):
+#        stocks = self.pool.get('stock.move').browse(cr, uid, stock_move_ids, context=context)
+#        product_ids = [stock.product_id.id for stock in stocks if stock.product_id]
+#        return self.search(cr,uid,[('reserve_product','in', product_ids)])
+#
+#    def _calculate_resa(self, cr, uid, reservation_ids, context=None):
+#        reservations = self.pool.get('hotel.reservation').browse(cr, uid, reservation_ids, context=context)
+#        res = set([])
+#        for resa in reservations :
+#            res.update(resa.reservation_line)
+#        return res
 
     _columns = {
         'categ_id': fields.many2one('product.category','Type d\'article'),
@@ -232,7 +247,13 @@ class hotel_reservation_line(osv.osv):
         'checkout':fields.related('line_id','checkout', type="datetime"),
         'resa_name':fields.related('line_id','name',type="char"),
         'complete_name':fields.function(_get_complete_name, type="char", string='Complete Name', size=128),
-        'conflicting_lines':fields.function(_get_conflicting_lines, type='many2many', relation='hotel.reservation.lines',string='Conflicting rows'),
+        'conflicting_lines':fields.function(_get_conflicting_lines, type='many2many', relation='hotel_reservation.line',string='Conflicting rows', method=True,
+                                            store={
+#                                                    'hotel_reservation.line':[lambda self,cr,uid,ids,ctx:ids,['qte_reserves','line_id'],10],
+#                                                    'stock.move':(_calculate_lines, ['product_qty'], 20),
+#                                                    'hotel_reservation':(_calculate_resa, ['state','reservation_line','checkin','checkout'], 30)
+                                                   }
+                                            ),
 
 
         }
