@@ -110,6 +110,17 @@ class product_product(osv.osv):
 product_product()
 
 
+# i create model in this file to avoid inter-dependance between hotel.reservation and this one
+# actually, they have many2one on each other
+#this object is fully implemented in openresa_recurrence.py file
+class openresa_reservation_recurrence(osv.osv):
+    _name = 'openresa.reservation.recurrence'
+    
+    _columns = {
+        }
+    
+openresa_reservation_recurrence()
+
 class hotel_reservation_line(osv.osv):
     _name = "hotel_reservation.line"
     _inherit = "hotel_reservation.line"
@@ -189,8 +200,42 @@ class hotel_reservation_line(osv.osv):
             ret[line.id] = '%s %d x %s (%s)' %(date_str,line.qte_reserves, line.reserve_product.name_template, line.partner_id.name)
         return ret
 
-    ''' get conflicting lines for each reservation 's line'''
+    """
+    @param prod_dict: list of dict of prod and qty to retrieve values (represents produdcts needed for reservation) : [{'prod_id':id,'qty':qty_needed}]
+    @param checkin-checkout: dates of checkin-checkout to test
+    @return: lines for which current checkin-checkout and prod_dict are in conflicts
+    @note: to be used in fields.function calculation and for other uses, as openresa.reservation.choices 'dispo' calculation
+    """
+    def get_global_conflicting_lines(self,cr, uid, prod_dict, checkin, checkout, context=None):
+        ret = []
+        prod_ids = [item['prod_id'] for item in prod_dict]
+        #compute qties of products already in 'remplir' resa
+        available = self.pool.get("hotel.reservation").get_prods_available_and_qty(cr, uid, checkin, checkout, prod_ids=prod_ids, states=['cancle','done','confirm','wait_confirm'], context=context)
+        #for each prod desired, retrieve those which are conflicting
+        conflicting_prods = []
+        for item in prod_dict:
+            if available[item['prod_id']] < item['qty']:
+                conflicting_prods.append(item['prod_id'])
+        #and retrieve lines belonging to conflicting_prods and checkin-checkout
+        if conflicting_prods:
+            ret.extend(self.search(cr, uid, [('reserve_product.id','in',conflicting_prods),'|',
+                                             '&',('line_id.checkin','>=',checkin),('line_id.checkin','<=',checkout),
+                                             '&',('line_id.checkout','>=',checkin),('line_id.checkout','<=',checkout)],
+                                   context=context))
+        return ret
+
+
     def _get_conflicting_lines(self, cr, uid, ids, name, args, context=None):
+        #by default, returns empty list
+        ret = {}.fromkeys(ids,[])
+        #get only lines in 'remplir' state
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.line_id and line.line_id.state == 'remplir':
+                ret[line.id] = self.get_global_conflicting_lines(cr, uid, [{'prod_id':line.reserve_product.id,'qty':line.qte_reserves}], line.line_id.checkin, line.line_id.checkout, context)
+        return ret
+
+    ''' get conflicting lines for each reservation 's line'''
+    def _get_conflicting_lines_old(self, cr, uid, ids, name, args, context=None):
         conflicting_lines = {}
         #for each line
         for line in self.browse(cr, uid, ids, context=context):
@@ -389,6 +434,7 @@ class hotel_reservation(osv.osv):
                                                help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
                 'all_dispo':fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
                 'date_choices':fields.one2many('openresa.reservation.choice','reservation_id','Choices of dates'),
+                'recurrence_id':fields.many2one('openresa.reservation.recurrence','Recurrence model')
         }
     _defaults = {
                  'in_option': lambda *a :0,
@@ -650,7 +696,7 @@ class hotel_reservation(osv.osv):
         return cr
 
     #main method to control availability of products : returns availability of each prod : {prod_id:qty} matching dates
-    def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', context=None):
+    def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', states=['cancle','done','remplir'], context=None):
         #if no prod_ids put, we check all prods
         if not prod_ids:
             prod_ids = self.pool.get("product.product").search(cr, uid, [])
@@ -660,7 +706,7 @@ class hotel_reservation(osv.osv):
         for prod in prods:
             prod_dispo.setdefault(prod.id, prod.virtual_available)
         #and, if some resa are made to this prods, we substract default qty with all qty reserved at these dates
-        results = self.get_nb_prod_reserved(cr, prod_ids, checkin, checkout, where_optionnel=where_optionnel).fetchall()
+        results = self.get_nb_prod_reserved(cr, prod_ids, checkin, checkout, where_optionnel=where_optionnel,states=states).fetchall()
         for prod_id, qty_reserved in results:
             prod_dispo[prod_id] -= qty_reserved
         return prod_dispo
@@ -890,18 +936,31 @@ hotel_reservation()
 
 class openresa_reservation_choice(osv.osv):
     _name = "openresa.reservation.choice"
+    
+    """
+    @param ids: ids of record to compute value
+    @return: if all lines are 'dispo' and without 'conflict', returns available
+            elif all lines are 'dispo' but if some are 'conflict', returns conflict
+            else returns unavailable (some line are not 'dispo')
+    @note: can not use fields of hotel.reservation as it, because it changes the checkin-checkout for each choice
+    """
+    def _get_choice_dispo(self, cr, uid, ids, name, args, context=None):
+        #by default, returns available
+
+        return ret
+    
     _columns = {
         'checkin':fields.datetime('Checkin', required=True),
         'checkout':fields.datetime('Checkout', required=True),
         'sequence':fields.integer('Sequence', required=True),
         'state':fields.selection([('waiting','Available choice'),('choosen','Choosen choice'),('refused','Refused choice')]),
         'reservation_id':fields.many2one('hotel.reservation','Reservation'),
+        'dispo':fields.function(_get_choice_dispo, type="selection", selection=[('conflict','Conflict'),('unavailable','Unavailable'),('available','Available')], method=True, string="Dispo",),
         }
     _order = "sequence"
     _defaults = {
             'state':lambda *a: 'waiting',
-        }
-    
+        }    
     #override create method to force seconds of dates to '00'
     def create(self, cr, uid, vals, context=None):
         if 'checkin' in vals:

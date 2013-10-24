@@ -99,6 +99,70 @@
 			<field name="target">new</field>
 			<field name="domain">[('state','not in',('done','cancle','remplir'))]</field>
 		</record>
+
+		<record model="ir.ui.view" id="view_openresa_recurrence_tree">
+			<field name="name">openresa.reservation.recurrence.tree</field>
+			<field name="model">openresa.reservation.recurrence</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+			    <tree>
+			        <field name="template_id"/>
+			        <field name="recur_type"/>
+			    </tree>
+	 		</field>
+		</record>
+				
+		<record model="ir.ui.view" id="view_openresa_recurrence_form">
+			<field name="name">openresa.reservation.recurrence.form</field>
+			<field name="model">openresa.reservation.recurrence</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+			    <form>
+					<group colspan="2" col="4" string="General setting">
+						<field name="template_id"/>
+						<field name="date_start" readonly="1"/>
+					</group>
+					
+					<group colspan="2" col="2" string="Recurrence setting">
+						<group colspan="2" col="6">
+							<field name="recur_type"/>
+							<field name="recur_periodicity"/>
+						    <group colspan="2" col="2">
+						        <field name="date_end" attrs="{'invisible':[('recur_type','not in',['daily','weekly'])],'required':[('recur_type','in',['daily','weekly'])]}"/>
+						        <field name="recur_occurrence_nb" attrs="{'invisible':[('recur_type','!=','monthly')],'required':[('recur_type','=','monthly')]}"/>
+					    	</group>
+						</group>
+					    <group colspan="2" col="14" attrs="{'invisible':[('recur_type','!=','weekly')]}">
+				    		<field name="recur_week_monday"/>
+				    		<field name="recur_week_tuesday"/>
+				    		<field name="recur_week_wednesday"/>
+				    		<field name="recur_week_thursday"/>
+				    		<field name="recur_week_friday"/>
+				    		<field name="recur_week_saturday"/>
+				    		<field name="recur_week_sunday"/>
+				    		<newline/>
+					    </group>
+					    <group colspan="2" col="14" attrs="{'invisible':[('recur_type','!=','monthly')]}">
+					    	<field name="recur_month_absolute" colspan="6"/>
+					    	<label string="Or"/>
+					    	<field name="recur_month_relative_weight" colspan="3"/>
+					    	<field name="recur_month_relative_day" colspan="2" nolabel="1"/>
+					    </group>
+					</group>
+					<field name="reservation_ids" colspan="4" nolabel="1">
+					    <tree string="Generated Reservations">
+					        <field name="reservation_no"/>
+					        <field name="name"/>
+					        <field name="checkin"/>
+					        <field name="checkout"/>
+					        <field name="state"/>
+					    </tree>
+					</field>
+					<button name="generate_reservations" type="object" string="Generate reservations"
+					    icon="gtk-execute"/>
+			    </form>
+	 		</field><!-- end tag of xml arch -->
+		</record>
 		
 		<!-- Vues Réservation d'articles -->
 		<record model="ir.ui.view" id="view_openstock_reservation_form">
@@ -179,11 +243,12 @@
 	 				   		</page>
 	 				   		<page string="Choix de Dates">
 	 				   		    <field name="date_choices" nolabel="1">
-	 				   		    	<tree editable="top" string="Choix de Dates" colors="green:state=='choosen';grey:state=='refused'">
+	 				   		    	<tree editable="top" string="Choix de Dates" colors="green:state=='choosen';grey:state=='refused';red:state=='waiting' and dispo=='unavailable';;orange:state=='waiting' and dispo=='conflict';">
 	 				   		    	    <field name="sequence"/>
 	 				   		    	    <field name="checkin"/>
 	 				   		    	    <field name="checkout"/>
 	 				   		    	    <field name="state"/>
+	 				   		    	    <field name="dispo"/>
 	 				   		    	</tree>
 	 				   		    </field>
 	 				   		</page>

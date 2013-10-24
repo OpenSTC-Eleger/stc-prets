@@ -21,6 +21,7 @@
 #
 ##############################################################################
 import openstc_pret_resa
+import openresa_recurrence
 import openstc_pret_checkout
 import wizard
 

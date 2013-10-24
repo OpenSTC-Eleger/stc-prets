@@ -42,6 +42,13 @@
 			<field name="domain" eval="False"/>
 		</record>
 
+		<record id="action_openresa_view_recurrence" model="ir.actions.act_window">
+			<field name="name">Réservations Récurrentes</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">openresa.reservation.recurrence</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
 	
 		<record id="action_openstock_view_reservation_new" model="ir.actions.act_window">
 			<field name="name">Créer une nouvelle réservation</field>
@@ -81,7 +88,7 @@
 
 		<menuitem id="menu_action_view_articles" name="Gestion des Ressources"
 			parent="base.menu_main_openstock" sequence="2" />
-
+		
 		<!-- MenuItems Gestion des Ressources -->
 		<menuitem id="menu_action_view_fournitures" action="action_openstock_view_fournitures"
 			name="Catalogue des ressources" parent="menu_action_view_articles"
@@ -111,6 +118,11 @@
 		<menuitem id="menu_action_openstock_view_reservation_calendar"
 			action="action_openstock_view_reservation_calendar"
 			parent="menu_action_view_reservations" sequence="3" />
+		
+		
+		<menuitem id="menu_action_openresa_view_recurrence"
+		    action="action_openresa_view_recurrence"
+		    parent="menu_action_view_reservations" sequence="4"/>
 		
 <!-- 		<menuitem id="menu_action_openstock_view_reservation_new" -->
 <!-- 			action="action_openstock_view_reservation_new" name="Créer une nouvelle réservation" -->
