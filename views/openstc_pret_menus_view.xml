@@ -81,7 +81,7 @@
 		</record>
 		
 		<menuitem icon="terp-project" id="base.menu_main_openstock" 
-		    name="Prêt - Location" sequence="10" />
+		    name="OpenResa" sequence="10" />
 
 		<menuitem id="menu_action_view_reservations" name="Gestion des Réservations"
 			parent="base.menu_main_openstock" sequence="1" />

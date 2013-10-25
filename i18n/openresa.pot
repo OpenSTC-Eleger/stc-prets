@@ -673,6 +673,11 @@ msgstr ""
 msgid "Nos Emprunts externes à retourner"
 msgstr ""
 
+#. module: openbase
+#: model:ir.ui.menu,name:base.menu_main_openstock
+msgid "OpenResa"
+msgstr ""
+
 #. module: openresa
 #: model:email.template,body_text:openstc.openstc_pret_email_template_resa_done
 msgid "\n"
