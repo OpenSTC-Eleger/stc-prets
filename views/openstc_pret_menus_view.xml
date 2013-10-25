@@ -85,31 +85,23 @@
 
 		<menuitem id="menu_action_view_reservations" name="Gestion des Réservations"
 			parent="base.menu_main_openstock" sequence="1" />
-
-		<menuitem id="menu_action_view_articles" name="Gestion des Ressources"
-			parent="base.menu_main_openstock" sequence="2" />
 		
 		<!-- MenuItems Gestion des Ressources -->
 		<menuitem id="menu_action_view_fournitures" action="action_openstock_view_fournitures"
-			name="Catalogue des ressources" parent="menu_action_view_articles"
-			sequence="1" />
+			name="Catalogue des ressources" parent="openbase.menu_configuration"
+			sequence="11" />
 
-		<menuitem id="menu_action_view_emprunt_ext" name="Emprunter des Ressources à l'extérieur"
-			action="action_view_openstc_pret_emprunt_wizard" parent="menu_action_view_articles"
-			sequence="2" />
+<!-- 		<menuitem id="menu_action_view_emprunt_ext" name="Emprunter des Ressources à l'extérieur" -->
+<!-- 			action="action_view_openstc_pret_emprunt_wizard" parent="menu_action_view_articles" -->
+<!-- 			sequence="2" /> -->
+
+<!-- 		<menuitem id="menu_action_openstc_pret_voir_emprunts_ext" -->
+<!-- 			action="action_openstc_pret_voir_emprunts_ext" name="Nos Emprunts externes à retourner" -->
+<!-- 			parent="menu_action_view_articles" sequence="3" /> -->
 
 		<menuitem id="menu_action_openstc_pret_view_checkout"
 			action="action_openstc_pret_view_checkout" name="Voir Etats des lieux retour d'articles"
-			parent="menu_action_view_articles" sequence="4" />
-		
-		<menuitem id="menu_action_openstc_pret_voir_emprunts_ext"
-			action="action_openstc_pret_voir_emprunts_ext" name="Nos Emprunts externes à retourner"
-			parent="menu_action_view_articles" sequence="3" />
-		
-		<!-- MenuItems Gestion des Réservations -->
-<!-- 		<menuitem id="menu_action_openstc_pret_resa_semaine_view" -->
-<!-- 			action="action_openstc_pret_resa_semaine_view" name="Réservation de la semaine a traiter" -->
-<!-- 			parent="menu_action_view_reservations" sequence="1" /> -->
+			parent="menu_action_view_reservations" sequence="4" />
 		
 		<menuitem id="menu_action_openstock_view_reservation" action="action_openstock_view_reservation"
 			name="Réservations" parent="menu_action_view_reservations"
@@ -124,35 +116,6 @@
 		    action="action_openresa_view_recurrence"
 		    parent="menu_action_view_reservations" sequence="4"/>
 		
-<!-- 		<menuitem id="menu_action_openstock_view_reservation_new" -->
-<!-- 			action="action_openstock_view_reservation_new" name="Créer une nouvelle réservation" -->
-<!-- 			parent="menu_action_view_reservations" sequence="4" /> -->
-		
-<!--
-		<menuitem id="menu_action_openstock_view_reservation_a_revalider"
-			action="action_openstock_view_reservation_a_revalider" name="Réservations A re-vérifier"
-			parent="menu_action_view_reservations" sequence="4" />
-			
-		<menuitem id="menu_action_openstock_view_reservation_a_remplir"
-			action="action_openstock_view_reservation_a_remplir" name="Réservations en Brouillon"
-			parent="menu_action_view_reservations" sequence="3" />
-		
-		<menuitem id="menu_action_openstock_view_reservation_confirmed"
-			action="action_openstock_view_reservation_confirmed" name="Réservations Confirmées"
-			parent="menu_action_view_reservations" sequence="6" />
-
-		<menuitem id="menu_action_openstock_view_reservation_in_use"
-			action="action_openstock_view_reservation_in_use" name="Réservations En cours d'utilisation"
-			parent="menu_action_view_reservations" sequence="7" />
-
-		<menuitem id="menu_action_openstock_view_reservation_done"
-			action="action_openstock_view_reservation_done" name="Réservations Terminées"
-			parent="menu_action_view_reservations" sequence="8" />
-
-		<menuitem id="menu_action_openstock_view_reservation_cancel"
-			action="action_openstock_view_reservation_cancel" name="Réservations Annulées"
-			parent="menu_action_view_reservations" sequence="9" /> -->
-
 		<record model="ir.ui.menu" id="hotel.hotel_management_menu">
 		    <field name="groups_id" eval="[(6,0,[ref('openbase.group_view_all_menus')])]"/>
 		</record>

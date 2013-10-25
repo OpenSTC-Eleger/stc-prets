@@ -770,7 +770,7 @@ msgstr "Inconnu"
 msgid "Nos Emprunts externes à retourner"
 msgstr "Nos Emprunts externes à retourner"
 
-#. module: openbase
+#. module: openresa
 #: model:ir.ui.menu,name:base.menu_main_openstock
 msgid "OpenResa"
 msgstr "OpenResa"
