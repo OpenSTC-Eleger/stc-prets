@@ -150,12 +150,13 @@
 					    </group>
 					</group>
 					<field name="reservation_ids" colspan="4" nolabel="1">
-					    <tree string="Generated Reservations">
+					    <tree string="Generated Reservations" colors="red:all_dispo==False;grey:state=='cancle'">
 					        <field name="reservation_no"/>
 					        <field name="name"/>
 					        <field name="checkin"/>
 					        <field name="checkout"/>
 					        <field name="state"/>
+					        <field name="all_dispo"/>
 					    </tree>
 					</field>
 					<button name="generate_reservations" type="object" string="Generate reservations"
