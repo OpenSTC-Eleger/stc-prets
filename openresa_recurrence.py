@@ -36,6 +36,7 @@ class openresa_reservation_recurrence(osv.osv):
     TYPE_RECUR = [('daily','Daily'),('weekly','Weekly'),('monthly','Monthly')]
     
     _columns = {
+        'recurrence_nb':fields.char('Number', required=True, size=16),
         'template_id':fields.many2one('hotel.reservation','Template', required=True),
         'name':fields.related('template_id','name', string='Name', type='char',store=True),
         'reservation_ids':fields.one2many('hotel.reservation','recurrence_id','Generated reservations'),
@@ -61,6 +62,7 @@ class openresa_reservation_recurrence(osv.osv):
         'recur_periodicity':lambda *a: 1,
         'recur_type':lambda *a: 'daily',
         'recur_occurrence_nb':lambda *a: 1,
+        'recurrence_nb':lambda self,cr,uid,context={}:self.pool.get("ir.sequence").next_by_code(cr, uid, 'recur.number',context=context),
         }
     
     

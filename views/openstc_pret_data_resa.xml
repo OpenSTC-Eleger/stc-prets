@@ -28,10 +28,23 @@
         <record id="sequence_resa_number" model="ir.sequence">
             <field name="name">Numéro de Réservation</field>
             <field name="code">resa.number</field>
-            <field name="prefix">R-%(year)s-%(month)s-</field>
+            <field name="prefix">R-%(year)s-</field>
+            <field name="padding" eval="4"/>
+        </record>
+
+	    <record id="sequence_recur_number_type" model="ir.sequence.type">
+            <field name="name">Type de Numéro de Récurrence</field>
+            <field name="code">recur.number</field>
+        </record>
+        <record id="sequence_recur_number" model="ir.sequence">
+            <field name="name">Numéro de Récurrence</field>
+            <field name="code">recur.number</field>
+            <field name="prefix">REC-%(year)s-</field>
             <field name="padding" eval="3"/>
         </record>
 
+                
+        
 	<!-- Data for Reservation uom -->
 	<record id="openstc_pret_uom_categ_resa" model="product.uom.categ">
 	    <field name="name">Temporel</field>

@@ -106,7 +106,8 @@
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
 			    <tree>
-			        <field name="template_id"/>
+			        <field name="recurrence_nb"/>
+			        <field name="name"/>
 			        <field name="recur_type"/>
 			    </tree>
 	 		</field>
@@ -119,6 +120,7 @@
 			<field name="arch" type="xml">
 			    <form>
 					<group colspan="2" col="4" string="General setting">
+					    <field name="recurrence_nb"/>
 						<field name="template_id"/>
 						<field name="date_start" readonly="1"/>
 					</group>
