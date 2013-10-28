@@ -20,9 +20,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import openstc_pret_resa
+import openresa
 import openresa_recurrence
-import openstc_pret_checkout
+import openresa_checkout
 import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

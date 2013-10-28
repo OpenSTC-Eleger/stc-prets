@@ -22,16 +22,16 @@
     """,
     "data": [
         'security/ir.model.access.csv',
-        'views/openstc_pret_data_resa.xml',
+        'views/openresa_data.xml',
         
-        "wizard/openstc_pret_view_wizard.xml",
+        "wizard/openresa_view_wizard.xml",
         
-        "views/openstc_pret_checkout_view.xml",
-        "views/openstc_pret_view_resa.xml",
-        'views/openstc_pret_menus_view.xml',
+        "views/openresa_checkout_view.xml",
+        "views/openresa_view.xml",
+        'views/openresa_menus_view.xml',
         
 
-        "workflow/openstc_pret_workflow.xml",
+        "workflow/openresa_workflow.xml",
         'workflow/purchase_workflow.xml',
 
         "test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
