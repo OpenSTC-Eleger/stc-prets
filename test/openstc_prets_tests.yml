@@ -157,7 +157,7 @@
   !record {model: hotel.reservation, id: openstc_prets_tests_resa2, forcecreate: true, view: False}:
     name: Reservation 2
     checkin: "2013-06-01 08:00:00"
-    checkout: "2013-06-02 10:00:00"
+    checkout: "2013-06-02 08:00:00"
     site_id: openstc_prets_tests_site1
     openstc_partner_id: openstc_prets_tests_partner2
     partner_id: openstc_prets_tests_partner2
@@ -176,6 +176,7 @@
     reserve_product: openstc_prets_tests_mat01
     line_id: openstc_prets_tests_resa1
     qte_reserves: 10.0
+    uom_qty: 1.0
 -
   resa 1 mat2 on qty 3.0
 -
@@ -183,6 +184,7 @@
     reserve_product: openstc_prets_tests_mat02
     line_id: openstc_prets_tests_resa1
     qte_reserves: 3.0
+    uom_qty: 1.0
 -
   resa 2 mat 1 on qty 25.0
 -
@@ -190,6 +192,7 @@
     reserve_product: openstc_prets_tests_mat01
     line_id: openstc_prets_tests_resa2
     qte_reserves: 25.0
+    uom_qty: 1.0
 -
   resa 2 mat 2 on qty 2.0
 -
@@ -197,7 +200,7 @@
     reserve_product: openstc_prets_tests_mat02
     line_id: openstc_prets_tests_resa2
     qte_reserves: 2.0
-
+    uom_qty: 1.0
 -
   test qte dispo without any other resa on same dates -->
 -    

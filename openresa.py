@@ -115,8 +115,9 @@ product_product()
 #this object is fully implemented in openresa_recurrence.py file
 class openresa_reservation_recurrence(osv.osv):
     _name = 'openresa.reservation.recurrence'
-    
+    _inherits = {'hotel.reservation':'template_id'}
     _columns = {
+            'template_id':fields.many2one('hotel.reservation','Template', required=True, ondelete='cascade')
         }
     
 openresa_reservation_recurrence()
@@ -173,11 +174,26 @@ class hotel_reservation_line(osv.osv):
                 ret.update({line.id:{'dispo':line.qte_dispo >= line.qte_reserves}})
         return ret
 
+    #param record: browse_record hotel.reservation.line
+    def get_prod_price(self, cr, uid, product_id, uom_qty, partner_id, pricelist_id=False, context=None):
+        pricelist_obj = self.pool.get("product.pricelist")
+        if not pricelist_id:
+            pricelist_id = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_product_pricelist.id
+        res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], [(product_id,uom_qty,partner_id)], context=None)
+        return res and res[product_id][pricelist_id] or False
+
     def _get_amount(self, cr, uid, ids, name, args, context=None):
-        ret = {}.fromkeys(ids, 0.0)
+        ret = {}.fromkeys(ids, {'prix_unitaire':0.0, 'amount':0.0})
         for line in self.browse(cr, uid, ids, context):
-            amount = line.prix_unitaire * line.uom_qty * line.qte_reserves
-            ret[line.id] = amount
+            pricelist_id = line.line_id.pricelist_id and line.line_id.pricelist_id.id or line.line_id.partner_id.property_product_pricelist.id 
+            unit_price = self.get_prod_price(cr, uid, line.reserve_product.id,
+                                          line.uom_qty,
+                                          line.line_id.partner_id.id, 
+                                          pricelist_id,
+                                          context)
+            amount = unit_price * line.uom_qty
+            ret.update({line.id:{'prix_unitaire':unit_price,
+                                 'amount':amount}})
             #TOCHECK: is there any taxe when collectivity invoice people ?
         return ret
 
@@ -261,29 +277,17 @@ class hotel_reservation_line(osv.osv):
 
         return conflicting_lines
 
-#    def _calculate_lines(self, cr, uid, stock_move_ids, context=None):
-#        stocks = self.pool.get('stock.move').browse(cr, uid, stock_move_ids, context=context)
-#        product_ids = [stock.product_id.id for stock in stocks if stock.product_id]
-#        return self.search(cr,uid,[('reserve_product','in', product_ids)])
-#
-#    def _calculate_resa(self, cr, uid, reservation_ids, context=None):
-#        reservations = self.pool.get('hotel.reservation').browse(cr, uid, reservation_ids, context=context)
-#        res = set([])
-#        for resa in reservations :
-#            res.update(resa.reservation_line)
-#        return res
-
     _columns = {
         'categ_id': fields.many2one('product.category','Type d\'article'),
         "reserve_product": fields.many2one("product.product", "Article réservé", domain=[('openstc_reservable','=',True)]),
         "qte_reserves":fields.float("Qté désirée", digits=(3,2)),
-        "prix_unitaire": fields.float("Prix Unitaire", digit=(4,2)),
+        "prix_unitaire": fields.function(_get_amount, multi='resa_amount', method=True, type='float', string="Prix Unitaire", store=False),
         'dispo':fields.function(_calc_qte_dispo, string="Disponible", method=True, multi="dispo", type='boolean'),
         "infos":fields.char("Informations supplémentaires",size=256),
         "name":fields.char('Libellé', size=128),
         'state':fields.related('line_id','state', type='selection',string='Etat Résa', selection=_get_state_line, readonly=True),
         'uom_qty':fields.float('Qté de Référence pour Facturation',digit=(2,1)),
-        'amount':fields.function(_get_amount, string="Prix (si tarifé)", type="float", method=True),
+        'amount':fields.function(_get_amount, multi='resa_amount', string="Prix (si tarifé)", type="float", method=True, store=False),
         'qte_dispo':fields.function(_calc_qte_dispo, method=True, string='Qté Dispo', multi="dispo", type='float'),
         'action':fields.selection(_AVAILABLE_ACTION_VALUES, 'Action'),
         'state':fields.related('line_id','state', type='char'),
@@ -354,28 +358,27 @@ class hotel_reservation(osv.osv):
 
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'resa.number',context)
-        user = self.pool.get("res.users").browse(cr, uid, uid)
-        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
-        service = False
-        if 'service_id' in context:
-            #get service_id in context, it takes priority to any other service
-            service = context['service_id']
-            service = self.pool.get("openstc.service").browse(cr, uid, service)
-        else:
-            #get first service_ids of user if the user is a manager
-            for group in user.groups_id:
-                if prog.search(group.name):
-                    if isinstance(user.service_ids, list) and not service:
-                        service = user.service_ids and user.service_ids[0] or False
-
-        if service:
-            #If sequence is configured to have service info, we write it
-            seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
+#        user = self.pool.get("res.users").browse(cr, uid, uid)
+#        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
+#        service = False
+#        if 'service_id' in context:
+#            #get service_id in context, it takes priority to any other service
+#            service = context['service_id']
+#            service = self.pool.get("openstc.service").browse(cr, uid, service)
+#        else:
+#            #get first service_ids of user if the user is a manager
+#            for group in user.groups_id:
+#                if prog.search(group.name):
+#                    if isinstance(user.service_ids, list) and not service:
+#                        service = user.service_ids and user.service_ids[0] or False
+#
+#        if service:
+#            #If sequence is configured to have service info, we write it
+#            seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
 
         return seq
     #@tocheck: useless ?
     def _calc_in_option(self, cr, uid, ids, name, args, context=None):
-        print("start calc_in_option method")
         ret = {}
         #fixes : calc only for resa, avoiding inheritance bugs
         for resa in self.pool.get("hotel.reservation").browse(cr, uid, ids, context):
@@ -385,8 +388,6 @@ class hotel_reservation(osv.osv):
             for line in resa.reservation_line:
                 #Vérif si résa dans les délais, sinon, in_option est cochée
                 d = timedelta(days=int(line.reserve_product.sale_delay and line.reserve_product.sale_delay or 0))
-                print("now :"+str(date_crea))
-                print("checkin :" + str(checkin))
                 #Si l'un des produits est hors délai
                 if date_crea + d > checkin:
                     if line.reserve_product.bloquant:
@@ -425,7 +426,6 @@ class hotel_reservation(osv.osv):
                                             garantir la livraison aux dates indiquées")),
                 'name':fields.char('Nom Manifestation', size=128, required=True),
                 'partner_mail':fields.char('Email Demandeur', size=128, required=False),
-                'is_recur':fields.boolean('Issue d\'une Récurrence', readonly=True),
                 'site_id':fields.many2one('openstc.site','Site (Lieu)'),
                 'prod_id':fields.many2one('product.product','Ressource'),
                 'openstc_partner_id':fields.many2one('res.partner','Demandeur', help="Personne demandant la réservation."),
@@ -434,15 +434,15 @@ class hotel_reservation(osv.osv):
                                                help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
                 'all_dispo':fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
                 'date_choices':fields.one2many('openresa.reservation.choice','reservation_id','Choices of dates'),
-                'recurrence_id':fields.many2one('openresa.reservation.recurrence','Recurrence model')
+                'recurrence_id':fields.many2one('openresa.reservation.recurrence','From recurrence'),
+                'is_template':fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
         }
     _defaults = {
                  'in_option': lambda *a :0,
                  'state': lambda *a: 'remplir',
-                 'is_recur': lambda *a: 0,
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
         }
-    _order = "checkin, in_option"
+    _order = "checkin"
 
     def _check_dates(self, cr, uid, ids, context=None):
         for resa in self.browse(cr, uid, ids, context):
@@ -452,12 +452,16 @@ class hotel_reservation(osv.osv):
 
     _constraints = [(_check_dates, _("Your checkin is greater than your checkout, please modify them"), ['checkin','checkout'])]
 
+    def format_vals(self, cr, uid, checkin, checkout, context=None):
+        def force_seconds_date(vals):
+            if vals and len(vals) > 16:
+                vals = vals[:16] + ':00'
+        return vals
+        checkin = force_seconds_date(checkin)
+        checkout = force_seconds_date(checkout)
+        return True
 
     def create(self, cr, uid, vals, context=None):
-        #Si on vient de créer une nouvelle réservation et qu'on veut la sauvegarder (cas où l'on appuie sur
-        #"vérifier disponibilités" juste après la création (openERP force la sauvegarde)
-        #Dans ce cas, on mets des valeurs par défauts pour les champs obligatoires
-        #print(vals)
         if not 'state' in vals or vals['state'] == 'remplir':
             vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
         if 'checkin' in vals:
@@ -469,7 +473,6 @@ class hotel_reservation(osv.osv):
         return super(hotel_reservation, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
-        #if dates are modified, we uncheck all dispo to force user to re check all lines
         if context == None:
             context = {}
         if 'checkin' in vals:
@@ -479,8 +482,6 @@ class hotel_reservation(osv.osv):
             if len(vals['checkout']) >10:
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
         res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
-        #if 'checkin' in vals or 'checkout' in vals:
-        #    self.trigger_reserv_modified(cr, uid, ids, context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -492,28 +493,15 @@ class hotel_reservation(osv.osv):
         self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
         return super(hotel_reservation, self).unlink(cr, uid, ids, context)
 
-    def onchange_in_option(self, cr, uid, ids, in_option=False, state=False, context=None):
-        #TOREMOVE:
-        #if in_option:
-            #Affichage d'un wizard pour simuler une msgbox
-        if in_option:
-            return {'warning':{'title':'Réservation mise en option', 'message': '''Attention, Votre réservation est "hors délai"
-            , nous ne pouvons pas vous assurer que nous pourrons vous livrer.'''}}
-
-        return {'value':{}}
-
     def onchange_openstc_partner_id(self, cr, uid, ids, openstc_partner_id=False):
         return {'value':{'partner_id':openstc_partner_id}}
 
-        
     def onchange_partner_shipping_id(self, cr, uid, ids, partner_shipping_id=False):
         email = False
         if partner_shipping_id:
             email = self.pool.get("res.partner.address").browse(cr, uid, partner_shipping_id).email
         return {'value':{'partner_mail':email,'partner_invoice_id':partner_shipping_id,'partner_order_id':partner_shipping_id}}
     
-
-
     def confirmed_reservation(self,cr,uid,ids):
         for resa in self.browse(cr, uid, ids):
             if self.is_all_dispo(cr, uid, ids[0]):
@@ -522,27 +510,24 @@ class hotel_reservation(osv.osv):
 
                 attach_sale_id = []
                 #TOCHECK: as long as form is written by employee, we let him all latitude to manage prices
-                #Calcul montant de la résa
-                form_amount = 0.0
+                form_amount = resa.amount_total
                 line_ids = []
-                for line in resa.reservation_line:
-                    form_amount += line.prix_unitaire * line.qte_reserves
-                if form_amount > 0.0:
+                if form_amount > 0.0 and (not resa.recurrence_id or resa.is_template):
                 #Si montant > 0 euros, générer sale order puis dérouler wkf jusqu'a édition facture
                     folio_id = self.create_folio(cr, uid, ids)
                     wf_service = netsvc.LocalService('workflow')
                     wf_service.trg_validate(uid, 'hotel.folio', folio_id, 'order_confirm', cr)
                     folio = self.pool.get("hotel.folio").browse(cr, uid, folio_id)
+                    #move_ids store moves created by folio and reverse moves created to reset stock moves
                     move_ids = []
                     for picking in folio.order_id.picking_ids:
                         for move in picking.move_lines:
+                            move_ids.append(move.id)
                             #On crée les mvts stocks inverses pour éviter que les stocks soient impactés
-                            self.pool.get("stock.move").copy(cr, uid, move.id, {'picking_id':move.picking_id.id,'location_id':move.location_dest_id.id,'location_dest_id':move.location_id.id,'state':'draft'})
+                            new_move_id = self.pool.get("stock.move").copy(cr, uid, move.id, {'picking_id':move.picking_id.id,'location_id':move.location_dest_id.id,'location_dest_id':move.location_id.id,'state':'draft'})
+                            move_ids.append(new_move_id)
                     #On mets a jour le browse record pour qu'il intégre les nouveaux stock moves
                     folio.refresh()
-                    #On applique et on termine tous les stock moves (ceux créés de base par sale order et ceux créés ce dessus
-                    for picking in folio.order_id.picking_ids:
-                        move_ids.extend([x.id for x in picking.move_lines])
                     self.pool.get("stock.move").action_done(cr, uid, move_ids)
                     attach_sale_id.append(self.pool.get("sale.order")._create_report_attach(cr, uid, folio.order_id))
                 #send mail with optional attaches on products and the sale order pdf attached
@@ -562,11 +547,11 @@ class hotel_reservation(osv.osv):
         raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
         return False
 
-    #Mettre à l'état cancle et retirer les mouvements de stocks (supprimer mouvement ou faire le mouvement inverse ?)
     def cancelled_reservation(self, cr, uid, ids):
         self.write(cr, uid, ids, {'state':'cancle'})
         return True
-
+    
+    #@ToRemove
     def drafted_reservation(self, cr, uid, ids):
         for resa in self.browse(cr, uid, ids):
             if self.is_all_dispo(cr, uid, ids[0]):
@@ -595,31 +580,25 @@ class hotel_reservation(osv.osv):
         if isinstance(ids, list):
             ids = ids[0]
         resa = self.browse(cr, uid, ids)
-        if resa.is_recur:
-            #TODO: create invoice from scratch
-            pass
-        else:
-            wf_service = netsvc.LocalService("workflow")
-            inv_ids = []
-            attach_ids = []
-            #Create invoice from each folio
-            for folio in resa.folio_id:
-                wf_service.trg_validate(uid, 'hotel.folio', folio.id, 'manual_invoice', cr)
-            resa.refresh()
-            #Validate invoice(s) created
-            for folio in resa.folio_id:
-                for inv in folio.order_id.invoice_ids:
-                    print(inv.state)
-                    wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
-                    inv_ids.append(inv.id)
-            #send mail to notify user if opt_out not checked and if there is invoice(s)
-            if inv_ids:
-                #attaches = self.pool.get("ir.attachment").search(cr, uid, [('res_model_','=','account.invoice'),('res_id','in',inv_ids)])
-                cr.execute("select id from ir_attachment where res_model = %s and res_id in %s", ('account.invoice',tuple(inv_ids)))
-                attaches = [item[0] for item in cr.fetchall()]
-                if not isinstance(attaches, list):
-                    attaches = [attaches]
-                self.envoyer_mail(cr, uid, [ids], vals={'state':'done'}, attach_ids=attaches)
+        wf_service = netsvc.LocalService("workflow")
+        inv_ids = []
+        attach_ids = []
+        #Create invoice from each folio
+        for folio in resa.folio_id:
+            wf_service.trg_validate(uid, 'hotel.folio', folio.id, 'manual_invoice', cr)
+        resa.refresh()
+        #Validate invoice(s) created
+        for folio in resa.folio_id:
+            for inv in folio.order_id.invoice_ids:
+                print(inv.state)
+                wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
+                inv_ids.append(inv.id)
+        #send mail to notify user if opt_out not checked and if there is invoice(s)
+        if inv_ids:
+            #attaches = self.pool.get("ir.attachment").search(cr, uid, [('res_model_','=','account.invoice'),('res_id','in',inv_ids)])
+            cr.execute("select id from ir_attachment where res_model = %s and res_id in %s", ('account.invoice',tuple(inv_ids)))
+            attaches = [item[0] for item in cr.fetchall()]
+            self.envoyer_mail(cr, uid, [ids], vals={'state':'done'}, attach_ids=attaches)
         self.write(cr, uid, ids, {'state':'done'})
         return True
     def is_drafted(self, cr, uid, ids):
@@ -656,7 +635,9 @@ class hotel_reservation(osv.osv):
         return not self.need_confirm(cr, uid, ids)
 
     def ARemplir_reservation(self, cr, uid, ids):
-        #TOCHECK: Voir quand il faut mettre la résa à l'état "in_option" : Clique sur Suivant malgré non dispo ?
+        for resa in self.browse(cr, uid, ids):
+            if not resa.is_template and not resa.recurrence_id:
+                self.envoyer_mail(cr, uid, ids, {'state':'waiting'})
         self.write(cr, uid, ids, {'state':'remplir'})
         return True
 
@@ -726,14 +707,16 @@ class hotel_reservation(osv.osv):
                 return False
         return True
 
-    #polymorphism of _create_folio
+    """polymorphism of _create_folio
+    @note: manage both individual resa and recurrente resa (1 line = 1 occurrence)
+    """
     def create_folio(self, cr, uid, ids, context=None):
         for reservation in self.browse(cr,uid,ids):
             room_lines = []
             for line in reservation.reservation_line:
                 room_lines.append((0,0,{
-                   'checkin_date':reservation['checkin'],
-                   'checkout_date':reservation['checkout'],
+                   'checkin_date':reservation.checkin,
+                   'checkout_date':reservation.checkout,
                    'product_id':line.reserve_product.id,
                    'name':line.reserve_product.name_template,
                    'product_uom':line.reserve_product.uom_id.id,
@@ -741,6 +724,8 @@ class hotel_reservation(osv.osv):
                    'product_uom_qty':line.uom_qty
 
                    }))
+            #if resa is from on recurrence, copy all room_lines for each resa (update checkin and checkout for each one)
+            
             folio=self.pool.get('hotel.folio').create(cr,uid,{
                   'date_order':reservation.date_order,
                   'shop_id':reservation.shop_id.id,
@@ -753,67 +738,55 @@ class hotel_reservation(osv.osv):
                   'checkout_date': reservation.checkout,
                   'room_lines':room_lines,
            })
+            #@tocheck: useless ?
             cr.execute('insert into hotel_folio_reservation_rel (order_id,invoice_id) values (%s,%s)', (reservation.id, folio))
 
         return folio
 
-    #param record: browse_record hotel.reservation.line
-    def get_prod_price(self, cr, uid, ids, record, context=None):
-        pricelist_obj = self.pool.get("product.pricelist")
-        pricelist_id = record.line_id.pricelist_id.id
-        if not pricelist_id:
-            pricelist_id = record.line_id.partner_id.property_product_pricelist.id
-        res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], [(record.reserve_product.id,record.uom_qty,record.line_id.partner_id.id)], context=None)
-        return res and res[record.reserve_product.id][pricelist_id] or False
-        #return record.reserve_product.product_tmpl_id.standard_price
-
-    #param record: browse_record hotel.reservation.line
-    #if product uom refers to a resa time, we compute uom according to checkin, checkout
-    def get_prod_uom_qty(self, cr, uid, ids, record, length, context=None):
-        if re.search(u"([Tt]emporel|[Rr][ée]servation)", record.reserve_product.uom_id.category_id.name):
-            #uom factor refers to day, to have uom factor refering to hours, we have to adjust ratio
-            factor = 24.0 / record.reserve_product.uom_id.factor
-            res = length / factor
-            #round to direct superior int
-            #TODO: here we can apply an adjustment to decide the max decimal value before passing to superior int
-            if res > int(res):
-                res = int(res) + 1.0
+    """
+    @param prod_id: product_id for which to compute price (we get uom_id with it)
+    @param length: length of resa (in hours)
+    @return: uom_qty according to uom of product, to be used in invoicing of resa
+    @note: if product uom refers to a resa time (checked by categ_uom xml_id),
+    we adjust uom_qty according to uom of product (using product.uom method)
+    else, reurn day value by default
+    """
+    def get_prod_uom_qty(self, cr, uid, prod_id, length, context=None):
+        record = self.pool.get('product.product').browse(cr, uid, prod_id, context=context)
+        uom_obj = self.pool.get('product.uom')
+        data_obj = self.pool.get('ir.model.data')
+        #@TOCHECK: must i check user deletion of those uom (avoid crash if data are missing) ?
+        hour_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_hour')[1]
+        hour_uom = uom_obj.browse(cr, uid, hour_uom_id, context=context)
+        day_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_day')[1]
+        day_uom = uom_obj.browse(cr, uid, day_uom_id, context=context)
+        categ_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_categ_resa')[1]
+        #if product_uom is a resa time and different from day uom, adjust qty with this uom
+        res = length
+        if record.uom_id.category_id.id == categ_uom_id:
+            if record.uom_id.id <> hour_uom_id:
+                res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length,record.uom_id, context=context)
+        #else, compute qty for day uom by default
         else:
-            res = record.qte_reserves
+            res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length, day_uom, context=context)
         return res
 
-    def get_length_resa(self, cr, uid, id, context=None):
-        resa = self.browse(cr, uid, id, context)
-        checkin = strptime(resa.checkin, '%Y-%m-%d %H:%M:%S')
-        checkout = strptime(resa.checkout, '%Y-%m-%d %H:%M:%S')
+    def get_length_resa(self, cr, uid, checkin, checkout, context=None):
+        checkin = strptime(checkin, '%Y-%m-%d %H:%M:%S')
+        checkout = strptime(checkout, '%Y-%m-%d %H:%M:%S')
         length = (checkout - checkin).hours
         return length
-
-    def get_amount_resa(self, cr, uid, ids, context=None):
-        pricelist_obj = self.pool.get("product.pricelist")
-        for resa in self.browse(cr, uid, ids ,context):
-            pricelist = resa.partner_id.property_product_pricelist.id
-            amount = 0.0
-            values = []
-            for line in resa.reservation_line:
-                #TOREMOVE: for each prod, gets price from table price
-                #amount += self.get_prod_price(cr, uid, ids, line, context) * line.qte_reserves
-                #TODO: for each prod, gets price from pricelist
-                values.append((line.reserve_product.id,line.qte_reserves, resa.partner_id.id))
-            pricelist_obj = self.pool.get("product.pricelist")
-            res = pricelist_obj.price_get_multi(cr, uid, [pricelist], values, context=None)
-            #compute amount with price_unit got
-            for line in resa.reservation_line:
-                amount += res[line.reserve_product.id][pricelist]
-        return amount
 
     def compute_lines_price(self, cr, uid, ids, context=None):
         values = []
         #get lentgh resa in hours
         for resa in self.browse(cr, uid, ids, context):
-            length_resa = self.get_length_resa(cr, uid, resa.id, context=None)
-            values.extend([(1,line.id,{'prix_unitaire':self.get_prod_price(cr, uid, resa.id, line, context),
-                                       'uom_qty':self.get_prod_uom_qty(cr, uid, resa.id, line, length_resa, context)}) for line in resa.reservation_line])
+            partner_id = resa.partner_id.id
+            pricelist_id = resa.pricelist_id and resa.pricelist_id.id or resa.partner.property_product_pricelist.id
+            length_resa = self.get_length_resa(cr, uid, resa.checkin, resa.checkout, context=None)
+            for line in resa.reservation_line:
+                uom_qty = self.get_prod_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
+                values.append((1,line.id,{'uom_qty':uom_qty}))
             self.write(cr, uid, [resa.id], {'reservation_line':values}, context=context)
         return True
 
@@ -845,39 +818,48 @@ class hotel_reservation(osv.osv):
 
 
 
-    #Vals: Dict containing "to" (deprecated) and "state" in ("error","draft", "confirm") (required)
+    """
+    @param vals: Dict containing "to" (deprecated) and "state" in ("error","draft", "confirm") (required)
+    "state" is a shortcut to retrieve template_xml_id
+    @param attach_ids: optionnal parameter to manually add attaches to mail
+    @note: send mail according to 'state' value
+    """
     def envoyer_mail(self, cr, uid, ids, vals=None, attach_ids=[], context=None):
         #TODO: check if company wants to send email (info not(opt_out) in partner)
         #We keep only resa where partner have not opt_out checked
         resa_ids_notif = []
-        resa_ids_notif = [resa.id for resa in self.browse(cr, uid, ids) if not resa.partner_id.opt_out]
+        resa_ids_notif = [resa.id for resa in self.browse(cr, uid, ids) 
+                          if not resa.partner_id.opt_out 
+                          and (not resa.recurrence_id or resa.is_template)]
         if resa_ids_notif:
             email_obj = self.pool.get("email.template")
             email_tmpl_id = 0
             prod_attaches = {}
+            #first, retrieve template_id according to 'state' parameter
             if 'state' in vals.keys():
                 if vals['state'] == "error":
                     email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','annulée')])
+                elif vals['state'] == 'waiting':
+                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Attente')])
+                elif vals['state'] == 'done':
+                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Termin')])
                 elif vals['state'] == 'validated':
                     email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Valid%')])
                     #Search for product attaches to be added to email
                     prod_ids = []
                     for resa in self.browse(cr, uid, ids):
                         prod_ids.extend([line.reserve_product.id for line in resa.reservation_line])
-                    cr.execute("select id, res_id from ir_attachment where res_id in %s and res_model=%s order by res_id", (tuple(prod_ids), 'product.product'))
-                    #format sql return to concat attaches with each prod_id
-
-                    for item in cr.fetchall():
-                        prod_attaches.setdefault(item[1],[])
-                        prod_attaches[item[1]].append(item[0])
-                elif vals['state'] == 'waiting':
-                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Attente')])
-                elif vals['state'] == 'done':
-                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Termin')])
+                    if prod_ids:
+                        cr.execute("select id, res_id from ir_attachment where res_id in %s and res_model=%s order by res_id", (tuple(prod_ids), 'product.product'))
+                        #format sql return to concat attaches with each prod_id
+                        for item in cr.fetchall():
+                            prod_attaches.setdefault(item[1],[])
+                            prod_attaches[item[1]].append(item[0])
+                            
                 if email_tmpl_id:
                     if isinstance(email_tmpl_id, list):
                         email_tmpl_id = email_tmpl_id[0]
-                    #Envoi du mail proprement dit, email_tmpl_id définit quel mail sera envoyé
+                    #generate mail and send it with optional attaches
                     for resa in self.browse(cr, uid, resa_ids_notif):
                         #link attaches of each product
                         attach_values = []
@@ -1121,6 +1103,7 @@ class res_partner(osv.osv):
         values = [(item[0],item[1], partner_id)for item in prod_ids_and_qties]
         #get prices from pricelist_obj
         res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], values, context=context)
+        item_id = res.pop('item_id')
         #format return to be callable by xmlrpc (because dict with integer on keys raises exceptions)
         ret = {}
         for key,val in res.items():
