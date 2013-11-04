@@ -119,7 +119,7 @@ class openresa_reservation_recurrence(osv.osv):
     _columns = {
             'template_id':fields.many2one('hotel.reservation','Template', required=True, ondelete='cascade')
         }
-    
+
 openresa_reservation_recurrence()
 
 class hotel_reservation_line(osv.osv):
@@ -417,8 +417,25 @@ class hotel_reservation(osv.osv):
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         return ret
 
+    _actions = {
+        'resolve_conflict':lambda self,cr,uid,record, groups_code: True,
+    }
+
+    def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
+        #default value: empty string for each id
+        ret = {}.fromkeys(ids,'')
+        groups_code = []
+        groups_code = [group.code for group in self.pool.get("res.users").browse(cr, uid, uid, context=context).groups_id if group.code]
+
+        #evaluation of each _actions item, if test returns True, adds key to actions possible for this record
+        for record in self.browse(cr, uid, ids, context=context):
+            #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
+            ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
+        return ret
+
     _columns = {
                 'state': fields.selection(_get_state_values, 'Etat',readonly=True),
+                'create_date' : fields.datetime('Create Date', readonly=True),
                 'in_option':fields.function(_calc_in_option, string="En Option", selection=AVAILABLE_IN_OPTION_LIST, type="selection", method = True, store={'hotel.reservation':(get_resa_modified,['checkin','reservation_line'],10)},
                                             help=("Une réservation mise en option signifie que votre demande est prise en compte mais \
                                             dont on ne peut pas garantir la livraison à la date prévue.\
@@ -436,6 +453,7 @@ class hotel_reservation(osv.osv):
                 'date_choices':fields.one2many('openresa.reservation.choice','reservation_id','Choices of dates'),
                 'recurrence_id':fields.many2one('openresa.reservation.recurrence','From recurrence'),
                 'is_template':fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
+                'actions':fields.function(_get_actions, method=True, string="Actions possibles",type="char", store=False),
         }
     _defaults = {
                  'in_option': lambda *a :0,
@@ -501,7 +519,7 @@ class hotel_reservation(osv.osv):
         if partner_shipping_id:
             email = self.pool.get("res.partner.address").browse(cr, uid, partner_shipping_id).email
         return {'value':{'partner_mail':email,'partner_invoice_id':partner_shipping_id,'partner_order_id':partner_shipping_id}}
-    
+
     def confirmed_reservation(self,cr,uid,ids):
         for resa in self.browse(cr, uid, ids):
             if self.is_all_dispo(cr, uid, ids[0]):
@@ -887,9 +905,9 @@ class hotel_reservation(osv.osv):
         resa_ids = self.search(cr, uid, [('reservation_line.reserve_product.id','in',prod_ids),'|',
                                              '&',('checkin','>=',checkin),('checkin','<=',checkout),
                                              '&',('checkout','>=',checkin),('checkout','<=',checkout)],order='checkin',context=context)
-        
-        #i store all checkin - checkout in dates_limit, i order this list, 
-        #and then, i'll have all dates delimiting (checkin-checkout) checks of qty 
+
+        #i store all checkin - checkout in dates_limit, i order this list,
+        #and then, i'll have all dates delimiting (checkin-checkout) checks of qty
         dates_limit = []
         for resa in self.read(cr, uid, resa_ids, ['checkin','checkout']):
             if resa['checkin'] not in dates_limit:
@@ -902,7 +920,7 @@ class hotel_reservation(osv.osv):
         #for example: dates_limit=[date_a,date_b,date_c] => dates_check=[(date_a,date_b),(dateb,date_c)]
         for i in range(len(dates_limit) - 1):
             dates_check.append((dates_limit[i],dates_limit[i+1]))
-        #and i get prod_qty for each date_check, 
+        #and i get prod_qty for each date_check,
         #if, for one prod_id, qty is not sufficient, add date_check to the returned value
         ret = []
         for checkin,checkout in dates_check:
@@ -918,7 +936,7 @@ hotel_reservation()
 
 class openresa_reservation_choice(osv.osv):
     _name = "openresa.reservation.choice"
-    
+
     """
     @param ids: ids of record to compute value
     @return: if all lines are 'dispo' and without 'conflict', returns available
@@ -930,7 +948,7 @@ class openresa_reservation_choice(osv.osv):
         #by default, returns available
 
         return ret
-    
+
     _columns = {
         'checkin':fields.datetime('Checkin', required=True),
         'checkout':fields.datetime('Checkout', required=True),
@@ -942,7 +960,7 @@ class openresa_reservation_choice(osv.osv):
     _order = "sequence"
     _defaults = {
             'state':lambda *a: 'waiting',
-        }    
+        }
     #override create method to force seconds of dates to '00'
     def create(self, cr, uid, vals, context=None):
         if 'checkin' in vals:
@@ -952,8 +970,8 @@ class openresa_reservation_choice(osv.osv):
             if len(vals['checkout']) > 16:
                 vals['checkout'] = vals['checkout'][0:16] + ':00'
         return super(openstc_reservation_choice,self).create(cr, uid, vals, context=context)
-    
-    #override write method to force seconds of dates to '00'    
+
+    #override write method to force seconds of dates to '00'
     def write(self, cr, uid, ids, vals, context=None):
         if 'checkin' in vals:
             if len(vals['checkin']) > 16:
@@ -962,7 +980,7 @@ class openresa_reservation_choice(osv.osv):
             if len(vals['checkout']) > 16:
                 vals['checkout'] = vals['checkout'][0:16] + ':00'
         return super(openstc_reservation_choice, self).write(cr, uid, ids, vals, context=context)
-    
+
 openresa_reservation_choice()
 
 class product_category(osv.osv):
@@ -1086,10 +1104,10 @@ class account_invoice(osv.osv):
         return res
 
 account_invoice()
-    
+
 class res_partner(osv.osv):
     _inherit = "res.partner"
-    
+
     """
     @param prod_ids_and_qties: list of tuples containing each prod_id - qty to retrieve their prices
     @param pricelist_id: id of the pricelist to retrieve prices
@@ -1109,5 +1127,5 @@ class res_partner(osv.osv):
         for key,val in res.items():
             ret.update({str(key):val[pricelist_id]})
         return ret
-        
+
 res_partner()
