@@ -30,6 +30,7 @@ from dateutil import parser
 from dateutil import relativedelta
 import netsvc
 import pytz
+from tools.translate import _
 
 class openresa_reservation_recurrence(osv.osv):
     _inherit = 'openresa.reservation.recurrence'
@@ -172,7 +173,7 @@ class openresa_reservation_recurrence(osv.osv):
                 template_checkin = fields.datetime.context_timestamp(cr, uid, datetime.strptime(template['checkin'], '%Y-%m-%d %H:%M:%S'), context=context)
                 template_checkout = fields.datetime.context_timestamp(cr, uid, datetime.strptime(template['checkout'], '%Y-%m-%d %H:%M:%S'), context=context)
                 #get only timedelta.days value to retrieve checkout of each occurrences
-                duration_days = timedelta(days=(template_checkout - template_checkin).days)
+                duration_days = timedelta(template_checkout.day - template_checkin.day)
                 
                 #for each date, copy new reservation from template_id (which will populate one2many reservation_ids)
                 utc_timezone = pytz.timezone('UTC')
@@ -204,7 +205,7 @@ class openresa_reservation_recurrence(osv.osv):
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
             resa_count = 0
             for resa in recurrence.reservation_ids:
-                if resa.all_dispo and resa.state in ['remplir','wait_confirm']:
+                if resa.all_dispo and resa.state in ['remplir','draft']:
                     resa_count += 1
                     wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, 'confirm', cr)
             if resa_count > 0:

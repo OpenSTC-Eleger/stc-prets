@@ -40,15 +40,16 @@ class openresa_folio_report(report_sxw.rml_parse):
         categ_uom_id = data_obj.get_object_reference(self.cr, self.uid, 'openresa','openstc_pret_uom_categ_resa')[1]
         #for each resa, merge values of all there lines
         for line in order.order_line:
-            #default value if prod not yet found (subtotal is computed at the end
-            key = (line.product_id.id,line.product_uom_qty,line.product_uom.id,line.price_unit,line.discount)
-            ret.setdefault(key, {'prod':line.product_id.name,
-                                                 'uom_qty':int(line.product_uom_qty),
-                                                 'uom_name':line.product_uom.name if line.product_uom.category_id.id == categ_uom_id else day_uom.name,
-                                                 'unit_price':line.price_unit,
-                                                 'discount':line.discount,
-                                                 'qty':0})
-            ret[key]['qty'] += 1
+            if line.price_subtotal:
+                #default value if prod not yet found (subtotal is computed at the end
+                key = (line.product_id.id,line.product_uom_qty,line.product_uom.id,line.price_unit,line.discount)
+                ret.setdefault(key, {'prod':line.product_id.name,
+                                                     'uom_qty':int(line.product_uom_qty),
+                                                     'uom_name':line.product_uom.name if line.product_uom.category_id.id == categ_uom_id else day_uom.name,
+                                                     'unit_price':line.price_unit,
+                                                     'discount':line.discount,
+                                                     'qty':0})
+                ret[key]['qty'] += 1
                 
         #format data to be easily used by report and to compute subtotal
         ret2 = []

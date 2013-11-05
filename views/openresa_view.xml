@@ -161,8 +161,11 @@
 					        <field name="all_dispo"/>
 					    </tree>
 					</field>
+					<field name="state" widget="statusbar" statusbar_visible="remplir,confirm,done"/>
+					<newline/>
 					<button name="generate_reservations" type="object" string="Generate reservations"
-					    icon="gtk-execute"/>
+					    icon="gtk-execute" attrs="{'invisible':[('state','not in',['remplir','draft'])]}"/>
+					<button name="validate" type="object" string="Valider" attrs="{'invisible':[('state','not in',['remplir','draft'])]}"/>
 			    </form>
 	 		</field><!-- end tag of xml arch -->
 		</record>

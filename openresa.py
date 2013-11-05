@@ -532,7 +532,7 @@ class hotel_reservation(osv.osv):
                 line_ids = []
                 if form_amount > 0.0 and (not resa.recurrence_id or resa.is_template):
                 #Si montant > 0 euros, générer sale order puis dérouler wkf jusqu'a édition facture
-                    folio_id = self.create_folio(cr, uid, ids)
+                    folio_id = self.create_folio(cr, uid, [resa.id])
                     wf_service = netsvc.LocalService('workflow')
                     wf_service.trg_validate(uid, 'hotel.folio', folio_id, 'order_confirm', cr)
                     folio = self.pool.get("hotel.folio").browse(cr, uid, folio_id)
@@ -730,17 +730,31 @@ class hotel_reservation(osv.osv):
     """
     def create_folio(self, cr, uid, ids, context=None):
         for reservation in self.browse(cr,uid,ids):
+            #first, if it is a recurrence, get all occurrences to generate folio, else, keep only current resa
+            lines = []
+            #checkin and checkout are used to set the highest scale of dates of a recurrence
+            checkin = False
+            checkout = False
+            if reservation.recurrence_id:
+                for resa in reservation.recurrence_id.reservation_ids:
+                    lines.extend([line for line in resa.reservation_line if resa.all_dispo])
+                    #retrieve min and max date for all the recurrence
+                    checkin = resa.checkin if not checkin else min(resa.checkin, checkin)
+                    checkout = resa.checkout if not checkout else max(resa.checkout, checkout)
+            else: 
+                lines.extend(line for line in reservation.reservation_line)
+                checkin = reservation.checkin
+                checkout = reservation.checkout
             room_lines = []
-            for line in reservation.reservation_line:
+            for line in lines:
                 room_lines.append((0,0,{
-                   'checkin_date':reservation.checkin,
-                   'checkout_date':reservation.checkout,
+                   'checkin_date':line.line_id.checkin,
+                   'checkout_date':line.line_id.checkout,
                    'product_id':line.reserve_product.id,
-                   'name':line.reserve_product.name_template,
+                   'name':line.reserve_product.name,
                    'product_uom':line.reserve_product.uom_id.id,
                    'price_unit':line.prix_unitaire,
                    'product_uom_qty':line.uom_qty
-
                    }))
             #if resa is from on recurrence, copy all room_lines for each resa (update checkin and checkout for each one)
             
@@ -752,8 +766,8 @@ class hotel_reservation(osv.osv):
                   'partner_invoice_id':reservation.partner_invoice_id.id,
                   'partner_order_id':reservation.partner_order_id.id,
                   'partner_shipping_id':reservation.partner_shipping_id.id,
-                  'checkin_date': reservation.checkin,
-                  'checkout_date': reservation.checkout,
+                  'checkin_date': checkin,
+                  'checkout_date': checkout,
                   'room_lines':room_lines,
            })
             #@tocheck: useless ?
