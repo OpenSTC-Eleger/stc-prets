@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report auto="False" 
+            	id="openresa.folio_report" 
+            	model="hotel.folio"
+                name="openresa.folio.report" 
+                rml="openresa/report/openresa_folio_report.rml"
+                usage="default" 
+                string="Facturation"/>
+    </data>
+</openerp>

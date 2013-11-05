@@ -787,6 +787,7 @@ class hotel_reservation(osv.osv):
         #else, compute qty for day uom by default
         else:
             res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length, day_uom, context=context)
+        
         return res
 
     def get_length_resa(self, cr, uid, checkin, checkout, context=None):

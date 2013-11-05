@@ -29,11 +29,10 @@
         "views/openresa_checkout_view.xml",
         "views/openresa_view.xml",
         'views/openresa_menus_view.xml',
-        
+        'views/openresa_report.xml',
 
         "workflow/openresa_workflow.xml",
         'workflow/purchase_workflow.xml',
-
         "test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
         
         ],
