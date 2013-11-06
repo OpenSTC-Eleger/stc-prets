@@ -70,4 +70,16 @@ class openresa_folio_report(report_sxw.rml_parse):
 report_sxw.report_sxw('report.openresa.folio.report', 'hotel.folio',
       'addons/openresa/report/openresa_folio_report.rml', parser=openresa_folio_report)
 
+class openresa_booking_report(report_sxw.rml_parse):
+    
+    def __init__(self, cr, uid, name, context):
+        super(openresa_booking_report, self).__init__(cr, uid, name, context)
+        self.localcontext.update({
+            'time': time,
+            'datetime':datetime,
+        })
+
+report_sxw.report_sxw('report.openresa.booking.report', 'hotel.reservation',
+      'addons/openresa/report/openresa_booking_report.rml', parser=openresa_booking_report)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

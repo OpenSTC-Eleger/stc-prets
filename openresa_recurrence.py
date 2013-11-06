@@ -181,7 +181,7 @@ class openresa_reservation_recurrence(osv.osv):
                 for item in dates_check:
                     #compute all checkin-checkout converting dates from local_tz to UTC
                     checkin = item.replace(tzinfo=None)
-                    checkout = (checkin + duration_days).replace(hour=template_checkout.hour,tzinfo=None)
+                    checkout = (checkin + duration_days).replace(hour=template_checkout.hour, minute=template_checkout.minute,tzinfo=None)
                     checkin = str(local_timezone.localize(checkin).astimezone(utc_timezone))
                     checkout = str(local_timezone.localize(checkout).astimezone(utc_timezone))
                     resa = resa_obj.copy(cr, uid, template['id'],{'checkin':checkin,

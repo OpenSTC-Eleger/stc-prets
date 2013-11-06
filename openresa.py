@@ -352,31 +352,47 @@ class hotel_reservation(osv.osv):
     _name = "hotel.reservation"
     _inherit = "hotel.reservation"
     _description = "Réservations"
+    
+    """
+    @param record: browse_record of hotel.reservation for which to generate hotel.folio report
+    @return: id or attachment created for this record
+    @note: hotel.folio report is created on hotel.reservation because hotel.folio has not any form view for now
+    """
+    
+    def _create_report_folio_attach(self, cr, uid, record, context=None):
+        #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
+        ir_actions_report = self.pool.get('ir.actions.report.xml')
+        report_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openresa','folio_report')[1]
+        ret = False
+        if report_id:
+            report = ir_actions_report.browse(cr, uid, report_id,context=context)
+            report_service = 'report.' + report.report_name
+            service = netsvc.LocalService(report_service)
+            (result, format) = service.create(cr, uid, [folio.id for folio in record.folio_id], {'model': self._name}, context=context)
+            eval_context = {'time': time, 'object': record}
+            if not report.attachment or not eval(report.attachment, eval_context):
+                # no auto-saving of report as attachment, need to do it manually
+                result = base64.b64encode(result)
+                file_name = 'Facturation_' + record.reservation_no
+                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                file_name += ".pdf"
+                ir_attachment = self.pool.get('ir.attachment').create(cr, uid,
+                                                                      {'name': file_name,
+                                                                       'datas': result,
+                                                                       'datas_fname': file_name,
+                                                                       'res_model': self._name,
+                                                                       'res_id': record.id},
+                                                                      context=context)
+                ret = ir_attachment
+        return ret
 
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
 
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'resa.number',context)
-#        user = self.pool.get("res.users").browse(cr, uid, uid)
-#        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
-#        service = False
-#        if 'service_id' in context:
-#            #get service_id in context, it takes priority to any other service
-#            service = context['service_id']
-#            service = self.pool.get("openstc.service").browse(cr, uid, service)
-#        else:
-#            #get first service_ids of user if the user is a manager
-#            for group in user.groups_id:
-#                if prog.search(group.name):
-#                    if isinstance(user.service_ids, list) and not service:
-#                        service = user.service_ids and user.service_ids[0] or False
-#
-#        if service:
-#            #If sequence is configured to have service info, we write it
-#            seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
-
         return seq
+    
     #@tocheck: useless ?
     def _calc_in_option(self, cr, uid, ids, name, args, context=None):
         ret = {}
@@ -544,10 +560,9 @@ class hotel_reservation(osv.osv):
                             #On crée les mvts stocks inverses pour éviter que les stocks soient impactés
                             new_move_id = self.pool.get("stock.move").copy(cr, uid, move.id, {'picking_id':move.picking_id.id,'location_id':move.location_dest_id.id,'location_dest_id':move.location_id.id,'state':'draft'})
                             move_ids.append(new_move_id)
-                    #On mets a jour le browse record pour qu'il intégre les nouveaux stock moves
-                    folio.refresh()
+                    
                     self.pool.get("stock.move").action_done(cr, uid, move_ids)
-                    attach_sale_id.append(self.pool.get("sale.order")._create_report_attach(cr, uid, folio.order_id))
+                    attach_sale_id.append(self._create_report_folio_attach(cr, uid, resa))
                 #send mail with optional attaches on products and the sale order pdf attached
                 self.envoyer_mail(cr, uid, ids, {'state':'validated'}, attach_ids=attach_sale_id)
                 self.write(cr, uid, ids, {'state':'confirm'})
@@ -590,10 +605,7 @@ class hotel_reservation(osv.osv):
     def redrafted_reservation(self, cr, uid, ids):
         self.write(cr, uid, ids, {'state':'remplir'})
         return True
-    def in_used_reservation(self, cr, uid, ids):
-        self.put_in_use_with_intervention(cr, uid, ids)
-        self.write(cr, uid, ids, {'state':'in_use'})
-        return True
+
     def done_reservation(self, cr, uid, ids):
         if isinstance(ids, list):
             ids = ids[0]
@@ -619,14 +631,7 @@ class hotel_reservation(osv.osv):
             self.envoyer_mail(cr, uid, [ids], vals={'state':'done'}, attach_ids=attaches)
         self.write(cr, uid, ids, {'state':'done'})
         return True
-    def is_drafted(self, cr, uid, ids):
-        for values in self.browse(cr, uid, ids):
-            if values.state <> 'draft':
-                return False
-        return True
 
-    def is_not_drafted(self, cr, uid, ids):
-        return not self.is_drafter
     #@todo: change openstc_manager for hotel.group_manager group
     def need_confirm(self, cr, uid, ids):
         reservations = self.browse(cr, uid, ids)

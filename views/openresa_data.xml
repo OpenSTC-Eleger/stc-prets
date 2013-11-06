@@ -78,6 +78,7 @@
 	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est validée</field>
+			<field name="report_template" ref="openresa.booking_report"/>
 			<field name="body_html"><![CDATA[
 	<h2>Message Automatique</h2>
 	
@@ -96,7 +97,7 @@
 	my_checkout_str = my_checkout_str.decode('utf-8')
 	%>
 	<li>Dates : ${my_checkin_str} - ${my_checkout_str}</li>
-	<li>Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}</li>
+	<li>Personne Responsable : ${object.partner_shipping_id.name or ''}</li>
 	<li><u>Ressources Réservées :</u> 
 	<ul>
 	% for line in object.reservation_line:

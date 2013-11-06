@@ -20,6 +20,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+import hotel
 import openresa
 import openresa_recurrence
 import openresa_checkout

@@ -123,6 +123,7 @@
 					<group colspan="2" col="4" string="General setting">
 						<field name="template_id"/>
 						<field name="date_start" readonly="1"/>
+						<field name="is_template"/>
 					</group>
 					
 					<group colspan="2" col="2" string="Recurrence setting">
