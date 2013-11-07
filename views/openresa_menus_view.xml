@@ -87,8 +87,14 @@
 			parent="base.menu_main_openstock" sequence="1" />
 		
 		<!-- MenuItems Gestion des Ressources -->
+		<menuitem id="menu_configuration_openresa"
+			name="Gestion des Réservations"
+			parent="openbase.menu_configuration"
+			sequence="3" />
+		
+		<!-- MenuItems Gestion des Ressources -->
 		<menuitem id="menu_action_view_fournitures" action="action_openstock_view_fournitures"
-			name="Catalogue des ressources" parent="openbase.menu_configuration"
+			name="Catalogue des ressources" parent="menu_configuration_openresa"
 			sequence="11" />
 
 <!-- 		<menuitem id="menu_action_view_emprunt_ext" name="Emprunter des Ressources à l'extérieur" -->
