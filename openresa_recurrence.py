@@ -53,7 +53,7 @@ class openresa_reservation_recurrence(osv.osv):
         'recur_month_relative_day':fields.selection(DAY_SELECTION, 'Day month'),
         'recur_type':fields.selection(TYPE_RECUR,'Type'),
         'date_start':fields.related('template_id','checkin', type="datetime", string='First occurrence date'),
-        'date_end':fields.date('Last occurrence to generate', required=False),
+        'date_end':fields.datetime('Last occurrence to generate', required=False),
         'recur_occurrence_nb':fields.integer('Nb of occurrences'),
         'date_confirm':fields.date('Date of confirm'),
         }
@@ -80,7 +80,8 @@ class openresa_reservation_recurrence(osv.osv):
         dates = []
         periodicity = recurrence.recur_periodicity
         date_start = fields.datetime.context_timestamp(cr, uid, datetime.strptime(recurrence.date_start, '%Y-%m-%d %H:%M:%S'),context=context)
-        date_end = fields.datetime.context_timestamp(cr, uid, datetime.strptime(recurrence.date_end, '%Y-%m-%d'),context=context) if recurrence.date_end else False
+        date_end = fields.datetime.context_timestamp(cr, uid, datetime.strptime(recurrence.date_end, '%Y-%m-%d %H:%M:%S'),context=context) if recurrence.date_end else False
+        
         switch_date = {
             'monday':relativedelta.MO,
             'tuesday':relativedelta.TU,
