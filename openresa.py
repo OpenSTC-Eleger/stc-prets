@@ -174,28 +174,22 @@ class hotel_reservation_line(osv.osv):
                 ret.update({line.id:{'dispo':line.qte_dispo >= line.qte_reserves}})
         return ret
 
-    #param record: browse_record hotel.reservation.line
-    def get_prod_price(self, cr, uid, product_id, uom_qty, partner_id, pricelist_id=False, context=None):
-        pricelist_obj = self.pool.get("product.pricelist")
-        if not pricelist_id:
-            pricelist_id = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_product_pricelist.id
-        res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], [(product_id,uom_qty,partner_id)], context=None)
-        return res and res[product_id][pricelist_id] or False
-
     def _get_amount(self, cr, uid, ids, name, args, context=None):
-        ret = {}.fromkeys(ids, {'prix_unitaire':0.0, 'amount':0.0})
+        ret = {}.fromkeys(ids, 0.0)
         for line in self.browse(cr, uid, ids, context):
-            pricelist_id = line.line_id.pricelist_id and line.line_id.pricelist_id.id or line.line_id.partner_id.property_product_pricelist.id 
-            unit_price = self.get_prod_price(cr, uid, line.reserve_product.id,
-                                          line.uom_qty,
-                                          line.line_id.partner_id.id, 
-                                          pricelist_id,
-                                          context)
-            amount = unit_price * line.uom_qty
-            ret.update({line.id:{'prix_unitaire':unit_price,
-                                 'amount':amount}})
+            amount = line.pricelist_amount * line.qte_reserves
+            ret.update({line.id:amount})
             #TOCHECK: is there any taxe when collectivity invoice people ?
         return ret
+
+    """
+    @note: fnct_inv function for mount field
+    @param value: new amount filled by user
+    @return: True, and update field 'prix_unitaire' to match 'value' param and 'uom_qty' field value
+    """
+    def _get_amount_fnct_inv(self, cr, uid, id, name, value, fnct_arg, context=None):
+        line = self.browse(cr, uid, id, context=context)
+        return line.write({'pricelist_amount':value},context=context)
 
     def _get_complete_name(self, cr, uid, ids, name, args, context=None):
         ret = {}
@@ -281,13 +275,14 @@ class hotel_reservation_line(osv.osv):
         'categ_id': fields.many2one('product.category','Type d\'article'),
         "reserve_product": fields.many2one("product.product", "Article réservé", domain=[('openstc_reservable','=',True)]),
         "qte_reserves":fields.float("Qté désirée", digits=(3,2)),
-        "prix_unitaire": fields.function(_get_amount, multi='resa_amount', method=True, type='float', string="Prix Unitaire", store=False),
+        "prix_unitaire": fields.float("Prix Unitaire", digits=(4,2)),
+        'pricelist_amount':fields.float('Price from pricelist'),
         'dispo':fields.function(_calc_qte_dispo, string="Disponible", method=True, multi="dispo", type='boolean'),
         "infos":fields.char("Informations supplémentaires",size=256),
         "name":fields.char('Libellé', size=128),
         'state':fields.related('line_id','state', type='selection',string='Etat Résa', selection=_get_state_line, readonly=True),
         'uom_qty':fields.float('Qté de Référence pour Facturation',digit=(2,1)),
-        'amount':fields.function(_get_amount, multi='resa_amount', string="Prix (si tarifé)", type="float", method=True, store=False),
+        'amount':fields.function(_get_amount, fnct_inv=_get_amount_fnct_inv, string="Prix (si tarifé)", type="float", method=True, store=False),
         'qte_dispo':fields.function(_calc_qte_dispo, method=True, string='Qté Dispo', multi="dispo", type='float'),
         'action':fields.selection(_AVAILABLE_ACTION_VALUES, 'Action'),
         'state':fields.related('line_id','state', type='char'),
@@ -758,8 +753,10 @@ class hotel_reservation(osv.osv):
                    'product_id':line.reserve_product.id,
                    'name':line.reserve_product.name,
                    'product_uom':line.reserve_product.uom_id.id,
-                   'price_unit':line.prix_unitaire,
-                   'product_uom_qty':line.uom_qty
+                   'product_uom_qty':line.qte_reserves,
+                   'product_uos':line.reserve_product.uos_id and line.reserve_product.uos_id.id or line.reserve_product.uom_id.id,
+                   'product_uos_qty':line.uom_qty,
+                   'price_unit':line.pricelist_amount,
                    }))
             #if resa is from on recurrence, copy all room_lines for each resa (update checkin and checkout for each one)
             
@@ -781,14 +778,14 @@ class hotel_reservation(osv.osv):
         return folio
 
     """
-    @param prod_id: product_id for which to compute price (we get uom_id with it)
+    @param prod_id: product_id from which to compute new uom
     @param length: length of resa (in hours)
-    @return: uom_qty according to uom of product, to be used in invoicing of resa
+    @return: new_uom_qty to apply for invoicing
     @note: if product uom refers to a resa time (checked by categ_uom xml_id),
-    we adjust uom_qty according to uom of product (using product.uom method)
-    else, reurn day value by default
+    we use it to perform compute
+    else, use uom_day to perform compute
     """
-    def get_prod_uom_qty(self, cr, uid, prod_id, length, context=None):
+    def get_uom_qty(self, cr, uid, prod_id, length, context=None):
         record = self.pool.get('product.product').browse(cr, uid, prod_id, context=context)
         uom_obj = self.pool.get('product.uom')
         data_obj = self.pool.get('ir.model.data')
@@ -798,7 +795,7 @@ class hotel_reservation(osv.osv):
         day_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_day')[1]
         day_uom = uom_obj.browse(cr, uid, day_uom_id, context=context)
         categ_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_categ_resa')[1]
-        #if product_uom is a resa time and different from day uom, adjust qty with this uom
+        #first, retrieve qty according to product_uom
         res = length
         if record.uom_id.category_id.id == categ_uom_id:
             if record.uom_id.id <> hour_uom_id:
@@ -806,7 +803,6 @@ class hotel_reservation(osv.osv):
         #else, compute qty for day uom by default
         else:
             res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length, day_uom, context=context)
-        
         return res
 
     def get_length_resa(self, cr, uid, checkin, checkout, context=None):
@@ -814,6 +810,15 @@ class hotel_reservation(osv.osv):
         checkout = strptime(checkout, '%Y-%m-%d %H:%M:%S')
         length = (checkout - checkin).hours
         return length
+    
+    
+    #param record: browse_record hotel.reservation.line
+    def get_prod_price(self, cr, uid, product_id, uom_qty, partner_id, pricelist_id=False, context=None):
+        pricelist_obj = self.pool.get("product.pricelist")
+        if not pricelist_id:
+            pricelist_id = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_product_pricelist.id
+        res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], [(product_id,uom_qty,partner_id)], context=None)
+        return res and res[product_id][pricelist_id] or False
 
     def compute_lines_price(self, cr, uid, ids, context=None):
         values = []
@@ -823,8 +828,13 @@ class hotel_reservation(osv.osv):
             pricelist_id = resa.pricelist_id and resa.pricelist_id.id or resa.partner.property_product_pricelist.id
             length_resa = self.get_length_resa(cr, uid, resa.checkin, resa.checkout, context=None)
             for line in resa.reservation_line:
-                uom_qty = self.get_prod_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
-                values.append((1,line.id,{'uom_qty':uom_qty}))
+                uom_qty = self.get_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
+                unit_price = self.get_prod_price(cr, uid, line.reserve_product.id,
+                                          uom_qty,
+                                          partner_id, 
+                                          pricelist_id,
+                                          context=context)
+                values.append((1,line.id,{'uom_qty':uom_qty,'prix_unitaire':unit_price,'pricelist_amount':uom_qty * unit_price}))
             self.write(cr, uid, [resa.id], {'reservation_line':values}, context=context)
         return True
 
@@ -857,7 +867,7 @@ class hotel_reservation(osv.osv):
 
 
     """
-    @param vals: Dict containing "to" (deprecated) and "state" in ("error","draft", "confirm") (required)
+    @param vals: Dict containing "to" (deprecated) and "state" in ("error","waiting", "validated","done") (required)
     "state" is a shortcut to retrieve template_xml_id
     @param attach_ids: optionnal parameter to manually add attaches to mail
     @note: send mail according to 'state' value
@@ -910,7 +920,7 @@ class hotel_reservation(osv.osv):
                         self.pool.get("mail.message").write(cr, uid, [mail_id], {'attachment_ids':attach_values})
                         self.pool.get("mail.message").send(cr, uid, [mail_id])
 
-        return
+        return True
 
     """
     @param prod_dict: [{prod_id:id,qty_desired:qty}] a dict mapping prod and corresponding qty desired to check

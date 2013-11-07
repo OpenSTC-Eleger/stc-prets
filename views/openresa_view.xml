@@ -219,9 +219,8 @@
 										<field name="qte_reserves" />
 										<field name="qte_dispo"/>
 										<field name="dispo" readonly="1"/>
-										<field name="uom_qty"/>
+										<field name="pricelist_amount"/>
 										<field name="amount"/>
-										<!-- <field name="uom_qty"/>  -->
 										<field name="infos"/>
 									</tree>
 								</field>
