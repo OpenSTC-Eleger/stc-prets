@@ -18,14 +18,14 @@
     * Gestion des disponibilités des articles
     * Gestion des états des lieux après utilisation et récapitulatif des détériorations d'un article
     * Recensemement des demandeurs de réservations
-    
+
     """,
     "data": [
         'security/ir.model.access.csv',
         'views/openresa_data.xml',
-        
+
         "wizard/openresa_view_wizard.xml",
-        
+
         "views/openresa_checkout_view.xml",
         "views/openresa_view.xml",
         'views/openresa_menus_view.xml',
@@ -33,8 +33,8 @@
 
         "workflow/openresa_workflow.xml",
         'workflow/purchase_workflow.xml',
-        "test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
-        
+        #"test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
+
         ],
     "js":['static/src/js/calendar_inherit.js'],
     "demo": [],
