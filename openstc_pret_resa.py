@@ -346,8 +346,10 @@ hotel_reservation_line()
 class hotel_reservation(osv.osv):
     AVAILABLE_IN_OPTION_LIST = [('no','Rien à Signaler'),('in_option','Réservation En Option'),('block','Réservation bloquée')]
     _name = "hotel.reservation"
+    _order = "state_num, create_date desc"
     _inherit = "hotel.reservation"
     _description = "Réservations"
+
 
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
@@ -404,6 +406,12 @@ class hotel_reservation(osv.osv):
     def _get_state_values(self, cr, uid, context=None):
         return self.return_state_values(cr, uid, context)
 
+    def _get_state_num(self, cr, uid, ids,  name, args, context=None):
+        res={}
+        for obj in self.browse(cr, uid, ids, context):
+            res[obj.id] = (obj.state=='remplir' and 1) or (obj.state=='draft' and 2) or (obj.state=='confirm' and 3) or (obj.state=='done' and 4) or 5
+        return res
+
     def _get_amount_total(self, cr, uid, ids, name, args, context=None):
         ret = {}
         for resa in self.browse(cr, uid, ids, context=None):
@@ -414,6 +422,69 @@ class hotel_reservation(osv.osv):
                     all_dispo = False
                 amount_total += line.amount
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
+        return ret
+
+    _actions = {
+        'resolve_conflict':lambda self,cr,uid,record, groups_code: True,
+    }
+
+#    def _get_resources_info(self, cr, uid, ids, name, args, context=None):
+#        ret = {}
+#        for resa in self.browse(cr, uid, ids, context=None):
+#            amount_total = 0.0
+#            all_dispo = True
+#            cpt = 0;
+#            for line in resa.reservation_line:
+#                resources += line.reserve_product.name
+#                stock_availibility_resources += line.reserve_product.name + ":" + line.qte_dispo + "En stock"
+#                if cpt!=resa.reservation_line.length-1 :
+#                    resources += ", "
+#                    stock_availibility_resources += ", "
+#                cpt+=1
+#            ret[resa.id] = {'resources':amount_total,'stock_availibility_resources':all_dispo}
+#        return ret
+
+    _field_resource_names = {'resource_names':'reservation_line'}
+    _field_resource_quantities = {'resource_quantities':'reservation_line'}
+
+    def __init__(self, pool, cr):
+        def _get_fields_resources_names(self, cr, uid, ids, name, args, context=None):
+            res = {}
+            name = name[0]
+            for obj in self.browse(cr, uid, ids, context=context):
+                res[obj.id] = {}
+                field_ids = obj[args[name]]
+                val = []
+                for item in field_ids:
+                    product = pool.get('product.product').browse(cr, uid, item.reserve_product.id, context=context)
+                    val.append([item.id,product.name_get()[0][1]])#,item.qte_dispo
+                res[obj.id].update({name:val})
+            return res
+
+        def _get_field_resource_quantities(self, cr, uid, ids, name, args, context=None):
+            res = {}
+            name = name[0]
+            for obj in self.browse(cr, uid, ids, context=context):
+                res[obj.id] = {}
+                field_ids = obj[args[name]]
+                val = []
+                for item in field_ids:
+                    product = pool.get('product.product').browse(cr, uid, item.reserve_product.id, context=context)
+                    tooltip = " souhaitée: " + str(item.qte_reserves)
+                    if item.dispo :
+                        tooltip += " ,dispo: " + str(item.qte_dispo)
+                    else :
+                        tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
+                    val.append([product.name_get()[0][1], tooltip])
+                res[obj.id].update({name:val})
+            return res
+
+        ret = super(hotel_reservation, self).__init__(pool,cr)
+        #add _field_names to fields definition of the model
+        #for f in self._fields_names.keys():
+            #force name of new field with '_names' suffix
+        self._columns.update({'resource_names':fields.function(_get_fields_resources_names, type='char',method=True, multi='field_resource_names',store=False, arg=self._field_resource_names)})
+        self._columns.update({'resource_quantities':fields.function(_get_field_resource_quantities, type='char',method=True, multi='field_resource_quantities',store=False, arg=self._field_resource_quantities)})
         return ret
 
     _actions = {
@@ -433,7 +504,9 @@ class hotel_reservation(osv.osv):
         return ret
 
     _columns = {
+                'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
                 'state': fields.selection(_get_state_values, 'Etat',readonly=True),
+                'state_num': fields.function(_get_state_num,string='Current state',type='integer', method=True, store={'hotel.reservation':(get_resa_modified,['state'],20)}),
                 'create_date' : fields.datetime('Create Date', readonly=True),
                 'in_option':fields.function(_calc_in_option, string="En Option", selection=AVAILABLE_IN_OPTION_LIST, type="selection", method = True, store={'hotel.reservation':(get_resa_modified,['checkin','reservation_line'],10)},
                                             help=("Une réservation mise en option signifie que votre demande est prise en compte mais \
@@ -453,6 +526,8 @@ class hotel_reservation(osv.osv):
                 'date_choices':fields.one2many('openresa.reservation.choice','reservation_id','Choices of dates'),
                 'recurrence_id':fields.many2one('openresa.reservation.recurrence','Recurrence model'),
                 'actions':fields.function(_get_actions, method=True, string="Actions possibles",type="char", store=False),
+                #'resources':fields.function(_get_resources_info, method=True, string="All resources for resa",type="char", store=False, multi="resources"),
+                #'stock_availibility_resources':fields.function(_get_resources_info, method=True, string="All stock availability resources for resa",type="char", store=False, multi="resources"),
         }
     _defaults = {
                  'in_option': lambda *a :0,
@@ -460,7 +535,7 @@ class hotel_reservation(osv.osv):
                  'is_recur': lambda *a: 0,
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
         }
-    _order = "checkin, in_option"
+    #_order = "checkin, in_option"
 
     def _check_dates(self, cr, uid, ids, context=None):
         for resa in self.browse(cr, uid, ids, context):

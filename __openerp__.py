@@ -18,24 +18,24 @@
     * Gestion des disponibilités des articles
     * Gestion des états des lieux après utilisation et récapitulatif des détériorations d'un article
     * Recensemement des demandeurs de réservations
-    
+
     """,
     "data": [
         'security/ir.model.access.csv',
         'views/openstc_pret_data_resa.xml',
-        
+
         "wizard/openstc_pret_view_wizard.xml",
-        
+
         "views/openstc_pret_checkout_view.xml",
         "views/openstc_pret_view_resa.xml",
         'views/openstc_pret_menus_view.xml',
-        
+
 
         "workflow/openstc_pret_workflow.xml",
         'workflow/purchase_workflow.xml',
 
-        "test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
-        
+        #"test/cr_commit.yml", "test/openresa_tests_data.xml","test/openstc_prets_tests.yml",
+
         ],
     "js":['static/src/js/calendar_inherit.js'],
     "demo": [],
