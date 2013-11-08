@@ -39,7 +39,7 @@ class openresa_folio_report(report_sxw.rml_parse):
         day_uom = self.pool.get('product.uom').browse(self.cr, self.uid, day_uom_id, context=self.localcontext)
         categ_uom_id = data_obj.get_object_reference(self.cr, self.uid, 'openresa','openstc_pret_uom_categ_resa')[1]
         #for each resa, merge values of all there lines
-        for line in order.order_line:
+        for line in order.room_lines:
             if line.price_subtotal:
                 #default value if prod not yet found (subtotal is computed at the end
                 key = (line.product_id.id,line.product_uom_qty,line.product_uom.id,line.price_unit,line.discount)
@@ -48,8 +48,11 @@ class openresa_folio_report(report_sxw.rml_parse):
                                                      'uom_name':line.product_uos.name,
                                                      'unit_price':line.price_subtotal,
                                                      'discount':line.discount,
+                                                     'description':line.product_id.description,
+                                                     'dates':'',
                                                      'qty':0})
                 #ret[key]['qty'] += int(line.product_uom_qty)
+                ret[key]['dates'] += '\n %s - %s' % (self.formatLang(line.checkin_date,date_time=True)[0:16],self.formatLang(line.checkout_date,date_time=True)[0:16])
                 ret[key]['qty'] += 1
                 
         #format data to be easily used by report and to compute subtotal
