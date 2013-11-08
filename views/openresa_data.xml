@@ -28,10 +28,23 @@
         <record id="sequence_resa_number" model="ir.sequence">
             <field name="name">Numéro de Réservation</field>
             <field name="code">resa.number</field>
-            <field name="prefix">R-%(year)s-%(month)s-</field>
+            <field name="prefix">R-%(year)s-</field>
+            <field name="padding" eval="4"/>
+        </record>
+
+	    <record id="sequence_recur_number_type" model="ir.sequence.type">
+            <field name="name">Type de Numéro de Récurrence</field>
+            <field name="code">recur.number</field>
+        </record>
+        <record id="sequence_recur_number" model="ir.sequence">
+            <field name="name">Numéro de Récurrence</field>
+            <field name="code">recur.number</field>
+            <field name="prefix">REC-%(year)s-</field>
             <field name="padding" eval="3"/>
         </record>
 
+                
+        
 	<!-- Data for Reservation uom -->
 	<record id="openstc_pret_uom_categ_resa" model="product.uom.categ">
 	    <field name="name">Temporel</field>
@@ -41,18 +54,22 @@
 	    <field name="name">Day (Reservation)</field>
 	    <field name="category_id" eval="openstc_pret_uom_categ_resa"/>
 	    <field name="factor">1.0</field>
+	    <field name="rounding">1.0</field>
 	</record>
 	<record id="openstc_pret_uom_half_day" model="product.uom">
 	    <field name="name">Half-Day (Reservation)</field>
 	    <field name="category_id" eval="openstc_pret_uom_categ_resa"/>
 		<field name="uom_type">smaller</field>
 		<field name="factor">2.0</field>
+	    <field name="rounding">1.0</field>
+	    
 	</record>
 	<record id="openstc_pret_uom_hour" model="product.uom">
 	    <field name="name">Hour (Reservation)</field>
 	    <field name="category_id" eval="openstc_pret_uom_categ_resa"/>
 	    <field name="uom_type">smaller</field>
 	    <field name="factor">24.0</field>
+	    <field name="rounding">1.0</field>
 	</record>
 	
 	    <record id="openstc_pret_email_template_resa_validee" model="email.template">
@@ -61,6 +78,7 @@
 	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est validée</field>
+			<field name="report_template" ref="openresa.booking_report"/>
 			<field name="body_html"><![CDATA[
 	<h2>Message Automatique</h2>
 	
@@ -71,15 +89,15 @@
 	<%
 	from datetime import datetime
 	import pytz
-	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
-	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
-	my_checkin_str = my_checkin_str.decode('utf-8')
-	my_checkout_str = my_checkout_str.decode('utf-8')
-	%>
-	<li>Dates : ${my_checkin_str} - ${my_checkout_str}</li>
-	<li>Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}</li>
+	resas = []
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
+	endif%>
+	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
 	<li><u>Ressources Réservées :</u> 
 	<ul>
 	% for line in object.reservation_line:
@@ -87,8 +105,21 @@
 	% endfor
 	</ul>
 	</li>
-	</ul>
-   
+	<li><u>Dates : </u></li>
+	<ul>
+	% for resa in resas:
+	<%
+	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkin_str = my_checkin_str.decode('utf-8')
+	my_checkout_str = my_checkout_str.decode('utf-8')
+	%>
+	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
+   % endfor
+   </ul>
+   </ul>
    % if object.folio_id:
    	<p>Votre Réservation fait l'objet d'une facturation, vous pouvez voir en pièce jointe le Bon de Commande associé A votre Réservation.<br/>
    	Une facture vous sera envoyée à la restitution des ressources réservées une fois votre Evénement terminé.</p>
@@ -104,40 +135,55 @@
    
 			    ]]></field>
 			<field name="body_text"><![CDATA[
-			    Message Automatique
-			    
-			    Votre Réservation a bien été enregistrée.
-			    Récapitulatif de votre Réservation :
-			    
-			    Libellé : ${object.name or ''}
-			    <%
-				from datetime import datetime
-				import pytz
-				my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-				my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-				my_checkin_str = my_checkin_str.decode('utf-8')
-				my_checkout_str = my_checkout_str.decode('utf-8')
-			   %>
-			    Dates : ${my_checkin_str} - ${my_checkout_str}
-			    Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}
-			    % for line in object.reservation_line:
-			    ${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
-			    % endfor
-			    
-			    
-			    % if object.folio_id:
-			    	Votre Réservation fait l'objet d'une facturation, vous pouvez voir en pièce jointe le Bon de Commande associé A votre Réservation.
-			    	Une facture vous sera envoyée à la restitution des ressources réservées une fois votre Evénement terminé.
-			    % endif
-			    
-			    Cordialement,
-			    
-			    ${object.shop_id.company_id.name or ''}
-			    
-			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
-		    ]]></field>
+			Message Automatique
+			
+			Votre Réservation a bien été enregistrée.  
+			Récapitulatif de votre Réservation : 
+			
+			Libellé : ${object.name or ''}
+			<%
+			from datetime import datetime
+			import pytz
+			resas = []
+			if object.recurrence_id:
+				for resa in object.recurrence_id.reservation_ids:
+					resas.append(resa)
+				endfor
+			else:
+				resas = [object]
+			endif%>
+			Personne Responsable : ${object.partner_shipping_id.name or ''}
+			Ressources Réservées : 
+			
+			% for line in object.reservation_line:
+			${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
+			% endfor
+			
+			Dates : 
+			
+			% for resa in resas:
+			<%
+			my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+			my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+			my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+			my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+			my_checkin_str = my_checkin_str.decode('utf-8')
+			my_checkout_str = my_checkout_str.decode('utf-8')
+			%>
+			du ${my_checkin_str} au ${my_checkout_str}
+		   % endfor
+		   
+		   % if object.folio_id:
+		   	Votre Réservation fait l'objet d'une facturation, vous pouvez voir en pièce jointe le Bon de Commande associé A votre Réservation.
+		   	Une facture vous sera envoyée à la restitution des ressources réservées une fois votre Evénement terminé.
+		   % endif
+		   
+		   Cordialement,
+		   
+		   ${object.shop_id.company_id.name or ''}
+		   		   
+		   Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
+	    ]]></field>
     </record>
 	    
 	<record id="openstc_pret_email_template_resa_en_attente" model="email.template">
@@ -150,31 +196,45 @@
 			    <h2>Message Automatique</h2>
 			    
 			    <p>Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. </p>
-			    <p>Récapitulatif de votre Réservation : </p>
-			    <ul>
-			    <li>Libellé : ${object.name or ''}</li>
+				<p>Récapitulatif de votre Réservation : </p>
+				<ul>
+				<li>Libellé : ${object.name or ''}</li>
 				<%
-				import pytz
 				from datetime import datetime
-				my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-				my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
+				import pytz
+				resas = []
+				if object.recurrence_id:
+					for resa in object.recurrence_id.reservation_ids:
+						resas.append(resa)
+					endfor
+				else:
+					resas = [object]
+				endif%>
+				<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
+				<li><u>Ressources Réservées :</u> 
+				<ul>
+				% for line in object.reservation_line:
+				<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
+				% endfor
+				</ul>
+				</li>
+				<li><u>Dates : </u></li>
+				<ul>
+				% for resa in resas:
+				<%
+				my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+				my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+				my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+				my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 				my_checkin_str = my_checkin_str.decode('utf-8')
 				my_checkout_str = my_checkout_str.decode('utf-8')
 				%>
-			    <li>Dates : ${my_checkin_str} - ${my_checkout_str}</li>
-			    <li>Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}</li>
-			    <li><u>Ressources Réservées :</u> 
-			    <ul>
-			    % for line in object.reservation_line:
-			    <li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
-			    % endfor
-			    </ul>
-			    </li>
-			    </ul>
+				<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
+				  % endfor
+			  </ul>
+			  </ul>
 			    <br />
-			    Toutefois, veuillez noter que, même si votre réservation n'est pas encore validée, les ressources qu'elle concerne vous sont mis de côté à partir de maintenant. 
+   			    Toutefois, veuillez noter que les ressources que vous avez demandé ne vous sont pas encore acquises pour les dates indiquées, un autre email vous sera envoyé pour vous confirmer votre réservation.  
 			    <br />
 			    <p>Cordialement,</p>
 			    <br />
@@ -189,31 +249,46 @@
 			    Message Automatique
 			    
 			    Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. 
-			    Récapitulatif de votre Réservation : 
-			    
-			    Libellé : ${object.name or ''}
-			   <%
-				import pytz
+				Récapitulatif de votre Réservation : 
+				
+				Libellé : ${object.name or ''}
+				<%
 				from datetime import datetime
-				my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-				my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
+				import pytz
+				resas = []
+				if object.recurrence_id:
+					for resa in object.recurrence_id.reservation_ids:
+						resas.append(resa)
+					endfor
+				else:
+					resas = [object]
+				endif%>
+				Personne Responsable : ${object.partner_shipping_id.name or ''}
+				Ressources Réservées : 
+				
+				% for line in object.reservation_line:
+				${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
+				% endfor
+				
+				Dates : 
+				% for resa in resas:
+				<%
+				my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+				my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+				my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+				my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 				my_checkin_str = my_checkin_str.decode('utf-8')
 				my_checkout_str = my_checkout_str.decode('utf-8')
-			    %>
-			    Dates : ${my_checkin_str} - ${my_checkout_str}
-			    Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}
-			    % for line in object.reservation_line:
-			    ${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
-			    % endfor
+				%>
+				du ${my_checkin_str} au ${my_checkout_str}
+				  % endfor
 			    
-			    Toutefois, veuillez noter que, même si votre réservation n'est pas encore validée, les ressources qu'elle concerne vous sont mis de côté à partir de maintenant. 
+   			    Toutefois, veuillez noter que les ressources que vous avez demandé ne vous sont pas encore acquises pour les dates indiquées, un autre email vous sera envoyé pour vous confirmer votre réservation.  
 			    
 			    Cordialement,
 			    
 			    ${object.shop_id.company_id.name or ''}
-			    
+			    			    
 			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
 		    ]]></field>
     </record>
@@ -241,15 +316,15 @@
 	<%
 	from datetime import datetime
 	import pytz
-	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-	my_checkin_str = my_checkin_str.decode('utf-8')
-	my_checkout_str = my_checkout_str.decode('utf-8')
-	%>
-	<li>Dates : ${my_checkin_str} - ${my_checkout_str}</li>
-	<li>Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}</li>
+	resas = []
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
+	endif%>
+	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
 	<li><u>Ressources Réservées :</u> 
 	<ul>
 	% for line in object.reservation_line:
@@ -257,7 +332,21 @@
 	% endfor
 	</ul>
 	</li>
-	</ul>
+	<li><u>Dates : </u></li>
+	<ul>
+	% for resa in resas:
+	<%
+	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkin_str = my_checkin_str.decode('utf-8')
+	my_checkout_str = my_checkout_str.decode('utf-8')
+	%>
+	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
+   % endfor
+   </ul>
+   </ul>
 	
 	Nous vous remercions d'avoir utilisé nos services de réservations en ligne.
 	
@@ -272,39 +361,62 @@
    
 			    ]]></field>
 			<field name="body_text"><![CDATA[
-			    Message Automatique
-			    
-			    ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}
-			    
-			    Votre Réservation de ressources est terminée.
-			    % if object.folio_id:
-				Ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.
-				% endif
-			    Récapitulatif de votre Réservation :
-			    
-			    Libellé : ${object.name or ''}
-			    <%
-				from datetime import datetime
-				import pytz
-				my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-				my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-				my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-				my_checkin_str = my_checkin_str.decode('utf-8')
-				my_checkout_str = my_checkout_str.decode('utf-8')
-				%>
-			    Dates : ${my_checkin_str} - ${my_checkout_str}
-			    Personne Responsable : ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}
-			    % for line in object.reservation_line:
-			    ${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
-			    % endfor
-			    
-			    Cordialement,
-			    
-			    ${object.shop_id.company_id.name or ''}
-			    
-			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
-		    ]]></field>
+	Message Automatique
+	
+	 ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''} 
+	
+	Votre Réservation de ressources est terminée
+	% if object.folio_id:
+	, ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.
+	% endif
+	
+	Récapitulatif de votre Réservation : 
+	
+	Libellé : ${object.name or ''}
+	<%
+	from datetime import datetime
+	import pytz
+	resas = []
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
+	endif%>
+	Personne Responsable : ${object.partner_shipping_id.name or ''}
+	Ressources Réservées : 
+	
+	% for line in object.reservation_line:
+	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
+	% endfor
+	
+	
+	Dates : 
+	
+	% for resa in resas:
+	<%
+	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkin_str = my_checkin_str.decode('utf-8')
+	my_checkout_str = my_checkout_str.decode('utf-8')
+	%>
+	du ${my_checkin_str} au ${my_checkout_str}
+   % endfor
+   
+   
+	
+	Nous vous remercions d'avoir utilisé nos services de réservations en ligne.
+	
+   
+   Cordialement,
+   
+   ${object.shop_id.company_id.name or ''}
+      
+   Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
+   ]]></field>
     </record>
 	
         <record id="openstc_pret_email_template_resa_cancelled" model="email.template">
@@ -315,19 +427,44 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été annulée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Message Automatique</h2>
+	<ul>
+	<p>Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :</p> 
+	<p><i>Saisir ici la raison de votre refus</i></p>
+	<p>Récapitulatif de votre Réservation refusée : </p>
 	<%
 	from datetime import datetime
 	import pytz
-	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
+	resas = []
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
+	endif%>
+	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
+	<li><u>Ressources Réservées :</u> 
+	<ul>
+	% for line in object.reservation_line:
+	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
+	% endfor
+	</ul>
+	</li>
+	<li><u>Dates : </u></li>
+	<ul>
+	% for resa in resas:
+	<%
+	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 	my_checkin_str = my_checkin_str.decode('utf-8')
 	my_checkout_str = my_checkout_str.decode('utf-8')
 	%>
-	
-	<p>Votre Réservation normalement prévue du ${my_checkin_str} au ${my_checkout_str} dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :</p> 
-	<p<i>Saisir ici la raison de votre refus</i></p>
+	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
+   % endfor
+   </ul>
+   </ul>
 	<br />
 	<p>Cordialement,</p>
 	<br />
@@ -341,24 +478,48 @@
 			<field name="body_text"><![CDATA[
 	Message Automatique
 	
+	Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante : 
+	Saisir ici la raison de votre refus
+	Récapitulatif de votre Réservation refusée : 
 	<%
 	from datetime import datetime
 	import pytz
-	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
-	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime("%x %Hh%M".encode('utf-8'))
+	resas = []
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
+	endif%>
+	Personne Responsable : ${object.partner_shipping_id.name or ''}
+	Ressources Réservées : 
+	
+	% for line in object.reservation_line:
+	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
+	% endfor
+	
+	
+	Dates : 
+	
+	% for resa in resas:
+	<%
+	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 	my_checkin_str = my_checkin_str.decode('utf-8')
 	my_checkout_str = my_checkout_str.decode('utf-8')
 	%>
-	
-	Votre Réservation normalement prévue du ${my_checkin_str} au ${my_checkout_str} dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante : 
-	<pSaisir ici la raison de votre refus
+	du ${my_checkin_str} au ${my_checkout_str}
+   % endfor
+   
+   
 	
 	Cordialement,
 	
 	${object.shop_id.company_id.name or ''}
-	
+		
 	Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
 		    ]]></field>
 		</record> 

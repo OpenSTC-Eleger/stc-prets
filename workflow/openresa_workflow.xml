@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    OpenSTC Interventions - Openerp Module to manage Cityhall technical department
+    Copyright (C) 2013 Siclic www.siclic.fr
+
+    This file is part of OpenSTC Interventions.
+
+    OpenSTC Interventions is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    OpenSTC Interventions is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with OpenSTC Interventions.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<openerp>
+	<data>
+		<!-- Modifs du workflow de hotel.reservation (ajout de fonctionnalités 
+			au workflow existant) -->
+		<record model="workflow.activity" id="act_cancel">
+			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
+			<field name="name">cancel</field>
+			<field name="kind">function</field>
+			<field name="flow_stop">True</field>
+			<field name="action">cancelled_reservation()</field>
+		</record>
+		
+		<record model="workflow.activity" id="hotel_reservation.act_draft">
+			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
+			<field name="flow_start" eval="False" />
+			<field name="name">draft</field>
+			<field name="kind">function</field>
+			<field name="action">drafted_reservation()</field>
+		</record>
+		
+		<record model="workflow.activity" id="act_waiting_confirm">
+			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
+			<field name="name">waiting confirm</field>
+			<field name="kind">function</field>
+			<field name="action">waiting_confirm()</field>
+		</record>
+
+		<record model="workflow.activity" id="hotel_reservation.act_done">
+			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
+			<field name="name">done</field>
+			<field name="flow_stop">True</field>
+			<field name="kind">function</field>
+			<field name="action">done_reservation()</field>
+		</record>
+		
+		<record model="workflow.activity" id="act_remplir">
+			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
+			<field name="name">remplir</field>
+			<field name="kind">function</field>
+			<field name="flow_start">True</field>
+			<field name="action">ARemplir_reservation()</field>
+		</record>
+		
+		<record model="workflow.transition" id="t002">
+			<field name="act_from" ref="act_remplir" />
+			<field name="act_to" ref="hotel_reservation.act_confirm" />
+			<field name="signal">confirm</field>
+			<field name="condition">not_need_confirm()</field>
+		</record>
+
+		<record model="workflow.transition" id="trans_openstc_pret_draft_waiting_confirm">
+			<field name="act_from" ref="act_remplir" />
+			<field name="act_to" ref="act_waiting_confirm" />
+			<field name="signal">confirm</field>
+			<field name="condition">need_confirm()</field>
+		</record>
+
+		<record model="workflow.transition" id="trans_openstc_pret_waiting_confirm_confirm">
+			<field name="act_from" ref="act_waiting_confirm" />
+			<field name="act_to" ref="hotel_reservation.act_confirm" />
+			<field name="signal">confirm</field>
+		</record>
+		
+		<record model="workflow.transition" id="trans_openstc_pret_in_use_done">
+			<field name="act_from" ref="hotel_reservation.act_confirm" />
+			<field name="act_to" ref="hotel_reservation.act_done" />
+			<field name="signal">done</field>
+		</record>
+		
+		<record model="workflow.transition" id="trans_openstc_pret_waiting_confirm_cancel">
+			<field name="act_from" ref="act_waiting_confirm" />
+			<field name="act_to" ref="act_cancel" />
+			<field name="signal">cancel</field>
+		</record>
+		
+		<record model="workflow.transition" id="t02">
+			<field name="act_from" ref="hotel_reservation.act_confirm" />
+			<field name="act_to" ref="act_cancel" />
+			<field name="signal">cancel</field>
+		</record>
+
+	</data>
+
+	
+				<!-- Override of existing workfows to disable auto mailing-->
+	
+
+	<data>
+		<record id="sale.act_wait_ship" model="workflow.activity">
+            <field name="action_id" ref=""/>
+        </record>
+	</data>
+
+	<data>
+		<record id="account.act_open" model="workflow.activity">
+            <field name="action_id" ref=""/>
+        </record>
+	</data>
+</openerp>

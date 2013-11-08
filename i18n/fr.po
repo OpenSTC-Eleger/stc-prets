@@ -966,9 +966,9 @@ msgid "Folio No"
 msgstr "Numéro Bon de Location"
 
 #. module: openresa
-#: model:product.uom,name:openstc.openstc_pret_uom_day
+#: model:product.uom,name:openresa.openstc_pret_uom_day
 msgid "Day (Reservation)"
-msgstr "Journée (Réservation)"
+msgstr "Journée(s)"
 
 #. module: openresa
 #: help:hotel.reservation,openstc_partner_id:0
@@ -1161,9 +1161,9 @@ msgid "modèle de mail pour résa annulée"
 msgstr "modèle de mail pour résa annulée"
 
 #. module: openresa
-#: model:product.uom,name:openstc.openstc_pret_uom_hour
+#: model:product.uom,name:openresa.openstc_pret_uom_hour
 msgid "Hour (Reservation)"
-msgstr "Heure (Réservation)"
+msgstr "Heure(s)"
 
 #. module: openresa
 #: field:hotel_reservation.line,action:0
@@ -1637,9 +1637,9 @@ msgid "Se fournir à l'extérieur"
 msgstr "Se fournir à l'extérieur"
 
 #. module: openresa
-#: model:product.uom,name:openstc.openstc_pret_uom_half_day
+#: model:product.uom,name:openresa.openstc_pret_uom_half_day
 msgid "Half-Day (Reservation)"
-msgstr "Demi-journée (Réservation)"
+msgstr "Demi-journée(s)"
 
 #. module: openresa
 #: model:email.template,body_html:openstc.openstc_pret_email_template_resa_done

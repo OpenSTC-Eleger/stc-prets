@@ -836,7 +836,7 @@ msgid "Folio No"
 msgstr ""
 
 #. module: openresa
-#: model:product.uom,name:openstc.openstc_pret_uom_day
+#: model:product.uom,name:openresa.openstc_pret_uom_day
 msgid "Day (Reservation)"
 msgstr ""
 
@@ -1031,7 +1031,7 @@ msgid "modèle de mail pour résa annulée"
 msgstr ""
 
 #. module: openresa
-#: model:product.uom,name:openstc.openstc_pret_uom_hour
+#: model:product.uom,name:openresa.openstc_pret_uom_hour
 msgid "Hour (Reservation)"
 msgstr ""
 
@@ -1321,7 +1321,7 @@ msgid "General Infos"
 msgstr ""
 
 #. module: openresa
-#: model:product.uom.categ,name:openstc.openstc_pret_uom_categ_resa
+#: model:product.uom.categ,name:openstc.openresa_pret_uom_categ_resa
 msgid "Temporel"
 msgstr ""
 
@@ -1435,7 +1435,7 @@ msgid "Se fournir à l'extérieur"
 msgstr ""
 
 #. module: openresa
-#: model:product.uom,name:openstc.openstc_pret_uom_half_day
+#: model:product.uom,name:openresa.openstc_pret_uom_half_day
 msgid "Half-Day (Reservation)"
 msgstr ""
 

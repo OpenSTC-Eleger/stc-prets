@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report auto="False" 
+            	id="openresa.folio_report" 
+            	model="hotel.folio"
+                name="openresa.folio.report" 
+                rml="openresa/report/openresa_folio_report.rml"
+                usage="default" 
+                string="Facturation"/>
+        
+        <report auto="False" 
+            	id="openresa.booking_report"
+            	model="hotel.reservation"
+                name="openresa.booking.report"
+                rml="openresa/report/openresa_booking_report.rml"
+                usage="default" 
+				attachment="('Contrat_'+(object.reservation_no or '').replace('-','_')+'.pdf')"
+                string="Contrat"/>
+    </data>
+</openerp>

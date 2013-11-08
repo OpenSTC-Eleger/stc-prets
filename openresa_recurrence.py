@@ -28,6 +28,9 @@ import calendar
 from dateutil import rrule
 from dateutil import parser
 from dateutil import relativedelta
+import netsvc
+import pytz
+from tools.translate import _
 
 class openresa_reservation_recurrence(osv.osv):
     _inherit = 'openresa.reservation.recurrence'
@@ -36,8 +39,6 @@ class openresa_reservation_recurrence(osv.osv):
     TYPE_RECUR = [('daily','Daily'),('weekly','Weekly'),('monthly','Monthly')]
     
     _columns = {
-        'template_id':fields.many2one('hotel.reservation','Template', required=True),
-        'name':fields.related('template_id','name', string='Name', type='char',store=True),
         'reservation_ids':fields.one2many('hotel.reservation','recurrence_id','Generated reservations'),
         'recur_periodicity':fields.integer('Periodicity'),
         'recur_week_monday':fields.boolean('Mon'),
@@ -52,8 +53,9 @@ class openresa_reservation_recurrence(osv.osv):
         'recur_month_relative_day':fields.selection(DAY_SELECTION, 'Day month'),
         'recur_type':fields.selection(TYPE_RECUR,'Type'),
         'date_start':fields.related('template_id','checkin', type="datetime", string='First occurrence date'),
-        'date_end':fields.date('Last occurrence to generate', required=False),
+        'date_end':fields.datetime('Last occurrence to generate', required=False),
         'recur_occurrence_nb':fields.integer('Nb of occurrences'),
+        'date_confirm':fields.date('Date of confirm'),
         }
     
     
@@ -61,12 +63,12 @@ class openresa_reservation_recurrence(osv.osv):
         'recur_periodicity':lambda *a: 1,
         'recur_type':lambda *a: 'daily',
         'recur_occurrence_nb':lambda *a: 1,
+        'is_template': lambda *a: True,
         }
-    
     
     """
     @param id: id or recurrence to generate dates
-    @return: list of tuple of checkin,checkout in standard format [('YYYY-mm-yy HH:MM:SS','YYYY-mm-yy HH:MM:SS')]
+    @return: list of tuple of checkin,checkout in standard format [('YYYY-mm-yy HH:MM:SS','YYYY-mm-yy HH:MM:SS')] in UTC
     @note: This method is used internally in OpenERP StandAlone, but could be used in xmlrpc call for custom UI
     => daily recurrence: repeat same resa each x days from date_start to date_end
     => weekly recurrence: repeat same resa for xxx,xxx,xxx weekdays each x weeks from date_start to date_end
@@ -74,17 +76,12 @@ class openresa_reservation_recurrence(osv.osv):
     => monthly recurrence 2: repeat same resa each relative day (third Friday of each month)of a month each x months from date_start to date_end
     """
     def get_dates_from_setting(self, cr, uid, id, context=None):
-        def weekdayInInterval(val,weekdayStart, weekdayEnd, sameWeek=True):
-            if sameWeek:
-                return val > weekdayStart and val <= weekdayEnd
-            else:
-                return val < weekdayStart or val > weekdayEnd
-            
         recurrence = self.browse(cr, uid, id, context=context)
         dates = []
         periodicity = recurrence.recur_periodicity
-        date_start = datetime.strptime(recurrence.date_start, '%Y-%m-%d %H:%M:%S')
-        date_end = datetime.strptime(recurrence.date_end, '%Y-%m-%d')
+        date_start = fields.datetime.context_timestamp(cr, uid, datetime.strptime(recurrence.date_start, '%Y-%m-%d %H:%M:%S'),context=context)
+        date_end = fields.datetime.context_timestamp(cr, uid, datetime.strptime(recurrence.date_end, '%Y-%m-%d %H:%M:%S'),context=context) if recurrence.date_end else False
+        
         switch_date = {
             'monday':relativedelta.MO,
             'tuesday':relativedelta.TU,
@@ -126,8 +123,11 @@ class openresa_reservation_recurrence(osv.osv):
                 raise osv.except_osv(_('Error'),_('You must provide a complete setting for once of monthly recurrence method'))
         else:
             raise osv.except_osv(_('Error'), _('You must set an existing type of recurrence'))
-        
-        return list(dates)
+        ret = list(dates)
+        #remove date_start values from list if generated too by recurrence
+        if ret[0] == date_start:
+            ret.pop(0)
+        return ret
 
 
     """
@@ -137,6 +137,8 @@ class openresa_reservation_recurrence(osv.osv):
     and call main method 'generate_reservations'
     """
     def populate_reservations(self, cr, uid, id, dates, context=None):
+        if not context:
+            context = self.pool.get('res.users').context_get(cr, uid, context=context)
         dates_check = [datetime.strptime(val, '%Y-%m-%d %H:%M:%S') for val in dates]
         return self.generate_reservations(cr, uid, [id], dates=dates_check, context=context)
  
@@ -167,19 +169,48 @@ class openresa_reservation_recurrence(osv.osv):
                 resa_obj.write(cr, uid, template['id'],{'recurrence_id':recurrence['id']})
                 #retrieve dates according to recurrence setting or according to parameter
                 dates_check = dates and dates or self.get_dates_from_setting(cr, uid, recurrence['id'], context=context)
-                #remove date_start values from list if generated too by recurrence
-                if recurrence['date_start'] == str(dates_check[0]):
-                    dates_check.pop(0)
+
                 #retrieve duration of template resa
-                duration = (datetime.strptime(template['checkout'], '%Y-%m-%d %H:%M:%S') - datetime.strptime(template['checkin'], '%Y-%m-%d %H:%M:%S'))
+                template_checkin = fields.datetime.context_timestamp(cr, uid, datetime.strptime(template['checkin'], '%Y-%m-%d %H:%M:%S'), context=context)
+                template_checkout = fields.datetime.context_timestamp(cr, uid, datetime.strptime(template['checkout'], '%Y-%m-%d %H:%M:%S'), context=context)
+                #get only timedelta.days value to retrieve checkout of each occurrences
+                duration_days = timedelta(template_checkout.day - template_checkin.day)
+                
                 #for each date, copy new reservation from template_id (which will populate one2many reservation_ids)
+                utc_timezone = pytz.timezone('UTC')
+                local_timezone = pytz.timezone(context.get('tz'))
                 for item in dates_check:
-                    #compute checkin-checkout of current resa to create
-                    checkin = str(item)
-                    checkout = str(item + duration)
-                    resa = resa_obj.copy(cr, uid, template['id'],{'checkin':checkin,'checkout':checkout,'recurrence_id':recurrence['id']},context=context)
+                    #compute all checkin-checkout converting dates from local_tz to UTC
+                    checkin = item.replace(tzinfo=None)
+                    checkout = (checkin + duration_days).replace(hour=template_checkout.hour, minute=template_checkout.minute,tzinfo=None)
+                    checkin = str(local_timezone.localize(checkin).astimezone(utc_timezone))
+                    checkout = str(local_timezone.localize(checkout).astimezone(utc_timezone))
+                    resa = resa_obj.copy(cr, uid, template['id'],{'checkin':checkin,
+                                                                  'checkout':checkout,
+                                                                  'recurrence_id':recurrence['id'],
+                                                                  'is_template':False},context=context)
             else:
                 raise osv.except_osv(_('Error'),_('You have to specify a template to generate occurrences of this recurrence'))
+        return True
+    
+    """
+    @param ids: recurrence to validate
+    @note: validate all VALIDABLE occurrences of the recurrence
+    an occurrence can be validated when all product(s) are 'dispo'
+    """
+    def validate(self, cr, uid, ids, context=None):
+        wkf_service = netsvc.LocalService('workflow')
+        now = datetime.now().strftime('%Y-%m-%d')
+        for recurrence in self.browse(cr, uid, ids, context=context):
+            #count to know how many resa have been requested to be confirmed,
+            #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
+            resa_count = 0
+            for resa in recurrence.reservation_ids:
+                if resa.all_dispo and resa.state in ['remplir','draft']:
+                    resa_count += 1
+                    wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, 'confirm', cr)
+            if resa_count > 0:
+                recurrence.write({'date_confirm':now})
         return True
     
 openresa_reservation_recurrence()

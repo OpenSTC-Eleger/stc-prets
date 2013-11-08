@@ -107,6 +107,8 @@
 			<field name="arch" type="xml">
 			    <tree>
 			        <field name="template_id"/>
+			        <field name="date_start"/>
+			        <field name="partner_id"/>
 			        <field name="recur_type"/>
 			    </tree>
 	 		</field>
@@ -121,6 +123,7 @@
 					<group colspan="2" col="4" string="General setting">
 						<field name="template_id"/>
 						<field name="date_start" readonly="1"/>
+						<field name="is_template"/>
 					</group>
 					
 					<group colspan="2" col="2" string="Recurrence setting">
@@ -159,8 +162,11 @@
 					        <field name="all_dispo"/>
 					    </tree>
 					</field>
+					<field name="state" widget="statusbar" statusbar_visible="remplir,confirm,done"/>
+					<newline/>
 					<button name="generate_reservations" type="object" string="Generate reservations"
-					    icon="gtk-execute"/>
+					    icon="gtk-execute" attrs="{'invisible':[('state','not in',['remplir','draft'])]}"/>
+					<button name="validate" type="object" string="Valider" attrs="{'invisible':[('state','not in',['remplir','draft'])]}"/>
 			    </form>
 	 		</field><!-- end tag of xml arch -->
 		</record>
@@ -213,8 +219,8 @@
 										<field name="qte_reserves" />
 										<field name="qte_dispo"/>
 										<field name="dispo" readonly="1"/>
+										<field name="pricelist_amount"/>
 										<field name="amount"/>
-										<!-- <field name="uom_qty"/>  -->
 										<field name="infos"/>
 									</tree>
 								</field>
