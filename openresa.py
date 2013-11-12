@@ -348,13 +348,13 @@ class hotel_reservation(osv.osv):
     _order = "state_num, create_date desc"
     _inherit = "hotel.reservation"
     _description = "Réservations"
-    
+
     """
     @param record: browse_record of hotel.reservation for which to generate hotel.folio report
     @return: id or attachment created for this record
     @note: hotel.folio report is created on hotel.reservation because hotel.folio has not any form view for now
     """
-    
+
     def _create_report_folio_attach(self, cr, uid, record, context=None):
         #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
@@ -389,7 +389,7 @@ class hotel_reservation(osv.osv):
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'resa.number',context)
         return seq
-    
+
     #@tocheck: useless ?
     def _calc_in_option(self, cr, uid, ids, name, args, context=None):
         ret = {}
@@ -572,6 +572,16 @@ class hotel_reservation(osv.osv):
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
         }
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if order is not None and len(order.split())==0 and  isinstance(order, str): order=None
+        #Keep simple resa and only template for reccurence
+        if len(args) == 0:
+            keeped_domain = ['|',('recurrence_id','=', False),'&',('recurrence_id','!=', False),('is_template','=',True)]
+            args.extend(keeped_domain)
+        return super(hotel_reservation, self).search(cr, uid, args, offset, limit, order, context, count)
+
+
+
     def _check_dates(self, cr, uid, ids, context=None):
         for resa in self.browse(cr, uid, ids, context):
             if resa.checkin >= resa.checkout:
@@ -654,7 +664,7 @@ class hotel_reservation(osv.osv):
                             #On crée les mvts stocks inverses pour éviter que les stocks soient impactés
                             new_move_id = self.pool.get("stock.move").copy(cr, uid, move.id, {'picking_id':move.picking_id.id,'location_id':move.location_dest_id.id,'location_dest_id':move.location_id.id,'state':'draft'})
                             move_ids.append(new_move_id)
-                    
+
                     self.pool.get("stock.move").action_done(cr, uid, move_ids)
                     attach_sale_id.append(self._create_report_folio_attach(cr, uid, resa))
                 #send mail with optional attaches on products and the sale order pdf attached
@@ -677,7 +687,7 @@ class hotel_reservation(osv.osv):
     def cancelled_reservation(self, cr, uid, ids):
         self.write(cr, uid, ids, {'state':'cancle'})
         return True
-    
+
     #@ToRemove
     def drafted_reservation(self, cr, uid, ids):
         for resa in self.browse(cr, uid, ids):
@@ -840,7 +850,7 @@ class hotel_reservation(osv.osv):
                     #retrieve min and max date for all the recurrence
                     checkin = resa.checkin if not checkin else min(resa.checkin, checkin)
                     checkout = resa.checkout if not checkout else max(resa.checkout, checkout)
-            else: 
+            else:
                 lines.extend(line for line in reservation.reservation_line)
                 checkin = reservation.checkin
                 checkout = reservation.checkout
@@ -858,7 +868,7 @@ class hotel_reservation(osv.osv):
                    'price_unit':line.pricelist_amount,
                    }))
             #if resa is from on recurrence, copy all room_lines for each resa (update checkin and checkout for each one)
-            
+
             folio=self.pool.get('hotel.folio').create(cr,uid,{
                   'date_order':reservation.date_order,
                   'shop_id':reservation.shop_id.id,
@@ -909,8 +919,8 @@ class hotel_reservation(osv.osv):
         checkout = strptime(checkout, '%Y-%m-%d %H:%M:%S')
         length = (checkout - checkin).hours
         return length
-    
-    
+
+
     #param record: browse_record hotel.reservation.line
     def get_prod_price(self, cr, uid, product_id, uom_qty, partner_id, pricelist_id=False, context=None):
         pricelist_obj = self.pool.get("product.pricelist")
@@ -930,7 +940,7 @@ class hotel_reservation(osv.osv):
                 uom_qty = self.get_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
                 unit_price = self.get_prod_price(cr, uid, line.reserve_product.id,
                                           uom_qty,
-                                          partner_id, 
+                                          partner_id,
                                           pricelist_id,
                                           context=context)
                 values.append((1,line.id,{'uom_qty':uom_qty,'prix_unitaire':unit_price,'pricelist_amount':uom_qty * unit_price}))
@@ -975,8 +985,8 @@ class hotel_reservation(osv.osv):
         #TODO: check if company wants to send email (info not(opt_out) in partner)
         #We keep only resa where partner have not opt_out checked
         resa_ids_notif = []
-        resa_ids_notif = [resa.id for resa in self.browse(cr, uid, ids) 
-                          if not resa.partner_id.opt_out 
+        resa_ids_notif = [resa.id for resa in self.browse(cr, uid, ids)
+                          if not resa.partner_id.opt_out
                           and (not resa.recurrence_id or resa.is_template)]
         if resa_ids_notif:
             email_obj = self.pool.get("email.template")
@@ -1002,7 +1012,7 @@ class hotel_reservation(osv.osv):
                         for item in cr.fetchall():
                             prod_attaches.setdefault(item[1],[])
                             prod_attaches[item[1]].append(item[0])
-                            
+
                 if email_tmpl_id:
                     if isinstance(email_tmpl_id, list):
                         email_tmpl_id = email_tmpl_id[0]
