@@ -530,8 +530,10 @@ class hotel_reservation(osv.osv):
         self._columns.update({'resource_quantities':fields.function(_get_field_resource_quantities, type='char',method=True, multi='field_resource_quantities',store=False, arg=self._field_resource_quantities)})
         return ret
 
-#    def _tooltip(self, cr, uid, ids, myFields, arg, context):
+#    def _tooltip(self, cr, uid, ids, fields, arg, context):
 #        res = {}
+#        for resa in self.browse(cr, uid, [ids], context):
+#            res[resa.id] =  _(" By ")  + user.name + _( "the" ) state
 #        return res
 
 
@@ -549,9 +551,11 @@ class hotel_reservation(osv.osv):
 
     _columns = {
                 'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
+                'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
                 'state': fields.selection(_get_state_values, 'Etat',readonly=True),
                 'state_num': fields.function(_get_state_num,string='Current state',type='integer', method=True, store={'hotel.reservation':(get_resa_modified,['state'],20)}),
                 'create_date' : fields.datetime('Create Date', readonly=True),
+                'write_date' : fields.datetime('Write Date', readonly=True),
                 'in_option':fields.function(_calc_in_option, string="En Option", selection=AVAILABLE_IN_OPTION_LIST, type="selection", method = True, store={'hotel.reservation':(get_resa_modified,['checkin','reservation_line'],10)},
                                             help=("Une réservation mise en option signifie que votre demande est prise en compte mais \
                                             dont on ne peut pas garantir la livraison à la date prévue.\
@@ -577,6 +581,9 @@ class hotel_reservation(osv.osv):
                 'people_phone': fields.char('Phone', size=10),
                 'people_email': fields.char('Email', size=128),
                 'is_citizen': fields.boolean('Claimer is a citizen'),
+
+                'note': fields.text('Note'),
+
         }
     _defaults = {
                  'in_option': lambda *a :0,
