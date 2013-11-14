@@ -542,11 +542,13 @@ class hotel_reservation(osv.osv):
         }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        #Patch. By default swif client send order by id DESC. To order by default hotel_reservation swif collection
+        #is overriden to send default order to ''.
         if order is not None and len(order.split())==0 and  isinstance(order, str): order=None
         #Keep simple resa and only template for reccurence
-        if len(args) == 0:
-            keeped_domain = ['|',('recurrence_id','=', False),'&',('recurrence_id','!=', False),('is_template','=',True)]
-            args.extend(keeped_domain)
+#        if len(args) == 0:
+#            keeped_domain = ['|',('recurrence_id','=', False),'&',('recurrence_id','!=', False),('is_template','=',True)]
+#            args.extend(keeped_domain)
         return super(hotel_reservation, self).search(cr, uid, args, offset, limit, order, context, count)
 
 
