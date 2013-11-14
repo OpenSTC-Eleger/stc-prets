@@ -54,14 +54,14 @@
 	    <field name="name">Day (Reservation)</field>
 	    <field name="category_id" eval="openstc_pret_uom_categ_resa"/>
 	    <field name="factor">1.0</field>
-	    <field name="rounding">1.0</field>
+	    <field name="rounding">0.01</field>
 	</record>
 	<record id="openstc_pret_uom_half_day" model="product.uom">
 	    <field name="name">Half-Day (Reservation)</field>
 	    <field name="category_id" eval="openstc_pret_uom_categ_resa"/>
 		<field name="uom_type">smaller</field>
 		<field name="factor">2.0</field>
-	    <field name="rounding">1.0</field>
+	    <field name="rounding">0.01</field>
 	    
 	</record>
 	<record id="openstc_pret_uom_hour" model="product.uom">
@@ -69,7 +69,7 @@
 	    <field name="category_id" eval="openstc_pret_uom_categ_resa"/>
 	    <field name="uom_type">smaller</field>
 	    <field name="factor">24.0</field>
-	    <field name="rounding">1.0</field>
+	    <field name="rounding">0.01</field>
 	</record>
 	
 	    <record id="openstc_pret_email_template_resa_validee" model="email.template">

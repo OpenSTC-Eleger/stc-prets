@@ -80,7 +80,7 @@ class product_product(osv.osv):
         sites = []
         domain = []
         #if it's an user, prod_ids are filtered according to 'internal' reservable rights
-        if claimer_user_id and not claimer_partner_id:
+        if claimer_user_id:
             user = self.pool.get("res.users").read(cr, uid, claimer_user_id, ['service_ids'],context=context)
             domain = [('internal_booking','=',True),'|',
                       ('service_bookable_ids.id','child_of',[service_id for service_id in user['service_ids']]),
@@ -89,11 +89,12 @@ class product_product(osv.osv):
         elif not claimer_user_id and claimer_partner_id:
             partner = self.pool.get('res.partner').read(cr, uid, claimer_partner_id, ['type_id'],context=context)
             domain = [('external_booking','=',True),'|',
-                      ('partner_type_bookable_ids','child_of',partner['type_id'] and partner['type_id'][0] or []),
+                      ('partner_type_bookable_ids.id','child_of',partner['type_id'] and partner['type_id'][0] or []),
                       ('partner_type_bookable_ids','=',False)]
-        #else, if both partner and user id are supplied, or no one of them, raise an error
+        #else, if not any partner_id or user_id is supplied, returns all with no fitler
         else:
-            osv.except_osv(_('Error'),_('Incorrect values, you have to supply one and only one between claimer_user_id or claimer_partner_id, not both'))
+            domain = ['|',('internal_booking','=',True),('external_booking','=',True)]
+            #osv.except_osv(_('Error'),_('Incorrect values, you have to supply one and only one between claimer_user_id or claimer_partner_id, not both'))
 
         #retrieve values for equipments and sites authorized
         equipment_ids = equipment_obj.search(cr, uid, domain, context=context)
@@ -103,9 +104,37 @@ class product_product(osv.osv):
 
         #finally, compute results by merging 'product.product' many2ones of
         #records from tables openstc.equipment and openstc.site
-        prod_ids.extend([elt['product_product_id'] for elt in equipments if elt['product_product_id']])
-        prod_ids.extend([elt['product_id'] for elt in sites if elt['product_id']])
+        prod_ids.extend([elt['product_product_id'][0] for elt in equipments if elt['product_product_id']])
+        prod_ids.extend([elt['product_id'][0] for elt in sites if elt['product_id']])
         return prod_ids
+
+        """
+    @param prod_id: product_id from which to compute new uom
+    @param length: length of resa (in hours)
+    @return: new_uom_qty to apply for invoicing
+    @note: if product uom refers to a resa time (checked by categ_uom xml_id),
+    we use it to perform compute
+    else, use uom_day to perform compute
+    """
+    def get_temporal_uom_qty(self, cr, uid, prod_id, length, context=None):
+        record = self.pool.get('product.product').browse(cr, uid, prod_id, context=context)
+        uom_obj = self.pool.get('product.uom')
+        data_obj = self.pool.get('ir.model.data')
+        #@TOCHECK: must i check user deletion of those uom (avoid crash if data are missing) ?
+        hour_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_hour')[1]
+        hour_uom = uom_obj.browse(cr, uid, hour_uom_id, context=context)
+        day_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_day')[1]
+        day_uom = uom_obj.browse(cr, uid, day_uom_id, context=context)
+        categ_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_categ_resa')[1]
+        #first, retrieve qty according to product_uom
+        res = length
+        if record.uom_id.category_id.id == categ_uom_id:
+            if record.uom_id.id <> hour_uom_id:
+                res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length,record.uom_id, context=context)
+        #else, compute qty for day uom by default
+        else:
+            res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length, day_uom, context=context)
+        return res
 
 product_product()
 
@@ -166,9 +195,9 @@ class hotel_reservation_line(osv.osv):
                 available = self.pool.get("hotel.reservation").get_prods_available_and_qty( cr, uid, resa.checkin, resa.checkout, prod_ids=prod_ids, where_optionnel='and hr.id <> ' + str(resa.id), context=context)
                 #link prod qty available to resa_line associated
                 for line in resa.reservation_line:
-                    ret.update({line.id:{'qte_dispo':available[line.reserve_product.id]}})
+                    ret.update({line.id:{'qte_dispo':available[str(line.reserve_product.id)]}})
                     if 'dispo' in name:
-                        ret[line.id].update({'dispo':available[line.reserve_product.id] >= line.qte_reserves})
+                        ret[line.id].update({'dispo':available[str(line.reserve_product.id)] >= line.qte_reserves})
         elif 'dispo' in name:
             for line in self.browse(cr, uid, ids):
                 ret.update({line.id:{'dispo':line.qte_dispo >= line.qte_reserves}})
@@ -187,9 +216,10 @@ class hotel_reservation_line(osv.osv):
     @param value: new amount filled by user
     @return: True, and update field 'prix_unitaire' to match 'value' param and 'uom_qty' field value
     """
+    #@TOREMOVE
     def _get_amount_fnct_inv(self, cr, uid, id, name, value, fnct_arg, context=None):
         line = self.browse(cr, uid, id, context=context)
-        return line.write({'pricelist_amount':value},context=context)
+        return line.write({'pricelist_amount':float(value) / float(line.qte_reserves)},context=context)
 
     def _get_complete_name(self, cr, uid, ids, name, args, context=None):
         ret = {}
@@ -224,7 +254,7 @@ class hotel_reservation_line(osv.osv):
         #for each prod desired, retrieve those which are conflicting
         conflicting_prods = []
         for item in prod_dict:
-            if available[item['prod_id']] < item['qty']:
+            if available[str(item['prod_id'])] < item['qty']:
                 conflicting_prods.append(item['prod_id'])
         #and retrieve lines belonging to conflicting_prods and checkin-checkout
         if conflicting_prods:
@@ -275,14 +305,13 @@ class hotel_reservation_line(osv.osv):
         'categ_id': fields.many2one('product.category','Type d\'article'),
         "reserve_product": fields.many2one("product.product", "Article réservé", domain=[('openstc_reservable','=',True)]),
         "qte_reserves":fields.float("Qté désirée", digits=(3,2)),
-        "prix_unitaire": fields.float("Prix Unitaire", digits=(4,2)),
         'pricelist_amount':fields.float('Price from pricelist'),
         'dispo':fields.function(_calc_qte_dispo, string="Disponible", method=True, multi="dispo", type='boolean'),
         "infos":fields.char("Informations supplémentaires",size=256),
         "name":fields.char('Libellé', size=128),
         'state':fields.related('line_id','state', type='selection',string='Etat Résa', selection=_get_state_line, readonly=True),
         'uom_qty':fields.float('Qté de Référence pour Facturation',digit=(2,1)),
-        'amount':fields.function(_get_amount, fnct_inv=_get_amount_fnct_inv, string="Prix (si tarifé)", type="float", method=True, store=False),
+        'amount':fields.function(_get_amount, string="Prix (si tarifé)", type="float", method=True, store=False),
         'qte_dispo':fields.function(_calc_qte_dispo, method=True, string='Qté Dispo', multi="dispo", type='float'),
         'action':fields.selection(_AVAILABLE_ACTION_VALUES, 'Action'),
         'state':fields.related('line_id','state', type='char'),
@@ -465,7 +494,7 @@ class hotel_reservation(osv.osv):
         'create':lambda self,cr,uid,record, groups_code: True,
         'update':ownerOrOfficer,
         'delete':ownerOrOfficer,
-        'refuse':ownerOrOfficer,
+        'refused':ownerOrOfficer,
         'confirm':managerOnly,
         'done':managerOnly,
         'resolve_conflict':managerOnly,
@@ -573,7 +602,7 @@ class hotel_reservation(osv.osv):
         }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        if order is not None and len(order.split())==0 and  isinstance(order, str): order=None
+        if order in (' ',''): order=None
         #Keep simple resa and only template for reccurence
         if len(args) == 0:
             keeped_domain = ['|',('recurrence_id','=', False),'&',('recurrence_id','!=', False),('is_template','=',True)]
@@ -783,7 +812,7 @@ class hotel_reservation(osv.osv):
                                                                                         'reserve_product':  produit.id,
                                                                                         'categ_id':produit.categ_id.id,
                                                                                         'reserve':[(4, produit.id)],
-                                                                                        'prix_unitaire':produit.product_tmpl_id.list_price,
+                                                                                        'pricelist_amount':produit.product_tmpl_id.list_price,
                                                                                         'qte_reserves':1.0
                                                                                 }))
 
@@ -812,11 +841,11 @@ class hotel_reservation(osv.osv):
         prod_dispo = {}
         #by default, all qty in stock are available
         for prod in prods:
-            prod_dispo.setdefault(prod.id, prod.virtual_available)
+            prod_dispo.setdefault(str(prod.id), prod.virtual_available)
         #and, if some resa are made to this prods, we substract default qty with all qty reserved at these dates
         results = self.get_nb_prod_reserved(cr, prod_ids, checkin, checkout, where_optionnel=where_optionnel,states=states).fetchall()
         for prod_id, qty_reserved in results:
-            prod_dispo[prod_id] -= qty_reserved
+            prod_dispo[str(prod_id)] -= qty_reserved
         return prod_dispo
 
     #Vérifies les champs dispo de chaque ligne de résa pour dire si oui ou non la résa est OK pour la suite
@@ -886,34 +915,6 @@ class hotel_reservation(osv.osv):
 
         return folio
 
-    """
-    @param prod_id: product_id from which to compute new uom
-    @param length: length of resa (in hours)
-    @return: new_uom_qty to apply for invoicing
-    @note: if product uom refers to a resa time (checked by categ_uom xml_id),
-    we use it to perform compute
-    else, use uom_day to perform compute
-    """
-    def get_uom_qty(self, cr, uid, prod_id, length, context=None):
-        record = self.pool.get('product.product').browse(cr, uid, prod_id, context=context)
-        uom_obj = self.pool.get('product.uom')
-        data_obj = self.pool.get('ir.model.data')
-        #@TOCHECK: must i check user deletion of those uom (avoid crash if data are missing) ?
-        hour_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_hour')[1]
-        hour_uom = uom_obj.browse(cr, uid, hour_uom_id, context=context)
-        day_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_day')[1]
-        day_uom = uom_obj.browse(cr, uid, day_uom_id, context=context)
-        categ_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_categ_resa')[1]
-        #first, retrieve qty according to product_uom
-        res = length
-        if record.uom_id.category_id.id == categ_uom_id:
-            if record.uom_id.id <> hour_uom_id:
-                res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length,record.uom_id, context=context)
-        #else, compute qty for day uom by default
-        else:
-            res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length, day_uom, context=context)
-        return res
-
     def get_length_resa(self, cr, uid, checkin, checkout, context=None):
         checkin = strptime(checkin, '%Y-%m-%d %H:%M:%S')
         checkout = strptime(checkout, '%Y-%m-%d %H:%M:%S')
@@ -928,7 +929,10 @@ class hotel_reservation(osv.osv):
             pricelist_id = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_product_pricelist.id
         res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], [(product_id,uom_qty,partner_id)], context=None)
         return res and res[product_id][pricelist_id] or False
-
+        
+    """
+    OpenERP StandAlone method
+    """
     def compute_lines_price(self, cr, uid, ids, context=None):
         values = []
         #get lentgh resa in hours
@@ -936,14 +940,15 @@ class hotel_reservation(osv.osv):
             partner_id = resa.partner_id.id
             pricelist_id = resa.pricelist_id and resa.pricelist_id.id or resa.partner.property_product_pricelist.id
             length_resa = self.get_length_resa(cr, uid, resa.checkin, resa.checkout, context=None)
+            prod_obj = self.pool.get('product.product')
             for line in resa.reservation_line:
-                uom_qty = self.get_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
+                uom_qty = prod_obj.get_temporal_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
                 unit_price = self.get_prod_price(cr, uid, line.reserve_product.id,
                                           uom_qty,
                                           partner_id,
                                           pricelist_id,
                                           context=context)
-                values.append((1,line.id,{'uom_qty':uom_qty,'prix_unitaire':unit_price,'pricelist_amount':uom_qty * unit_price}))
+                values.append((1,line.id,{'uom_qty':uom_qty,'pricelist_amount':unit_price}))
             self.write(cr, uid, [resa.id], {'reservation_line':values}, context=context)
         return True
 
@@ -1065,7 +1070,7 @@ class hotel_reservation(osv.osv):
         for checkin,checkout in dates_check:
             prod_reserved = self.get_prods_available_and_qty(cr, uid, checkin, checkout, prod_ids=prod_ids, context=None)
             for item in prod_dict:
-                if item['qty_desired'] > prod_reserved[item['prod_id']]:
+                if item['qty_desired'] > prod_reserved[str(item['prod_id'])]:
                     ret.append((checkin,checkout))
                     #date computed as unavailable, we can skip other prod_id tests for this date
                     break
@@ -1248,16 +1253,18 @@ class res_partner(osv.osv):
     _inherit = "res.partner"
 
     """
-    @param prod_ids_and_qties: list of tuples containing each prod_id - qty to retrieve their prices
+    @param prod_ids_and_qties: list of dict containing each prod_id - qty to retrieve their prices
     @param pricelist_id: id of the pricelist to retrieve prices
     @return: list of dict [{'prod_id':id, price:float_price}] according to pricelist_id correctly formated
     (instead of original methods of this nasty OpenERP)
     """
-    def get_bookable_prices(self, cr, uid, partner_id, prod_ids_and_qties, pricelist_id=False, context=None):
+    def get_bookable_prices(self, cr, uid, partner_id, prod_ids_and_qties, checkin, checkout, pricelist_id=False, context=None):
         if not pricelist_id:
             pricelist_id = self.pool.get("res.partner").read(cr, uid, partner_id, ['property_product_pricelist'], context=context)['property_product_pricelist'][0]
+        length_resa = self.pool.get('hotel.reservation').get_length_resa(cr, uid, checkin, checkout, context=context)
+        length_fnct = self.pool.get('product.product').get_temporal_uom_qty
         pricelist_obj = self.pool.get('product.pricelist')
-        values = [(item[0],item[1], partner_id)for item in prod_ids_and_qties]
+        values = [(item['prod_id'],length_fnct(cr, uid, item['prod_id'],length_resa, context=context) * item['qty'], partner_id)for item in prod_ids_and_qties]
         #get prices from pricelist_obj
         res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], values, context=context)
         item_id = res.pop('item_id')
