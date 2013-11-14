@@ -435,14 +435,14 @@ class hotel_reservation(osv.osv):
                 amount_total += line.amount
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         return ret
-    
+
     """
     action rights for manager only
     - only manager can do it, because imply stock evolutions and perharps treatment of some conflicts
     """
     def managerOnly(self, cr, uid, record, groups_code):
         return 'HOTEL_MANA' in groups_code
-    
+
     """
     action rights for manager or owner of a record
     - claimer can do these actions on its own records,
@@ -460,14 +460,14 @@ class hotel_reservation(osv.osv):
                     break
             ret = ret and 'HOTEL_USER' in groups_code
         return ret
-    
+
     _actions = {
-        'create':lambda self,cr,uid,record, groups_code: True,
-        'update':ownerOrOfficer,
-        'delete':ownerOrOfficer,
+#        'create':lambda self,cr,uid,record, groups_code: True,
+#        'update':ownerOrOfficer,
+#        'delete':ownerOrOfficer,
+        'done':managerOnly,
         'refuse':ownerOrOfficer,
         'confirm':managerOnly,
-        'done':managerOnly,
         'resolve_conflict':managerOnly,
     }
 
@@ -530,6 +530,11 @@ class hotel_reservation(osv.osv):
         self._columns.update({'resource_quantities':fields.function(_get_field_resource_quantities, type='char',method=True, multi='field_resource_quantities',store=False, arg=self._field_resource_quantities)})
         return ret
 
+#    def _tooltip(self, cr, uid, ids, myFields, arg, context):
+#        res = {}
+#        return res
+
+
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
         #default value: empty string for each id
         ret = {}.fromkeys(ids,'')
@@ -565,6 +570,13 @@ class hotel_reservation(osv.osv):
                 'recurrence_id':fields.many2one('openresa.reservation.recurrence','From recurrence'),
                 'is_template':fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
                 'actions':fields.function(_get_actions, method=True, string="Actions possibles",type="char", store=False),
+                #'tooltip' : fields.function(_tooltip, method=True, string='Tooltip',type='char', store=False),
+                'partner_type': fields.related('partner_id', 'type_id', type='many2one', relation='openstc.partner.type', string='Type du demandeur', help='...'),
+                'partner_phone': fields.related('partner_invoice_id', 'phone', type='char', string='Phone partner', help='...'),
+                'people_name': fields.char('Name', size=128),
+                'people_phone': fields.char('Phone', size=10),
+                'people_email': fields.char('Email', size=128),
+                'is_citizen': fields.boolean('Claimer is a citizen'),
         }
     _defaults = {
                  'in_option': lambda *a :0,
