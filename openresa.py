@@ -435,9 +435,40 @@ class hotel_reservation(osv.osv):
                 amount_total += line.amount
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         return ret
-
+    
+    """
+    action rights for manager only
+    - only manager can do it, because imply stock evolutions and perharps treatment of some conflicts
+    """
+    def managerOnly(self, cr, uid, record, groups_code):
+        return 'HOTEL_MANA' in groups_code
+    
+    """
+    action rights for manager or owner of a record
+    - claimer can do these actions on its own records,
+    - officer can make these actions for claimer which does not have account,
+    - else, manager can also do it
+    """
+    def ownerOrOfficer(self, cr, uid, record, groups_code):
+        #if not rights, compute rights for offi/manager
+        ret = 'HOTEL_OFFI' in groups_code or 'HOTEL_MANA' in groups_code
+        if not ret:
+            #compute rights for owner
+            for contact in record.partner_id.address:
+                if uid == contact.user_id.id:
+                    ret = True
+                    break
+            ret = ret and 'HOTEL_USER' in groups_code
+        return ret
+    
     _actions = {
-        'resolve_conflict':lambda self,cr,uid,record, groups_code: True,
+        'create':lambda self,cr,uid,record, groups_code: True,
+        'update':ownerOrOfficer,
+        'delete':ownerOrOfficer,
+        'refuse':ownerOrOfficer,
+        'confirm':managerOnly,
+        'done':managerOnly,
+        'resolve_conflict':managerOnly,
     }
 
 #    def _get_resources_info(self, cr, uid, ids, name, args, context=None):

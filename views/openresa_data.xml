@@ -533,7 +533,13 @@
 	 <record model="res.groups" id="hotel.group_hotel_user">
     	 <field name="code">HOTEL_USER</field>
 	 </record>
-	    
+	 
+	 <record model="res.groups" id="group_hotel_officer">
+	     <field name="name">Réservations / Agent</field>
+    	 <field name="code">HOTEL_OFFI</field>
+    	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
+	 </record>
+	 
 	<record model="res.groups" id="openresa_api_group">
         <field name="name">API Reservation Group</field>
         <field name="code">APIRESA</field>
