@@ -494,10 +494,11 @@ class hotel_reservation(osv.osv):
 #        'create':lambda self,cr,uid,record, groups_code: True,
 #        'update':ownerOrOfficer,
 #        'delete':ownerOrOfficer,
-        'done':managerOnly,
-        'refused':ownerOrOfficer,
-        'confirm':managerOnly,
-        'resolve_conflict':managerOnly,
+        'valid': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
+        'refused': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
+        'resolve_conflict':lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == False and record.state == 'remplir',
+        'closed': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
+
     }
 
 #    def _get_resources_info(self, cr, uid, ids, name, args, context=None):
@@ -559,13 +560,6 @@ class hotel_reservation(osv.osv):
         self._columns.update({'resource_quantities':fields.function(_get_field_resource_quantities, type='char',method=True, multi='field_resource_quantities',store=False, arg=self._field_resource_quantities)})
         return ret
 
-#    def _tooltip(self, cr, uid, ids, fields, arg, context):
-#        res = {}
-#        for resa in self.browse(cr, uid, [ids], context):
-#            res[resa.id] =  _(" By ")  + user.name + _( "the" ) state
-#        return res
-
-
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
         #default value: empty string for each id
         ret = {}.fromkeys(ids,'')
@@ -603,7 +597,6 @@ class hotel_reservation(osv.osv):
                 'recurrence_id':fields.many2one('openresa.reservation.recurrence','From recurrence'),
                 'is_template':fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
                 'actions':fields.function(_get_actions, method=True, string="Actions possibles",type="char", store=False),
-                #'tooltip' : fields.function(_tooltip, method=True, string='Tooltip',type='char', store=False),
                 'partner_type': fields.related('partner_id', 'type_id', type='many2one', relation='openstc.partner.type', string='Type du demandeur', help='...'),
                 'partner_phone': fields.related('partner_invoice_id', 'phone', type='char', string='Phone partner', help='...'),
                 'people_name': fields.char('Name', size=128),
@@ -948,7 +941,7 @@ class hotel_reservation(osv.osv):
             pricelist_id = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_product_pricelist.id
         res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], [(product_id,uom_qty,partner_id)], context=None)
         return res and res[product_id][pricelist_id] or False
-        
+
     """
     OpenERP StandAlone method
     """
