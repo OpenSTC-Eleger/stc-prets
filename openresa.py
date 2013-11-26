@@ -542,14 +542,21 @@ class hotel_reservation(osv.osv):
                 res[obj.id] = {}
                 field_ids = obj[args[name]]
                 val = []
+                i=0
                 for item in field_ids:
                     product = pool.get('product.product').browse(cr, uid, item.reserve_product.id, context=context)
-                    tooltip = " souhaitée: " + str(item.qte_reserves)
-                    if item.dispo :
-                        tooltip += " ,dispo: " + str(item.qte_dispo)
+                    if obj.state != 'remplir':
+                        tooltip = " " + str(item.qte_reserves)
+                        if len(field_ids)-1 < i :
+                            tooltip += ", "
                     else :
-                        tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
+                        tooltip = " souhaitée: " + str(item.qte_reserves)
+                        if item.dispo :
+                            tooltip += " ,dispo: " + str(item.qte_dispo)
+                        else :
+                            tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
                     val.append([product.name_get()[0][1], tooltip])
+                    i+=1;
                 res[obj.id].update({name:val})
             return res
 
