@@ -78,7 +78,6 @@
 	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est validée</field>
-			<field name="report_template" ref="openresa.booking_report"/>
 			<field name="body_html"><![CDATA[
 	<h2>Message Automatique</h2>
 	
