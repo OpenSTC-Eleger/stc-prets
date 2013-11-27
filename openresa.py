@@ -327,6 +327,7 @@ class hotel_reservation_line(osv.osv):
 #                                                    'hotel_reservation':(_calculate_resa, ['state','reservation_line','checkin','checkout'], 30)
                                                    }
                                             ),
+        'send_invoicing':fields.boolean('Send invoicing by email'),
 
 
         }
@@ -714,7 +715,9 @@ class hotel_reservation(osv.osv):
                             move_ids.append(new_move_id)
 
                     self.pool.get("stock.move").action_done(cr, uid, move_ids)
-                    attach_sale_id.append(self._create_report_folio_attach(cr, uid, resa))
+                    #Send invoicing only if user wants to
+                    if resa.send_invoicing:
+                        attach_sale_id.append(self._create_report_folio_attach(cr, uid, resa))
                 #send mail with optional attaches on products and the sale order pdf attached
                 self.envoyer_mail(cr, uid, ids, {'state':'validated'}, attach_ids=attach_sale_id)
                 self.write(cr, uid, ids, {'state':'confirm'})
