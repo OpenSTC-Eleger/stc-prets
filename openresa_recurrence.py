@@ -22,6 +22,8 @@
 #
 #############################################################################
 
+import types
+
 from osv import fields, osv
 from datetime import datetime, timedelta
 import calendar
@@ -45,6 +47,23 @@ class openresa_reservation_recurrence(osv.osv):
     def _get_state_values(self, cr, uid, context=None):
         return self.return_state_values(cr, uid, context)
 
+    _actions = {
+        'confirm': True ,
+        'cancel': True,
+        'done': True,
+    }
+
+    def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
+        #default value: empty string for each id
+        ret = {}.fromkeys(ids,'')
+        groups_code = []
+        groups_code = [group.code for group in self.pool.get("res.users").browse(cr, uid, uid, context=context).groups_id if group.code]
+
+        #evaluation of each _actions item, if test returns True, adds key to actions possible for this record
+        for record in self.browse(cr, uid, ids, context=context):
+            #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
+            ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
+
     _columns = {
         'reservation_ids':fields.one2many('hotel.reservation','recurrence_id','Generated reservations'),
         'recur_periodicity':fields.integer('Periodicity'),
@@ -64,6 +83,7 @@ class openresa_reservation_recurrence(osv.osv):
         'recur_occurrence_nb':fields.integer('Nb of occurrences'),
         'date_confirm':fields.date('Date of confirm'),
         'recurrence_state': fields.selection(_get_state_values, 'Etat',readonly=True),
+        'actions':fields.function(_get_actions, method=True, string="Actions possibles",type="char", store=False),
         }
 
 
@@ -206,7 +226,7 @@ class openresa_reservation_recurrence(osv.osv):
     @note: validate all VALIDABLE occurrences of the recurrence
     an occurrence can be validated when all product(s) are 'dispo'
     """
-    def validate(self, cr, uid, ids, context=None):
+    def validate(self, cr, uid, ids, state, context=None):
         wkf_service = netsvc.LocalService('workflow')
         now = datetime.now().strftime('%Y-%m-%d')
         for recurrence in self.browse(cr, uid, ids, context=context):
@@ -216,7 +236,7 @@ class openresa_reservation_recurrence(osv.osv):
             for resa in recurrence.reservation_ids:
                 if resa.all_dispo and resa.state in ['remplir','draft']:
                     resa_count += 1
-                    wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, 'confirm', cr)
+                    wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
             if resa_count > 0:
                 recurrence.write({'date_confirm':now})
         return True
@@ -227,11 +247,7 @@ class openresa_reservation_recurrence(osv.osv):
             ids = [ids]
 
         if vals.has_key('state') :
-             #if we validate an recurrence valid occurences.
-            if vals['state'] == 'valid':
-                self.validate(self, cr, uid, ids, context=None)
-            #TODO
-            #elif als['state'] == 'refused':
+            self.validate(cr, uid, ids, vals['state'], context)
 
         res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
         return res
