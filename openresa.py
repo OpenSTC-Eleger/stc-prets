@@ -593,7 +593,7 @@ class hotel_reservation(osv.osv):
                                             Une réservation bloquée signifie que la réservation n'est pas prise en compte car nous ne pouvons pas \
                                             garantir la livraison aux dates indiquées")),
                 'name':fields.char('Nom Manifestation', size=128, required=True),
-                'partner_mail':fields.char('Email Demandeur', size=128, required=False),
+
                 'site_id':fields.many2one('openstc.site','Site (Lieu)'),
                 'prod_id':fields.many2one('product.product','Ressource'),
                 'openstc_partner_id':fields.many2one('res.partner','Demandeur', help="Personne demandant la réservation."),
@@ -606,13 +606,22 @@ class hotel_reservation(osv.osv):
                 'is_template':fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
                 'actions':fields.function(_get_actions, method=True, string="Actions possibles",type="char", store=False),
                 'partner_type': fields.related('partner_id', 'type_id', type='many2one', relation='openstc.partner.type', string='Type du demandeur', help='...'),
-                'partner_phone': fields.related('partner_invoice_id', 'phone', type='char', string='Phone partner', help='...'),
+
+                'contact_phone': fields.related('partner_invoice_id', 'phone', type='char', string='Phone contact', help='...'),
+                'partner_mail':fields.char('Email Demandeur', size=128, required=False),
+
+
                 'people_name': fields.char('Name', size=128),
                 'people_phone': fields.char('Phone', size=10),
-                'people_email': fields.char('Email', size=128),
+                #'people_email': fields.char('Email', size=128),
                 'is_citizen': fields.boolean('Claimer is a citizen'),
 
-                'note': fields.text('Note'),
+                'note': fields.text('Note de validation'),
+                'confirm_note': fields.text('Note de validation'),
+                'cancel_note': fields.text('Note de refus'),
+                'done_note': fields.text('Note de clôture'),
+
+                'attach_invoice': fields.boolean('Attach Invoice'),
 
         }
     _defaults = {
@@ -659,6 +668,25 @@ class hotel_reservation(osv.osv):
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
         return super(hotel_reservation, self).create(cr, uid, vals, context)
 
+    def validate(self, cr, uid, ids, vals, context=None):
+        wkf_service = netsvc.LocalService('workflow')
+        for resa in self.browse(cr, uid, ids, context=context):
+            #count to know how many resa have been requested to be confirmed,
+            #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
+            if resa.all_dispo : #and resa.state in ['remplir','draft']:
+                state = vals['state']
+                if vals.has_key('attach_invoice') :
+                    resa.write({'attach_invoice': vals['attach_invoice']})
+                if state == 'confirm' :
+                    resa.write({'confirm_note': vals['note']})
+                elif state == 'cancel' :
+                    resa.write({'cancel_note': vals['note']})
+                elif state == 'done' :
+                    resa.write({'done_note': vals['note']})
+                wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
+
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         if context == None:
             context = {}
@@ -668,6 +696,9 @@ class hotel_reservation(osv.osv):
         if 'checkout' in vals:
             if len(vals['checkout']) >10:
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
+
+        if vals.has_key('state') :
+            self.validate(cr, uid, ids, vals, context)
         res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
         return res
 
