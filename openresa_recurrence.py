@@ -47,10 +47,14 @@ class openresa_reservation_recurrence(osv.osv):
     def _get_state_values(self, cr, uid, context=None):
         return self.return_state_values(cr, uid, context)
 
+    def _check_rights(self, cr, uid, record, criteria):
+        return self.pool.get('hotel.reservation').search(cr, uid, criteria, offset=0, limit=None, order=None, context=None, count=True)
+
+
     _actions = {
-        'confirm': True ,
-        'cancel': True,
-        'done': True,
+        'confirm': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
+        'cancel': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
+        'done': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','confirm')]) > 0,
     }
 
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
@@ -63,6 +67,7 @@ class openresa_reservation_recurrence(osv.osv):
         for record in self.browse(cr, uid, ids, context=context):
             #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
             ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
+        return ret
 
     _columns = {
         'reservation_ids':fields.one2many('hotel.reservation','recurrence_id','Generated reservations'),
@@ -115,7 +120,7 @@ class openresa_reservation_recurrence(osv.osv):
         if dates:
             dates = list(dates)
         return dates
-    
+
     """
     @param weekdays: list of weekdays to generate
     @note: one of 'date_end' or 'count' parameter must be filled
@@ -133,7 +138,7 @@ class openresa_reservation_recurrence(osv.osv):
             'sunday':relativedelta.SU
         }
         weekdays_todo = [switch_date.get(key) for key in weekdays if key in switch_date.keys()]
-        
+
         if not context:
             context = self.pool.get('res.users').context_get(cr, uid, uid)
 
@@ -146,7 +151,7 @@ class openresa_reservation_recurrence(osv.osv):
         if dates:
             dates = list(dates)
         return dates
-    
+
     """
     @param date_start: date from which to start recurrence
     @param weight: interval of recurrence (each 3 months for example)
@@ -211,7 +216,7 @@ class openresa_reservation_recurrence(osv.osv):
         if dates:
             dates = list(dates)
         return dates
-        
+
     """
     @param id: id or recurrence to generate dates
     @return: list of tuple of checkin,checkout in standard format [('YYYY-mm-yy HH:MM:SS','YYYY-mm-yy HH:MM:SS')] in UTC
