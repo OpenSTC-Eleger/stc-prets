@@ -79,11 +79,13 @@ class openresa_reservation_recurrence(osv.osv):
         'recur_week_friday':fields.boolean('Fri'),
         'recur_week_saturday':fields.boolean('Sat'),
         'recur_week_sunday':fields.boolean('Sun'),
+        'recur_month_type':fields.selection([('monthday','Month Day'),('monthweekday','Month Relative Weekday')]),
         'recur_month_absolute':fields.integer('Mounth day'),
         'recur_month_relative_weight':fields.selection(WEIGHT_SELECTION, 'Weight Month'),
         'recur_month_relative_day':fields.selection(DAY_SELECTION, 'Day month'),
         'recur_type':fields.selection(TYPE_RECUR,'Type'),
         'date_start':fields.related('template_id','checkin', type="datetime", string='First occurrence date'),
+        'recur_length_type':fields.selection([('count','Nb of occurrences'),('until','End date')]),
         'date_end':fields.datetime('Last occurrence to generate', required=False),
         'recur_occurrence_nb':fields.integer('Nb of occurrences'),
         'date_confirm':fields.date('Date of confirm'),
@@ -360,8 +362,8 @@ class openresa_reservation_recurrence(osv.osv):
                 if resa.all_dispo and resa.state in ['remplir','draft']:
                     resa_count += 1
                 state = vals['state']
-                if vals.has_key('attach_invoice') :
-                    resa.write({'attach_invoice': vals['attach_invoice']})
+                if vals.has_key('send_invoicing') :
+                    resa.write({'send_invoicing': vals['send_invoicing']})
                 if state == 'confirm' :
                     resa.write({'confirm_note': vals['note']})
                 elif state == 'cancel' :

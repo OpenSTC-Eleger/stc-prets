@@ -327,7 +327,6 @@ class hotel_reservation_line(osv.osv):
 #                                                    'hotel_reservation':(_calculate_resa, ['state','reservation_line','checkin','checkout'], 30)
                                                    }
                                             ),
-        'send_invoicing':fields.boolean('Send invoicing by email'),
 
 
         }
@@ -620,8 +619,7 @@ class hotel_reservation(osv.osv):
                 'confirm_note': fields.text('Note de validation'),
                 'cancel_note': fields.text('Note de refus'),
                 'done_note': fields.text('Note de clôture'),
-
-                'attach_invoice': fields.boolean('Attach Invoice'),
+                'send_invoicing':fields.boolean('Send invoicing by email'),
 
         }
     _defaults = {
@@ -675,8 +673,8 @@ class hotel_reservation(osv.osv):
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
             if resa.all_dispo : #and resa.state in ['remplir','draft']:
                 state = vals['state']
-                if vals.has_key('attach_invoice') :
-                    resa.write({'attach_invoice': vals['attach_invoice']})
+                if vals.has_key('send_invoicing') :
+                    resa.write({'send_invoicing': vals['send_invoicing']})
                 if state == 'confirm' :
                     resa.write({'confirm_note': vals['note']})
                 elif state == 'cancel' :
