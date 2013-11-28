@@ -494,10 +494,10 @@ class hotel_reservation(osv.osv):
 #        'create':lambda self,cr,uid,record, groups_code: True,
 #        'update':ownerOrOfficer,
 #        'delete':ownerOrOfficer,
-        'valid': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
-        'refused': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
+        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
+        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
         'resolve_conflict':lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == False and record.state == 'remplir',
-        'closed': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
+        'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
 
     }
 
