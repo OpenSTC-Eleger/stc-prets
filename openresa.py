@@ -327,7 +327,6 @@ class hotel_reservation_line(osv.osv):
 #                                                    'hotel_reservation':(_calculate_resa, ['state','reservation_line','checkin','checkout'], 30)
                                                    }
                                             ),
-        'send_invoicing':fields.boolean('Send invoicing by email'),
 
 
         }
@@ -611,8 +610,9 @@ class hotel_reservation(osv.osv):
                 'people_phone': fields.char('Phone', size=10),
                 'people_email': fields.char('Email', size=128),
                 'is_citizen': fields.boolean('Claimer is a citizen'),
-
+                
                 'note': fields.text('Note'),
+                'send_invoicing':fields.boolean('Send invoicing by email'),
 
         }
     _defaults = {
