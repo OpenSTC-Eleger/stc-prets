@@ -364,12 +364,6 @@ class openresa_reservation_recurrence(osv.osv):
                 state = vals['state']
                 if vals.has_key('send_invoicing') :
                     resa.write({'send_invoicing': vals['send_invoicing']})
-                if state == 'confirm' :
-                    resa.write({'confirm_note': vals['note']})
-                elif state == 'cancel' :
-                    resa.write({'cancel_note': vals['note']})
-                elif state == 'done' :
-                    resa.write({'done_note': vals['note']})
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
             if resa_count > 0:
                 recurrence.write({'date_confirm':now})
