@@ -815,7 +815,7 @@ class hotel_reservation(osv.osv):
         reservations = self.browse(cr, uid, ids)
         etape_validation = False
         #if group == "Responsable", no need confirm
-        group_manager_id = self.pool.get("ir.model.data").get_object_reference(cr, uid, 'openbase','openstc_manager')
+        group_manager_id = self.pool.get("ir.model.data").get_object_reference(cr, uid, 'hotel','group_hotel_manager')
         #@TODO: if not found, perharps groups has been deleted, have to make an assert
         #@TODO: check group_manager_id with user['groups_id'] instead of using a loop (optimize)
         if group_manager_id:
