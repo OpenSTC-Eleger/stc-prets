@@ -442,7 +442,7 @@ class hotel_reservation(osv.osv):
         return ids
 
     def return_state_values(self, cr, uid, context=None):
-        return [('draft', 'Saisie des infos personnelles'),('confirm','Réservation confirmée'),('cancle','Annulée'),('in_use','Réservation planifiée'),('done','Réservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
+        return [('draft', 'Saisie des infos personnelles'),('confirm','Réservation confirmée'),('cancel','Annulée'),('in_use','Réservation planifiée'),('done','Réservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
 
     def _get_state_values(self, cr, uid, context=None):
         return self.return_state_values(cr, uid, context)
