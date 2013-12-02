@@ -117,8 +117,10 @@ class openresa_reservation_recurrence(osv.osv):
         if date_end:
             until = fields.datetime.context_timestamp(cr, uid, datetime.strptime(date_end, '%Y-%m-%d %H:%M:%S'),context=context)
             dates = rrule.rrule(rrule.DAILY, interval=weight, dtstart=date_start, until=until)
-        else:
+        elif count:
             dates = rrule.rrule(rrule.DAILY, interval=weight, dtstart=date_start, count=count)
+        else:
+            raise osv.except_osv(_('Error'), _('Missing parameter: date_end or count'))
         if dates:
             dates = list(dates)
         return dates
@@ -148,8 +150,10 @@ class openresa_reservation_recurrence(osv.osv):
         if date_end:
             until = fields.datetime.context_timestamp(cr, uid, datetime.strptime(date_end, '%Y-%m-%d %H:%M:%S'),context=context)
             dates = rrule.rrule(rrule.WEEKLY, byweekday=weekdays_todo, interval=weight, dtstart=date_start, until=until)
-        else:
+        elif count:
             dates = rrule.rrule(rrule.WEEKLY, byweekday=weekdays_todo, interval=weight, dtstart=date_start, count=count)
+        else:
+            raise osv.except_osv(_('Error'), _('Missing parameter: date_end or count'))
         if dates:
             dates = list(dates)
         return dates
@@ -171,8 +175,10 @@ class openresa_reservation_recurrence(osv.osv):
         if date_end:
             until = fields.datetime.context_timestamp(cr, uid, datetime.strptime(date_end, '%Y-%m-%d %H:%M:%S'),context=context)
             dates = rrule.rrule(rrule.MONTHLY, bymonthday=day, interval=weight, dtstart=date_start, until=until)
-        else:
+        elif count:
             dates = rrule.rrule(rrule.MONTHLY, bymonthday=day, interval=weight, dtstart=date_start, count=count)
+        else:
+            raise osv.except_osv(_('Error'), _('Missing parameter: date_end or count'))
         if dates:
             dates = list(dates)
         return dates
@@ -212,9 +218,11 @@ class openresa_reservation_recurrence(osv.osv):
             until = fields.datetime.context_timestamp(cr, uid, datetime.strptime(date_end, '%Y-%m-%d %H:%M:%S'),context=context)
             dates = rrule.rrule(rrule.MONTHLY, interval=weight, dtstart=date_start, until=until,
                                     byweekday=switch_date[weekday](switch[relative_position]))
-        else:
+        elif count:
             dates = rrule.rrule(rrule.MONTHLY, interval=weight, dtstart=date_start, count=count,
                                     byweekday=switch_date[weekday](switch[relative_position]))
+        else:
+            raise osv.except_osv(_('Error'), _('Missing parameter: date_end or count'))
         if dates:
             dates = list(dates)
         return dates
