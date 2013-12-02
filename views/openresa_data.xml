@@ -19,7 +19,7 @@
     along with OpenSTC Interventions.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <openerp>
-	<data noupdate="1">
+	<data noupdate="0">
 
 	    <record id="sequence_resa_number_type" model="ir.sequence.type">
             <field name="name">Type de Numéro de Réservation</field>
@@ -120,8 +120,9 @@
 
    <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br> <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b></p>
 
-	Le service Vie Associative et événementiel
-   <p>${object.shop_id.company_id.name or ''}</p>
+
+   <p>${object.write_uid.signature} <br />
+   ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
 			<field name="body_text"><![CDATA[
@@ -286,121 +287,55 @@
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Facture concernant votre Réservation: ${object.name or 'inconnu'}</field>
 			<field name="body_html"><![CDATA[
-	<h2>Message Automatique</h2>
+	<h2>Madame, Monsieur,</h2>
 
-	<p> ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''} </p>
-
-	<p>Votre Réservation de ressources est terminée
-	% if object.folio_id:
-	, ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.
-	% endif
-	</p>
-	<p>Récapitulatif de votre Réservation : </p>
-	<ul>
-	<li>Libellé : ${object.name or ''}</li>
 	<%
 	from datetime import datetime
 	import pytz
-	resas = []
-	if object.recurrence_id:
-		for resa in object.recurrence_id.reservation_ids:
-			resas.append(resa)
-		endfor
-	else:
-		resas = [object]
-	endif%>
-	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
-	<li><u>Ressources Réservées :</u>
-	<ul>
-	% for line in object.reservation_line:
-	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
-	% endfor
-	</ul>
-	</li>
-	<li><u>Dates : </u></li>
-	<ul>
-	% for resa in resas:
-	<%
-	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+
+	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
 	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 	my_checkin_str = my_checkin_str.decode('utf-8')
 	my_checkout_str = my_checkout_str.decode('utf-8')
 	%>
-	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
-   % endfor
-   </ul>
-   </ul>
 
-	Nous vous remercions d'avoir utilisé nos services de réservations en ligne.
+	<p>Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
+	${object.done_note or ''}.</br></br>
+
+
+
+	Cette réservation est clôturée.</p>
 
    <br />
-   <p>Cordialement,</p>
-   <br />
-   <p>${object.shop_id.company_id.name or ''}</p>
-   <br />
-   <img src="data:image/png;base64,${object.shop_id.company_id.logo or ''}"/>
-   <br />
-   <p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>
+   <p>${object.write_uid.signature} <br />
+   ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
 			<field name="body_text"><![CDATA[
-	Message Automatique
+	Madame, Monsieur,
 
-	 ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}
-
-	Votre Réservation de ressources est terminée
-	% if object.folio_id:
-	, ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.
-	% endif
-
-	Récapitulatif de votre Réservation :
-
-	Libellé : ${object.name or ''}
 	<%
 	from datetime import datetime
 	import pytz
-	resas = []
-	if object.recurrence_id:
-		for resa in object.recurrence_id.reservation_ids:
-			resas.append(resa)
-		endfor
-	else:
-		resas = [object]
-	endif%>
-	Personne Responsable : ${object.partner_shipping_id.name or ''}
-	Ressources Réservées :
 
-	% for line in object.reservation_line:
-	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
-	% endfor
-
-
-	Dates :
-
-	% for resa in resas:
-	<%
-	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
 	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 	my_checkin_str = my_checkin_str.decode('utf-8')
 	my_checkout_str = my_checkout_str.decode('utf-8')
 	%>
-	du ${my_checkin_str} au ${my_checkout_str}
-   % endfor
 
+	Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant :
 
+	${object.done_note or ''}.
 
-	Nous vous remercions d'avoir utilisé nos services de réservations en ligne.
+	Cette réservation est clôturée.
 
-
-   Cordialement,
-
+   ${object.write_uid.signature}
    ${object.shop_id.company_id.name or ''}
-
-   Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
    ]]></field>
     </record>
 
@@ -409,13 +344,11 @@
 	        <field name="model_id" ref="model_hotel_reservation"/>
 	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
-			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été annulée</field>
+			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été refusée</field>
 			<field name="body_html"><![CDATA[
-	<h2>Message Automatique</h2>
+	<h2>Madame, Monsieur,</h2>
 	<ul>
-	<p>Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :</p>
-	<p><i>Saisir ici la raison de votre refus</i></p>
-	<p>Récapitulatif de votre Réservation refusée : </p>
+	<p>Nous ne pouvons donner une suite favorable à votre demande de réservation de :</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -427,15 +360,11 @@
 	else:
 		resas = [object]
 	endif%>
-	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
-	<li><u>Ressources Réservées :</u>
 	<ul>
 	% for line in object.reservation_line:
 	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
 	% endfor
 	</ul>
-	</li>
-	<li><u>Dates : </u></li>
 	<ul>
 	% for resa in resas:
 	<%
@@ -451,21 +380,23 @@
    </ul>
    </ul>
 	<br />
-	<p>Cordialement,</p>
-	<br />
-	<p>${object.shop_id.company_id.name or ''}</p>
-	<br />
-	<img src="data:image/png;base64,${object.shop_id.company_id.logo or ''}"/>
-	<br />
-	<p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>
+	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :</p>
+	<ul>
+	% for line in object.reservation_line :
+		if line.dispo == False :
+			<li>${line.reserve_product.name or ''}<br /></li>
+    % endfor
+   </ul>
 
+	<br />
+
+   <p>	   ${object.write_uid.signature} <br />
+		   ${object.shop_id.company_id.name or ''} </p>
 			    ]]></field>
 			<field name="body_text"><![CDATA[
-	Message Automatique
+	Madame, Monsieur,
 
-	Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :
-	Saisir ici la raison de votre refus
-	Récapitulatif de votre Réservation refusée :
+	Nous ne pouvons donner une suite favorable à votre demande de réservation de :
 	<%
 	from datetime import datetime
 	import pytz
@@ -477,15 +408,11 @@
 	else:
 		resas = [object]
 	endif%>
-	Personne Responsable : ${object.partner_shipping_id.name or ''}
-	Ressources Réservées :
 
 	% for line in object.reservation_line:
 	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
 	% endfor
 
-
-	Dates :
 
 	% for resa in resas:
 	<%
@@ -501,11 +428,14 @@
 
 
 
-	Cordialement,
+	afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :
+	% for line in object.reservation_line :
+		if line.dispo == False :
+			<li>${line.reserve_product.name or ''}<br /></li>
+    % endfor
 
+	${object.write_uid.signature}
 	${object.shop_id.company_id.name or ''}
-
-	Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
 		    ]]></field>
 		</record>
 	</data>
