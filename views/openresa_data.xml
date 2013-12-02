@@ -20,7 +20,7 @@
 -->
 <openerp>
 	<data noupdate="1">
-    	
+
 	    <record id="sequence_resa_number_type" model="ir.sequence.type">
             <field name="name">Type de Numéro de Réservation</field>
             <field name="code">resa.number</field>
@@ -43,13 +43,13 @@
             <field name="padding" eval="3"/>
         </record>
 
-                
-        
+
+
 	<!-- Data for Reservation uom -->
 	<record id="openstc_pret_uom_categ_resa" model="product.uom.categ">
 	    <field name="name">Temporel</field>
 	</record>
-	
+
 	<record id="openstc_pret_uom_day" model="product.uom">
 	    <field name="name">Day (Reservation)</field>
 	    <field name="category_id" eval="openstc_pret_uom_categ_resa"/>
@@ -62,7 +62,7 @@
 		<field name="uom_type">smaller</field>
 		<field name="factor">2.0</field>
 	    <field name="rounding">0.01</field>
-	    
+
 	</record>
 	<record id="openstc_pret_uom_hour" model="product.uom">
 	    <field name="name">Hour (Reservation)</field>
@@ -71,7 +71,7 @@
 	    <field name="factor">24.0</field>
 	    <field name="rounding">0.01</field>
 	</record>
-	
+
 	    <record id="openstc_pret_email_template_resa_validee" model="email.template">
 	        <field name="name">Réservation Validée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
@@ -79,12 +79,9 @@
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est validée</field>
 			<field name="body_html"><![CDATA[
-	<h2>Message Automatique</h2>
-	
-	<p>Votre Réservation a bien été enregistrée.  </p>
-	<p>Récapitulatif de votre Réservation : </p>
-	<ul>
-	<li>Libellé : ${object.name or ''}</li>
+	<h2>Madame, Monsieur,</h2>
+
+	<p>Nous vous confirmons la réservation de : </p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -96,8 +93,6 @@
 	else:
 		resas = [object]
 	endif%>
-	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
-	<li><u>Ressources Réservées :</u> 
 	<ul>
 	% for line in object.reservation_line:
 	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
@@ -119,27 +114,20 @@
    % endfor
    </ul>
    </ul>
-   % if object.folio_id:
-   	<p>Votre Réservation fait l'objet d'une facturation, vous pouvez voir en pièce jointe le Bon de Commande associé A votre Réservation.<br/>
-   	Une facture vous sera envoyée à la restitution des ressources réservées une fois votre Evénement terminé.</p>
-   % endif
-   <br />
-   <p>Cordialement,</p>
-   <br />
+   <p>afin d'organiser <b> ${object.name or ''} </b></p></br>
+   <p>Nous avons bien pris en considération votre note </br> </br>: <b> ${object.confirm_note or ''} </b></p>
+
+
+   <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br> <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b></p>
+
+	Le service Vie Associative et événementiel
    <p>${object.shop_id.company_id.name or ''}</p>
-   <br />
-   <img src="data:image/png;base64,${object.shop_id.company_id.logo or ''}"/>
-   <br />
-   <p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>
-   
+
 			    ]]></field>
 			<field name="body_text"><![CDATA[
-			Message Automatique
-			
-			Votre Réservation a bien été enregistrée.  
-			Récapitulatif de votre Réservation : 
-			
-			Libellé : ${object.name or ''}
+			Madame, Monsieur
+
+			Nous vous confirmons la réservation de :
 			<%
 			from datetime import datetime
 			import pytz
@@ -151,15 +139,13 @@
 			else:
 				resas = [object]
 			endif%>
-			Personne Responsable : ${object.partner_shipping_id.name or ''}
-			Ressources Réservées : 
-			
+
 			% for line in object.reservation_line:
 			${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
 			% endfor
-			
-			Dates : 
-			
+
+			Dates :
+
 			% for resa in resas:
 			<%
 			my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
@@ -171,20 +157,19 @@
 			%>
 			du ${my_checkin_str} au ${my_checkout_str}
 		   % endfor
-		   
-		   % if object.folio_id:
-		   	Votre Réservation fait l'objet d'une facturation, vous pouvez voir en pièce jointe le Bon de Commande associé A votre Réservation.
-		   	Une facture vous sera envoyée à la restitution des ressources réservées une fois votre Evénement terminé.
-		   % endif
-		   
-		   Cordialement,
-		   
+
+		    afin d'organiser  ${object.name or ''}
+
+   			Nous avons bien pris en considération votre note : ${object.confirm_note or ''}
+
+   			Un contrat de location a été envoyé à l’adresse suivante :  ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
+
+		   ${object.write_uid.signature}
 		   ${object.shop_id.company_id.name or ''}
-		   		   
-		   Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
+
 	    ]]></field>
     </record>
-	    
+
 	<record id="openstc_pret_email_template_resa_en_attente" model="email.template">
 	        <field name="name">Réservation En Attente</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
@@ -193,7 +178,7 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est en attente de Validation</field>
 			<field name="body_html"><![CDATA[
 			    <h2>Message Automatique</h2>
-			    
+
 			    <p>Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. </p>
 				<p>Récapitulatif de votre Réservation : </p>
 				<ul>
@@ -210,7 +195,7 @@
 					resas = [object]
 				endif%>
 				<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
-				<li><u>Ressources Réservées :</u> 
+				<li><u>Ressources Réservées :</u>
 				<ul>
 				% for line in object.reservation_line:
 				<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
@@ -233,7 +218,7 @@
 			  </ul>
 			  </ul>
 			    <br />
-   			    Toutefois, veuillez noter que les ressources que vous avez demandé ne vous sont pas encore acquises pour les dates indiquées, un autre email vous sera envoyé pour vous confirmer votre réservation.  
+   			    Toutefois, veuillez noter que les ressources que vous avez demandé ne vous sont pas encore acquises pour les dates indiquées, un autre email vous sera envoyé pour vous confirmer votre réservation.
 			    <br />
 			    <p>Cordialement,</p>
 			    <br />
@@ -242,14 +227,14 @@
 			    <img src="data:image/png;base64,${object.shop_id.company_id.logo or ''}"/>
 			    <br />
 			    <p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>
-			    
+
 			    ]]></field>
 			<field name="body_text"><![CDATA[
 			    Message Automatique
-			    
-			    Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. 
-				Récapitulatif de votre Réservation : 
-				
+
+			    Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée.
+				Récapitulatif de votre Réservation :
+
 				Libellé : ${object.name or ''}
 				<%
 				from datetime import datetime
@@ -263,13 +248,13 @@
 					resas = [object]
 				endif%>
 				Personne Responsable : ${object.partner_shipping_id.name or ''}
-				Ressources Réservées : 
-				
+				Ressources Réservées :
+
 				% for line in object.reservation_line:
 				${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
 				% endfor
-				
-				Dates : 
+
+				Dates :
 				% for resa in resas:
 				<%
 				my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
@@ -281,18 +266,19 @@
 				%>
 				du ${my_checkin_str} au ${my_checkout_str}
 				  % endfor
-			    
-   			    Toutefois, veuillez noter que les ressources que vous avez demandé ne vous sont pas encore acquises pour les dates indiquées, un autre email vous sera envoyé pour vous confirmer votre réservation.  
-			    
+
+   			    Toutefois, veuillez noter que les ressources que vous avez demandé ne vous sont pas encore acquises pour les dates indiquées, un autre email vous sera envoyé pour vous confirmer votre réservation.
+
 			    Cordialement,
-			    
-			    ${object.shop_id.company_id.name or ''}
-			    			    
+
+				${object.write_uid.signature}
+		   		${object.shop_id.company_id.name or ''}
+
 			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
 		    ]]></field>
     </record>
-	    
-	
+
+
     <record id="openstc_pret_email_template_resa_done" model="email.template">
 	        <field name="name">Réservation Terminée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
@@ -301,9 +287,9 @@
 			<field name="subject">Facture concernant votre Réservation: ${object.name or 'inconnu'}</field>
 			<field name="body_html"><![CDATA[
 	<h2>Message Automatique</h2>
-	
+
 	<p> ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''} </p>
-	
+
 	<p>Votre Réservation de ressources est terminée
 	% if object.folio_id:
 	, ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.
@@ -324,7 +310,7 @@
 		resas = [object]
 	endif%>
 	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
-	<li><u>Ressources Réservées :</u> 
+	<li><u>Ressources Réservées :</u>
 	<ul>
 	% for line in object.reservation_line:
 	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
@@ -346,9 +332,9 @@
    % endfor
    </ul>
    </ul>
-	
+
 	Nous vous remercions d'avoir utilisé nos services de réservations en ligne.
-	
+
    <br />
    <p>Cordialement,</p>
    <br />
@@ -357,20 +343,20 @@
    <img src="data:image/png;base64,${object.shop_id.company_id.logo or ''}"/>
    <br />
    <p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>
-   
+
 			    ]]></field>
 			<field name="body_text"><![CDATA[
 	Message Automatique
-	
-	 ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''} 
-	
+
+	 ${object.partner_shipping_id.title.name or ''} ${object.partner_shipping_id.name or ''}
+
 	Votre Réservation de ressources est terminée
 	% if object.folio_id:
 	, ayant fait l'objet d'une facturation, veuillez trouver ci-joint la facture correspondant à votre location.
 	% endif
-	
-	Récapitulatif de votre Réservation : 
-	
+
+	Récapitulatif de votre Réservation :
+
 	Libellé : ${object.name or ''}
 	<%
 	from datetime import datetime
@@ -384,15 +370,15 @@
 		resas = [object]
 	endif%>
 	Personne Responsable : ${object.partner_shipping_id.name or ''}
-	Ressources Réservées : 
-	
+	Ressources Réservées :
+
 	% for line in object.reservation_line:
 	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
 	% endfor
-	
-	
-	Dates : 
-	
+
+
+	Dates :
+
 	% for resa in resas:
 	<%
 	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
@@ -404,20 +390,20 @@
 	%>
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
-   
-   
-	
+
+
+
 	Nous vous remercions d'avoir utilisé nos services de réservations en ligne.
-	
-   
+
+
    Cordialement,
-   
+
    ${object.shop_id.company_id.name or ''}
-      
+
    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
    ]]></field>
     </record>
-	
+
         <record id="openstc_pret_email_template_resa_cancelled" model="email.template">
 	        <field name="name">Réservation annulée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
@@ -427,7 +413,7 @@
 			<field name="body_html"><![CDATA[
 	<h2>Message Automatique</h2>
 	<ul>
-	<p>Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :</p> 
+	<p>Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :</p>
 	<p><i>Saisir ici la raison de votre refus</i></p>
 	<p>Récapitulatif de votre Réservation refusée : </p>
 	<%
@@ -442,7 +428,7 @@
 		resas = [object]
 	endif%>
 	<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
-	<li><u>Ressources Réservées :</u> 
+	<li><u>Ressources Réservées :</u>
 	<ul>
 	% for line in object.reservation_line:
 	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
@@ -472,14 +458,14 @@
 	<img src="data:image/png;base64,${object.shop_id.company_id.logo or ''}"/>
 	<br />
 	<p><i>Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.</i></p>
-   
+
 			    ]]></field>
 			<field name="body_text"><![CDATA[
 	Message Automatique
-	
-	Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante : 
+
+	Votre Réservation dans le cadre de votre manifestation : ${object.name} a été annulée pour la raison suivante :
 	Saisir ici la raison de votre refus
-	Récapitulatif de votre Réservation refusée : 
+	Récapitulatif de votre Réservation refusée :
 	<%
 	from datetime import datetime
 	import pytz
@@ -492,15 +478,15 @@
 		resas = [object]
 	endif%>
 	Personne Responsable : ${object.partner_shipping_id.name or ''}
-	Ressources Réservées : 
-	
+	Ressources Réservées :
+
 	% for line in object.reservation_line:
 	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
 	% endfor
-	
-	
-	Dates : 
-	
+
+
+	Dates :
+
 	% for resa in resas:
 	<%
 	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
@@ -512,19 +498,19 @@
 	%>
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
-   
-   
-	
+
+
+
 	Cordialement,
-	
+
 	${object.shop_id.company_id.name or ''}
-		
+
 	Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
 		    ]]></field>
-		</record> 
-	</data>	
+		</record>
+	</data>
 	<data>
-	
+
 	 <record model="res.groups" id="hotel.group_hotel_manager">
     	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
     	 <field name="code">HOTEL_MANA</field>
@@ -532,34 +518,34 @@
 	 <record model="res.groups" id="hotel.group_hotel_user">
     	 <field name="code">HOTEL_USER</field>
 	 </record>
-	 
+
 	 <record model="res.groups" id="group_hotel_officer">
 	     <field name="name">Réservations / Agent</field>
     	 <field name="code">HOTEL_OFFI</field>
     	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
 	 </record>
-	 
+
 	<record model="res.groups" id="openresa_api_group">
         <field name="name">API Reservation Group</field>
         <field name="code">APIRESA</field>
         <field name="category_id" ref="base.module_category_project_management"/>
 	</record>
-	
+
 	<record model="res.partner" id="openresa_partner_part">
 	    <field name="name">Particuliers</field>
 	    <field name="type_id" ref="openbase.openstc_prets_partner_type_part"/>
 		<field name="customer" eval="True"/>
 		<field name="supplier" eval="False"/>
 	</record>
-	
+
 	<!-- I create default contact to be able to display res_partner in openerp, and i create it separetly from res_partner
 	to be sure that is created only once, and always present -->
 	<record model="res.partner.address" id="openresa_partner_contact_default_part">
 	    <field name="name"></field>
 	    <field name="partner_id" ref="openresa_partner_part"/>
 	</record>
-	
-		
+
+
     <record model="ir.rule" id="openresa_partner_type_rule">
         <field name="name">Partner Type Rule</field>
         <field name="model_id" ref="openbase.model_openstc_partner_type"/>
@@ -570,6 +556,6 @@
         <field eval="1" name="perm_read"/>
         <field eval="1" name="perm_create"/>
     </record>
-    
+
 	</data>
 </openerp>
