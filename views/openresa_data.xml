@@ -99,7 +99,6 @@
 	% endfor
 	</ul>
 	</li>
-	<li><u>Dates : </u></li>
 	<ul>
 	% for resa in resas:
 	<%

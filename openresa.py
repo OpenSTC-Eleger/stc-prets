@@ -28,6 +28,7 @@ import netsvc
 from tools.translate import _
 from mx.DateTime.mxDateTime import strptime
 import time
+import types
 import base64
 import unicodedata
 import re
@@ -680,6 +681,9 @@ class hotel_reservation(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        isList = isinstance(ids, types.ListType)
+        if isList == False :
+            ids = [ids]
         if context == None:
             context = {}
         if 'checkin' in vals:
