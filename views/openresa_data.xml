@@ -116,9 +116,7 @@
    <p>afin d'organiser <b> ${object.name or ''} </b></p></br>
    <p>Nous avons bien pris en considération votre note </br> </br>: <b> ${object.confirm_note or ''} </b></p>
 
-
    <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br> <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b></p>
-
 
    <p>${object.write_uid.signature} <br />
    ${object.shop_id.company_id.name or ''} </p>
@@ -143,8 +141,6 @@
 			% for line in object.reservation_line:
 			${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
 			% endfor
-
-			Dates :
 
 			% for resa in resas:
 			<%
@@ -303,8 +299,6 @@
 	<p>Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
 	${object.done_note or ''}.</br></br>
 
-
-
 	Cette réservation est clôturée.</p>
 
    <br />
@@ -352,13 +346,21 @@
 	from datetime import datetime
 	import pytz
 	resas = []
+	products_not_available = []
 	if object.recurrence_id:
 		for resa in object.recurrence_id.reservation_ids:
 			resas.append(resa)
 		endfor
 	else:
 		resas = [object]
-	endif%>
+	endif
+
+	for line in object.reservation_line :
+		if line.dispo == False :
+			products_not_available.append(line.reserve_product.name)
+
+	%>
+
 	<ul>
 	% for line in object.reservation_line:
 	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
@@ -381,9 +383,8 @@
 	<br />
 	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :</p>
 	<ul>
-	% for line in object.reservation_line :
-		if line.dispo == False :
-			<li>${line.reserve_product.name or ''}<br /></li>
+	% for product in products_not_available :
+		<li>${product or ''}<br /></li>
     % endfor
    </ul>
 
@@ -400,13 +401,19 @@
 	from datetime import datetime
 	import pytz
 	resas = []
+	products_not_available = []
 	if object.recurrence_id:
 		for resa in object.recurrence_id.reservation_ids:
 			resas.append(resa)
 		endfor
 	else:
 		resas = [object]
-	endif%>
+	endif
+
+	for line in object.reservation_line :
+		if line.dispo == False :
+			products_not_available.append(line.reserve_product.name)
+	%>
 
 	% for line in object.reservation_line:
 	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
@@ -428,9 +435,8 @@
 
 
 	afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :
-	% for line in object.reservation_line :
-		if line.dispo == False :
-			<li>${line.reserve_product.name or ''}<br /></li>
+	% for product in products_not_available :
+		<li>${product or ''}<br /></li>
     % endfor
 
 	${object.write_uid.signature}

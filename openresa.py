@@ -473,7 +473,7 @@ class hotel_reservation(osv.osv):
     def managerOnly(self, cr, uid, record, groups_code):
         return 'HOTEL_MANA' in groups_code
 
-    """
+    """wkf_service.trg_validate(
     action rights for manager or owner of a record
     - claimer can do these actions on its own records,
     - officer can make these actions for claimer which does not have account,
@@ -496,8 +496,8 @@ class hotel_reservation(osv.osv):
 #        'update':ownerOrOfficer,
 #        'delete':ownerOrOfficer,
         'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
-        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
-        'resolve_conflict':lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == False and record.state == 'remplir',
+        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'remplir',
+        #'resolve_conflict':lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == False and record.state == 'remplir',
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
 
     }
@@ -674,8 +674,6 @@ class hotel_reservation(osv.osv):
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
             if resa.all_dispo : #and resa.state in ['remplir','draft']:
                 state = vals['state']
-                if vals.has_key('send_invoicing') :
-                    resa.write({'send_invoicing': vals['send_invoicing']})
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
 
         return True
@@ -693,9 +691,11 @@ class hotel_reservation(osv.osv):
             if len(vals['checkout']) >10:
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
 
-        if vals.has_key('state') :
-            self.validate(cr, uid, ids, vals, context)
         res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        if vals.has_key('state_event') :
+            vals.update( { 'state' : vals.get('state_event'), 'state_event': '' } )
+            self.validate(cr, uid, ids, vals, context)
+
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -763,7 +763,8 @@ class hotel_reservation(osv.osv):
         return False
 
     def cancelled_reservation(self, cr, uid, ids):
-        self.write(cr, uid, ids, {'state':'cancle'})
+        self.envoyer_mail(cr, uid, ids, {'state':'error'})
+        self.write(cr, uid, ids, {'state':'cancel'})
         return True
 
     #@ToRemove
