@@ -380,12 +380,15 @@ class openresa_reservation_recurrence(osv.osv):
         if isList == False :
             ids = [ids]
 
-        res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
+        state = ''
         if vals.has_key('state_event') :
-            vals.update( { 'state' : vals.get('state_event'), 'state_event': '' } )
+            state = vals.get('state_event')
+            vals.pop('state_event')
+        res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
+        if state != '' :
+            vals.update( { 'state' : state, 'state_event': '' } )
             self.validate(cr, uid, ids, vals, context)
 
-        res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
         return res
 
 openresa_reservation_recurrence()
