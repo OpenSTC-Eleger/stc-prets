@@ -118,7 +118,7 @@
 
    <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br> <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b></p>
 
-   <p>${object.write_uid.signature} <br />
+   <p>${object.write_uid.signature} or 'Le service Vie Associative et événementiel'<br />
    ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
@@ -160,7 +160,7 @@
 
    			Un contrat de location a été envoyé à l’adresse suivante :  ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
 
-		   ${object.write_uid.signature}
+		   ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
 		   ${object.shop_id.company_id.name or ''}
 
 	    ]]></field>
@@ -267,7 +267,7 @@
 
 			    Cordialement,
 
-				${object.write_uid.signature}
+				${object.write_uid.signature }
 		   		${object.shop_id.company_id.name or ''}
 
 			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
@@ -302,7 +302,7 @@
 	Cette réservation est clôturée.</p>
 
    <br />
-   <p>${object.write_uid.signature} <br />
+   <p>${object.write_uid.signature or 'Le service Vie Associative et événementiel'} <br />
    ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
@@ -327,7 +327,7 @@
 
 	Cette réservation est clôturée.
 
-   ${object.write_uid.signature}
+   ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
    ${object.shop_id.company_id.name or ''}
    ]]></field>
     </record>
@@ -346,7 +346,6 @@
 	from datetime import datetime
 	import pytz
 	resas = []
-	products_not_available = []
 	if object.recurrence_id:
 		for resa in object.recurrence_id.reservation_ids:
 			resas.append(resa)
@@ -354,11 +353,6 @@
 	else:
 		resas = [object]
 	endif
-
-	for line in object.reservation_line :
-		if line.dispo == False :
-			products_not_available.append(line.reserve_product.name)
-
 	%>
 
 	<ul>
@@ -381,16 +375,11 @@
    </ul>
    </ul>
 	<br />
-	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :</p>
-	<ul>
-	% for product in products_not_available :
-		<li>${product or ''}<br /></li>
-    % endfor
-   </ul>
-
+	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de  : </br>
+		${object.cancel_note or ''}
+	</p>
 	<br />
-
-   <p>	   ${object.write_uid.signature} <br />
+   <p>	   ${object.write_uid.signature} or 'Le service Vie Associative et événementiel' <br />
 		   ${object.shop_id.company_id.name or ''} </p>
 			    ]]></field>
 			<field name="body_text"><![CDATA[
@@ -401,7 +390,6 @@
 	from datetime import datetime
 	import pytz
 	resas = []
-	products_not_available = []
 	if object.recurrence_id:
 		for resa in object.recurrence_id.reservation_ids:
 			resas.append(resa)
@@ -410,9 +398,6 @@
 		resas = [object]
 	endif
 
-	for line in object.reservation_line :
-		if line.dispo == False :
-			products_not_available.append(line.reserve_product.name)
 	%>
 
 	% for line in object.reservation_line:
@@ -432,14 +417,10 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
+	afin d’organiser ${object.name or 'inconnu'}  en raison de :
+	${object.cancel_note or ''}
 
-
-	afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :
-	% for product in products_not_available :
-		<li>${product or ''}<br /></li>
-    % endfor
-
-	${object.write_uid.signature}
+	${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
 	${object.shop_id.company_id.name or ''}
 		    ]]></field>
 		</record>
