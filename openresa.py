@@ -669,13 +669,17 @@ class hotel_reservation(osv.osv):
 
     def validate(self, cr, uid, ids, vals, context=None):
         wkf_service = netsvc.LocalService('workflow')
+        resa_count = 0
         for resa in self.browse(cr, uid, ids, context=context):
             #count to know how many resa have been requested to be confirmed,
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
             if resa.all_dispo : #and resa.state in ['remplir','draft']:
+                resa_count += 1
                 state = vals['state']
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
-
+            if resa.recurrence_id and resa_count > 0 :
+                resa.recurrence_id.write({'recurrence_state':'in_use'})
+                #self.pool.get('hotel.reservation.recurrence').write(cr, uid, [res.recurrence_id.id],  ,context=None)
         return True
 
     def write(self, cr, uid, ids, vals, context=None):

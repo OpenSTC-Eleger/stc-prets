@@ -372,7 +372,7 @@ class openresa_reservation_recurrence(osv.osv):
                 state = vals['state']
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
             if resa_count > 0:
-                recurrence.write({'date_confirm':now})
+                recurrence.write({'date_confirm':now, 'recurrence_state':'in_use'})
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
