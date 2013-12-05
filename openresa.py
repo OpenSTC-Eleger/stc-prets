@@ -495,7 +495,7 @@ class hotel_reservation(osv.osv):
 #        'create':lambda self,cr,uid,record, groups_code: True,
 #        'update':ownerOrOfficer,
 #        'delete':ownerOrOfficer,
-        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
+        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
         'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'remplir',
         #'resolve_conflict':lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == False and record.state == 'remplir',
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
@@ -673,10 +673,7 @@ class hotel_reservation(osv.osv):
         for resa in self.browse(cr, uid, ids, context=context):
             #count to know how many resa have been requested to be confirmed,
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
-            if resa.all_dispo : #and resa.state in ['remplir','draft']:
-                resa_count += 1
-                state = vals['state']
-                wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
+            wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, vals['state'], cr)
             if resa.recurrence_id and resa_count > 0 :
                 resa.recurrence_id.write({'recurrence_state':'in_use'})
                 #self.pool.get('hotel.reservation.recurrence').write(cr, uid, [res.recurrence_id.id],  ,context=None)
