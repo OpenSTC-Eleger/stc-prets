@@ -250,7 +250,7 @@ class hotel_reservation_line(osv.osv):
         ret = []
         prod_ids = [item['prod_id'] for item in prod_dict]
         #compute qties of products already in 'remplir' resa
-        available = self.pool.get("hotel.reservation").get_prods_available_and_qty(cr, uid, checkin, checkout, prod_ids=prod_ids, states=['cancle','done','confirm','wait_confirm'], context=context)
+        available = self.pool.get("hotel.reservation").get_prods_available_and_qty(cr, uid, checkin, checkout, prod_ids=prod_ids, states=['cancel','done','confirm','wait_confirm'], context=context)
         #for each prod desired, retrieve those which are conflicting
         conflicting_prods = []
         for item in prod_dict:
@@ -667,6 +667,8 @@ class hotel_reservation(osv.osv):
         return super(hotel_reservation, self).create(cr, uid, vals, context)
 
     def validate(self, cr, uid, ids, vals, context=None):
+        if not isinstance(ids, list):
+            ids = [ids]
         wkf_service = netsvc.LocalService('workflow')
         for resa in self.browse(cr, uid, ids, context=context):
             #count to know how many resa have been requested to be confirmed,
@@ -759,7 +761,7 @@ class hotel_reservation(osv.osv):
         return False
 
     def cancelled_reservation(self, cr, uid, ids):
-        self.write(cr, uid, ids, {'state':'cancle'})
+        self.write(cr, uid, ids, {'state':'cancel'})
         return True
 
     #@ToRemove
@@ -865,7 +867,7 @@ class hotel_reservation(osv.osv):
         #Valeurs par défauts des champs cachés
         return res
 
-    def get_nb_prod_reserved(self, cr, prod_list, checkin, checkout, states=['cancle','done','remplir'], where_optionnel=""):
+    def get_nb_prod_reserved(self, cr, prod_list, checkin, checkout, states=['cancel','done','remplir'], where_optionnel=""):
         cr.execute("select reserve_product, sum(qte_reserves) as qte_reservee \
                     from hotel_reservation as hr, \
                     hotel_reservation_line as hrl \
@@ -878,7 +880,7 @@ class hotel_reservation(osv.osv):
         return cr
 
     #main method to control availability of products : returns availability of each prod : {prod_id:qty} matching dates
-    def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', states=['cancle','done','remplir'], context=None):
+    def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', states=['cancel','done','remplir'], context=None):
         #if no prod_ids put, we check all prods
         if not prod_ids:
             prod_ids = self.pool.get("product.product").search(cr, uid, [])

@@ -261,7 +261,7 @@
   and i check if resa state is cancle as excepted
 -
   !assert {model: hotel.reservation, id: openstc_prets_tests_resa1, string: Wkf failure resa is not at cancel state}:
-     - state == 'cancle'
+     - state == 'cancel'
     
 -  
   test with resa2, confirmation by agent, validation by manager
