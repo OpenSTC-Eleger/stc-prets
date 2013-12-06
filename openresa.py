@@ -28,6 +28,7 @@ import netsvc
 from tools.translate import _
 from mx.DateTime.mxDateTime import strptime
 import time
+import types
 import base64
 import unicodedata
 import re
@@ -472,7 +473,7 @@ class hotel_reservation(osv.osv):
     def managerOnly(self, cr, uid, record, groups_code):
         return 'HOTEL_MANA' in groups_code
 
-    """
+    """wkf_service.trg_validate(
     action rights for manager or owner of a record
     - claimer can do these actions on its own records,
     - officer can make these actions for claimer which does not have account,
@@ -494,9 +495,9 @@ class hotel_reservation(osv.osv):
 #        'create':lambda self,cr,uid,record, groups_code: True,
 #        'update':ownerOrOfficer,
 #        'delete':ownerOrOfficer,
-        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
-        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.all_dispo == True and record.state == 'remplir',
-        'resolve_conflict':lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == False and record.state == 'remplir',
+        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
+        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'remplir',
+        #'resolve_conflict':lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.all_dispo == False and record.state == 'remplir',
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
 
     }
@@ -670,18 +671,20 @@ class hotel_reservation(osv.osv):
         if not isinstance(ids, list):
             ids = [ids]
         wkf_service = netsvc.LocalService('workflow')
+        resa_count = 0
         for resa in self.browse(cr, uid, ids, context=context):
             #count to know how many resa have been requested to be confirmed,
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
-            if resa.all_dispo : #and resa.state in ['remplir','draft']:
-                state = vals['state']
-                if vals.has_key('send_invoicing') :
-                    resa.write({'send_invoicing': vals['send_invoicing']})
-                wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
-
+            wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, vals['state'], cr)
+            if resa.recurrence_id and resa_count > 0 :
+                resa.recurrence_id.write({'recurrence_state':'in_use'})
+                #self.pool.get('hotel.reservation.recurrence').write(cr, uid, [res.recurrence_id.id],  ,context=None)
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        isList = isinstance(ids, types.ListType)
+        if isList == False :
+            ids = [ids]
         if context == None:
             context = {}
         if 'checkin' in vals:
@@ -691,9 +694,11 @@ class hotel_reservation(osv.osv):
             if len(vals['checkout']) >10:
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
 
-        if vals.has_key('state') :
-            self.validate(cr, uid, ids, vals, context)
         res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        if vals.has_key('state_event') :
+            vals.update( { 'state' : vals.get('state_event'), 'state_event': '' } )
+            self.validate(cr, uid, ids, vals, context)
+
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -761,6 +766,7 @@ class hotel_reservation(osv.osv):
         return False
 
     def cancelled_reservation(self, cr, uid, ids):
+        self.envoyer_mail(cr, uid, ids, {'state':'error'})
         self.write(cr, uid, ids, {'state':'cancel'})
         return True
 

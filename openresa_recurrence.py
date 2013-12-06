@@ -370,11 +370,9 @@ class openresa_reservation_recurrence(osv.osv):
                 if resa.all_dispo and resa.state in ['remplir','draft']:
                     resa_count += 1
                 state = vals['state']
-                if vals.has_key('send_invoicing') :
-                    resa.write({'send_invoicing': vals['send_invoicing']})
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
             if resa_count > 0:
-                recurrence.write({'date_confirm':now})
+                recurrence.write({'date_confirm':now, 'recurrence_state':'in_use'})
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -382,10 +380,15 @@ class openresa_reservation_recurrence(osv.osv):
         if isList == False :
             ids = [ids]
 
-        if vals.has_key('state') :
+        state = ''
+        if vals.has_key('state_event') :
+            state = vals.get('state_event')
+            vals.pop('state_event')
+        res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
+        if state != '' :
+            vals.update( { 'state' : state, 'state_event': '' } )
             self.validate(cr, uid, ids, vals, context)
 
-        res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
         return res
 
 openresa_reservation_recurrence()

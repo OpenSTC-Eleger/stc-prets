@@ -99,7 +99,6 @@
 	% endfor
 	</ul>
 	</li>
-	<li><u>Dates : </u></li>
 	<ul>
 	% for resa in resas:
 	<%
@@ -117,11 +116,9 @@
    <p>afin d'organiser <b> ${object.name or ''} </b></p></br>
    <p>Nous avons bien pris en considération votre note </br> </br>: <b> ${object.confirm_note or ''} </b></p>
 
-
    <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br> <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b></p>
 
-
-   <p>${object.write_uid.signature} <br />
+   <p>${object.write_uid.signature} or 'Le service Vie Associative et événementiel'<br />
    ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
@@ -145,8 +142,6 @@
 			${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
 			% endfor
 
-			Dates :
-
 			% for resa in resas:
 			<%
 			my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
@@ -165,7 +160,7 @@
 
    			Un contrat de location a été envoyé à l’adresse suivante :  ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
 
-		   ${object.write_uid.signature}
+		   ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
 		   ${object.shop_id.company_id.name or ''}
 
 	    ]]></field>
@@ -272,7 +267,7 @@
 
 			    Cordialement,
 
-				${object.write_uid.signature}
+				${object.write_uid.signature }
 		   		${object.shop_id.company_id.name or ''}
 
 			    Selon la loi du 6 janvier 1978 de la Loi Informatique et Libertés, vous disposez d'un droit de regard, de rectification et de suppression sur l'ensemble des informations personnelles vous concernant.
@@ -304,12 +299,10 @@
 	<p>Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
 	${object.done_note or ''}.</br></br>
 
-
-
 	Cette réservation est clôturée.</p>
 
    <br />
-   <p>${object.write_uid.signature} <br />
+   <p>${object.write_uid.signature or 'Le service Vie Associative et événementiel'} <br />
    ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
@@ -334,7 +327,7 @@
 
 	Cette réservation est clôturée.
 
-   ${object.write_uid.signature}
+   ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
    ${object.shop_id.company_id.name or ''}
    ]]></field>
     </record>
@@ -359,7 +352,9 @@
 		endfor
 	else:
 		resas = [object]
-	endif%>
+	endif
+	%>
+
 	<ul>
 	% for line in object.reservation_line:
 	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
@@ -380,17 +375,11 @@
    </ul>
    </ul>
 	<br />
-	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :</p>
-	<ul>
-	% for line in object.reservation_line :
-		if line.dispo == False :
-			<li>${line.reserve_product.name or ''}<br /></li>
-    % endfor
-   </ul>
-
+	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de  : </br>
+		${object.cancel_note or ''}
+	</p>
 	<br />
-
-   <p>	   ${object.write_uid.signature} <br />
+   <p>	   ${object.write_uid.signature} or 'Le service Vie Associative et événementiel' <br />
 		   ${object.shop_id.company_id.name or ''} </p>
 			    ]]></field>
 			<field name="body_text"><![CDATA[
@@ -407,7 +396,9 @@
 		endfor
 	else:
 		resas = [object]
-	endif%>
+	endif
+
+	%>
 
 	% for line in object.reservation_line:
 	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
@@ -426,15 +417,10 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
+	afin d’organiser ${object.name or 'inconnu'}  en raison de :
+	${object.cancel_note or ''}
 
-
-	afin d’organiser ${object.name or 'inconnu'}  en raison de l’indisponibilité de :
-	% for line in object.reservation_line :
-		if line.dispo == False :
-			<li>${line.reserve_product.name or ''}<br /></li>
-    % endfor
-
-	${object.write_uid.signature}
+	${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
 	${object.shop_id.company_id.name or ''}
 		    ]]></field>
 		</record>
