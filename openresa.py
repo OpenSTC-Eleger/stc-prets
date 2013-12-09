@@ -73,25 +73,28 @@ class product_product(osv.osv):
     @return: list of prod_ids reservable by user / partner
     @attention: may not work if both claimer_user_id and claimer_partner_id are supplied (raise Error)
     """
-    def get_bookables(self, cr, uid, claimer_user_id=False, claimer_partner_id=False, context=None):
+    def get_bookables(self, cr, uid, claimer_partner_id=False, context=None):
         prod_ids = []
         equipment_obj = self.pool.get("openstc.equipment")
         site_obj = self.pool.get("openstc.site")
         equipments = []
         sites = []
         domain = []
-        #if it's an user, prod_ids are filtered according to 'internal' reservable rights
-        if claimer_user_id:
-            user = self.pool.get("res.users").read(cr, uid, claimer_user_id, ['service_ids'],context=context)
-            domain = [('internal_booking','=',True),'|',
-                      ('service_bookable_ids.id','child_of',[service_id for service_id in user['service_ids']]),
-                      ('service_bookable_ids','=',False)]
-        #else, if it's a partner, prod_ids are filtered according to 'external' reservable rights
-        elif not claimer_user_id and claimer_partner_id:
-            partner = self.pool.get('res.partner').read(cr, uid, claimer_partner_id, ['type_id'],context=context)
-            domain = [('external_booking','=',True),'|',
-                      ('partner_type_bookable_ids.id','child_of',partner['type_id'] and partner['type_id'][0] or []),
-                      ('partner_type_bookable_ids','=',False)]
+        partner_obj = self.pool.get('res.partner')
+        service_obj = self.pool.get('openstc.service')
+        if claimer_partner_id:
+            partner = partner_obj.read(cr, uid, claimer_partner_id, ['is_department', 'type_id'], context=context)
+            if partner['is_department']:
+                service_id = service_obj.search(cr, uid, [('partner_id.id','=',claimer_partner_id)], context=context)
+                if service_id:
+                    domain = [('internal_booking','=',True),'|',
+                              ('service_bookable_ids.id','child_of',service_id),
+                              ('service_bookable_ids','=',False)]
+            #else, if it's a partner, prod_ids are filtered according to 'external' reservable rights
+            else:
+                domain = [('external_booking','=',True),'|',
+                          ('partner_type_bookable_ids.id','child_of',partner['type_id'] and partner['type_id'][0] or []),
+                          ('partner_type_bookable_ids','=',False)]
         #else, if not any partner_id or user_id is supplied, returns all with no fitler
         else:
             domain = ['|',('internal_booking','=',True),('external_booking','=',True)]
@@ -531,7 +534,8 @@ class hotel_reservation(osv.osv):
             val = []
             prod_ids = []
             for item in field_ids:
-                val.append([item.id,item.reserve_product.name_get()[0][1]])#,item.qte_dispo
+                if 'resource_names' in name:
+                    val.append([item.id,item.reserve_product.name_get()[0][1]])#,item.qte_dispo
                 prod_ids.append(item.reserve_product.id)
             res[obj.id].update({'resource_names':val,
                                 'resource_ids':prod_ids})
