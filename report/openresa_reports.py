@@ -44,8 +44,8 @@ class openresa_folio_report(report_sxw.rml_parse):
                 #default value if prod not yet found (subtotal is computed at the end
                 key = (line.product_id.id,line.product_uom_qty,line.product_uom.id,line.price_unit,line.discount)
                 ret.setdefault(key, {'prod':line.product_id.name,
-                                                     'uom_qty':int(line.product_uom_qty),
-                                                     'uom_name':line.product_uos.name,
+                                                     'uom_qty':int(line.product_uos_qty),
+                                                     'uom_name':line.product_uos and line.product_uos.name or 'Date',
                                                      'unit_price':line.price_subtotal,
                                                      'discount':line.discount,
                                                      'description':line.product_id.description,
@@ -63,12 +63,20 @@ class openresa_folio_report(report_sxw.rml_parse):
         
         return ret2
     
+    def getResa(self, record):
+        ret_ids = self.pool.get('hotel.reservation').search(self.cr, self.uid, [('folio_id.id','=',record.id)])
+        ret = False 
+        if ret_ids:
+            ret = self.pool.get('hotel.reservation').browse(self.cr, self.uid, ret_ids[0],self.localcontext)
+        return ret
+    
     def __init__(self, cr, uid, name, context):
         super(openresa_folio_report, self).__init__(cr, uid, name, context)
         self.localcontext.update({
             'time': time,
             'datetime':datetime,
             'getLines':self.get_lines,
+            'getResa':self.getResa,
         })
 
 report_sxw.report_sxw('report.openresa.folio.report', 'hotel.folio',

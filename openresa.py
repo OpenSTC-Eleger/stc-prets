@@ -129,9 +129,9 @@ class product_product(osv.osv):
         categ_uom_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_uom_categ_resa')[1]
         #first, retrieve qty according to product_uom
         res = length
-        if record.uom_id.category_id.id == categ_uom_id:
+        if record.uos_id and record.uos_id.category_id.id == categ_uom_id:
             if record.uom_id.id <> hour_uom_id:
-                res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length,record.uom_id, context=context)
+                res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length,record.uos_id, context=context)
         #else, compute qty for day uom by default
         else:
             res = self.pool.get('product.uom')._compute_qty_obj(cr, uid, hour_uom, length, day_uom, context=context)
@@ -307,6 +307,7 @@ class hotel_reservation_line(osv.osv):
         "reserve_product": fields.many2one("product.product", "Article réservé", domain=[('openstc_reservable','=',True)]),
         "qte_reserves":fields.float("Qté désirée", digits=(3,2)),
         'pricelist_amount':fields.float('Price from pricelist'),
+        'pricelist_item':fields.many2one('product.pricelist.item','Pricelist item of invoicing'),
         'dispo':fields.function(_calc_qte_dispo, string="Disponible", method=True, multi="dispo", type='boolean'),
         "infos":fields.char("Informations supplémentaires",size=256),
         "name":fields.char('Libellé', size=128),
@@ -466,6 +467,9 @@ class hotel_reservation(osv.osv):
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         return ret
 
+    def _get_ressource_ids(self, cr, uid, ids, name, args, context=None):
+        return
+
     """
     action rights for manager only
     - only manager can do it, because imply stock evolutions and perharps treatment of some conflicts
@@ -518,55 +522,45 @@ class hotel_reservation(osv.osv):
 #            ret[resa.id] = {'resources':amount_total,'stock_availibility_resources':all_dispo}
 #        return ret
 
-    _field_resource_names = {'resource_names':'reservation_line'}
-    _field_resource_quantities = {'resource_quantities':'reservation_line'}
 
-    def __init__(self, pool, cr):
-        def _get_fields_resources_names(self, cr, uid, ids, name, args, context=None):
-            res = {}
-            name = name[0]
-            for obj in self.browse(cr, uid, ids, context=context):
-                res[obj.id] = {}
-                field_ids = obj[args[name]]
-                val = []
-                for item in field_ids:
-                    product = pool.get('product.product').browse(cr, uid, item.reserve_product.id, context=context)
-                    val.append([item.id,product.name_get()[0][1]])#,item.qte_dispo
-                res[obj.id].update({name:val})
-            return res
+    def _get_fields_resources_names(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = {}
+            field_ids = obj.reservation_line
+            val = []
+            prod_ids = []
+            for item in field_ids:
+                val.append([item.id,item.reserve_product.name_get()[0][1]])#,item.qte_dispo
+                prod_ids.append(item.reserve_product.id)
+            res[obj.id].update({'resource_names':val,
+                                'resource_ids':prod_ids})
+        return res
 
-        def _get_field_resource_quantities(self, cr, uid, ids, name, args, context=None):
-            res = {}
-            name = name[0]
-            for obj in self.browse(cr, uid, ids, context=context):
-                res[obj.id] = {}
-                field_ids = obj[args[name]]
-                val = []
-                i=0
-                for item in field_ids:
-                    product = pool.get('product.product').browse(cr, uid, item.reserve_product.id, context=context)
-                    if obj.state != 'remplir':
-                        tooltip = " " + str(item.qte_reserves)
-                        if len(field_ids)-1 < i :
-                            tooltip += ", "
+    def _get_field_resource_quantities(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        name = name[0]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = {}
+            field_ids = obj.reservation_line
+            val = []
+            i=0
+            for item in field_ids:
+                product = pool.get('product.product').browse(cr, uid, item.reserve_product.id, context=context)
+                if obj.state != 'remplir':
+                    tooltip = " " + str(item.qte_reserves)
+                    if len(field_ids)-1 < i :
+                        tooltip += ", "
+                else :
+                    tooltip = " souhaitée: " + str(item.qte_reserves)
+                    if item.dispo :
+                        tooltip += " ,dispo: " + str(item.qte_dispo)
                     else :
-                        tooltip = " souhaitée: " + str(item.qte_reserves)
-                        if item.dispo :
-                            tooltip += " ,dispo: " + str(item.qte_dispo)
-                        else :
-                            tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
-                    val.append([product.name_get()[0][1], tooltip])
-                    i+=1;
-                res[obj.id].update({name:val})
-            return res
-
-        ret = super(hotel_reservation, self).__init__(pool,cr)
-        #add _field_names to fields definition of the model
-        #for f in self._fields_names.keys():
-            #force name of new field with '_names' suffix
-        self._columns.update({'resource_names':fields.function(_get_fields_resources_names, type='char',method=True, multi='field_resource_names',store=False, arg=self._field_resource_names)})
-        self._columns.update({'resource_quantities':fields.function(_get_field_resource_quantities, type='char',method=True, multi='field_resource_quantities',store=False, arg=self._field_resource_quantities)})
-        return ret
+                        tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
+                val.append([product.name_get()[0][1], tooltip])
+                i+=1;
+            res[obj.id].update({name:val})
+        return res
 
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
         #default value: empty string for each id
@@ -593,6 +587,9 @@ class hotel_reservation(osv.osv):
                                             Une réservation bloquée signifie que la réservation n'est pas prise en compte car nous ne pouvons pas \
                                             garantir la livraison aux dates indiquées")),
                 'name':fields.char('Nom Manifestation', size=128, required=True),
+                'resource_names':fields.function(_get_fields_resources_names, type='char',method=True, multi='field_resource_names',store=False),
+                'resource_quantities':fields.function(_get_field_resource_quantities, type='char',method=True, multi='field_resource_quantities',store=False),
+                'resource_ids':fields.function(_get_fields_resources_names, multi='field_resource_names', method=True, type='char',store=False),
 
                 'site_id':fields.many2one('openstc.site','Site (Lieu)'),
                 'prod_id':fields.many2one('product.product','Ressource'),
@@ -729,6 +726,7 @@ class hotel_reservation(osv.osv):
                 #TOCHECK: as long as form is written by employee, we let him all latitude to manage prices
                 form_amount = resa.amount_total
                 line_ids = []
+                attach_vals = self._create_report_folio_attach(cr, uid, resa)
                 if form_amount > 0.0 and (not resa.recurrence_id or resa.is_template):
                 #Si montant > 0 euros, générer sale order puis dérouler wkf jusqu'a édition facture
                     folio_id = self.create_folio(cr, uid, [resa.id])
@@ -747,7 +745,7 @@ class hotel_reservation(osv.osv):
                     self.pool.get("stock.move").action_done(cr, uid, move_ids)
                     #Send invoicing only if user wants to
                     if resa.send_invoicing:
-                        attach_sale_id.append(self._create_report_folio_attach(cr, uid, resa))
+                        attach_sale_id.append(attach_vals)
                 #send mail with optional attaches on products and the sale order pdf attached
                 self.envoyer_mail(cr, uid, ids, {'state':'validated'}, attach_ids=attach_sale_id)
                 self.write(cr, uid, ids, {'state':'confirm'})
@@ -981,10 +979,10 @@ class hotel_reservation(osv.osv):
         if not pricelist_id:
             pricelist_id = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_product_pricelist.id
         res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], [(product_id,uom_qty,partner_id)], context=None)
-        return res and res[product_id][pricelist_id] or False
+        return res and (res[product_id][pricelist_id]) or False
 
     """
-    OpenERP StandAlone method
+    OpenERP internal invoicing compute
     """
     def compute_lines_price(self, cr, uid, ids, context=None):
         values = []
