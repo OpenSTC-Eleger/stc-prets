@@ -550,7 +550,7 @@ class hotel_reservation(osv.osv):
             val = []
             i=0
             for item in field_ids:
-                product = pool.get('product.product').browse(cr, uid, item.reserve_product.id, context=context)
+                product = item.reserve_product
                 if obj.state != 'remplir':
                     tooltip = " " + str(item.qte_reserves)
                     if len(field_ids)-1 < i :
