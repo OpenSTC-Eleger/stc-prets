@@ -577,57 +577,74 @@ class hotel_reservation(osv.osv):
             #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
             ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
         return ret
-
+    
+    def get_data_from_xml(self, cr, uid, module, model, context=None):
+        ret = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, model)
+        ret = ret[1] if ret else False
+        return ret
+    
     _columns = {
-                'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
-                'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
-                'state': fields.selection(_get_state_values, 'Etat',readonly=True),
-                'state_num': fields.function(_get_state_num,string='Current state',type='integer', method=True, store={'hotel.reservation':(get_resa_modified,['state'],20)}),
-                'create_date' : fields.datetime('Create Date', readonly=True),
-                'write_date' : fields.datetime('Write Date', readonly=True),
-                'in_option':fields.function(_calc_in_option, string="En Option", selection=AVAILABLE_IN_OPTION_LIST, type="selection", method = True, store={'hotel.reservation':(get_resa_modified,['checkin','reservation_line'],10)},
-                                            help=("Une réservation mise en option signifie que votre demande est prise en compte mais \
+        'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
+        'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
+        'state': fields.selection(_get_state_values, 'Etat', readonly=True),
+        'state_num': fields.function(_get_state_num, string='Current state', type='integer', method=True,
+                                     store={'hotel.reservation': (get_resa_modified, ['state'], 20)}),
+        'create_date': fields.datetime('Create Date', readonly=True),
+        'write_date': fields.datetime('Write Date', readonly=True),
+        'in_option': fields.function(_calc_in_option, string="En Option", selection=AVAILABLE_IN_OPTION_LIST,
+                                     type="selection", method=True, store={
+            'hotel.reservation': (get_resa_modified, ['checkin', 'reservation_line'], 10)},
+                                     help=("Une réservation mise en option signifie que votre demande est prise en compte mais \
                                             dont on ne peut pas garantir la livraison à la date prévue.\
                                             Une réservation bloquée signifie que la réservation n'est pas prise en compte car nous ne pouvons pas \
                                             garantir la livraison aux dates indiquées")),
-                'name':fields.char('Nom Manifestation', size=128, required=True),
-                'resource_names':fields.function(_get_fields_resources_names, type='char',method=True, multi='field_resource_names',store=False),
-                'resource_quantities':fields.function(_get_field_resource_quantities, type='char',method=True, multi='field_resource_quantities',store=False),
-                'resource_ids':fields.function(_get_fields_resources_names, multi='field_resource_names', method=True, type='char',store=False),
+        'name': fields.char('Nom Manifestation', size=128, required=True),
+        'resource_names': fields.function(_get_fields_resources_names, type='char', method=True,
+                                          multi='field_resource_names', store=False),
+        'resource_quantities': fields.function(_get_field_resource_quantities, type='char', method=True,
+                                               multi='field_resource_quantities', store=False),
+        'resource_ids': fields.function(_get_fields_resources_names, multi='field_resource_names', method=True,
+                                        type='char', store=False),
 
-                'site_id':fields.many2one('openstc.site','Site (Lieu)'),
-                'prod_id':fields.many2one('product.product','Ressource'),
-                'openstc_partner_id':fields.many2one('res.partner','Demandeur', help="Personne demandant la réservation."),
-                'resa_checkout_id':fields.many2one('openstc.pret.checkout','Etat des Lieux associé'),
-                'amount_total':fields.function(_get_amount_total, type='float', string='Amount Total', method=True, multi="resa",
-                                               help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
-                'all_dispo':fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
-                'date_choices':fields.one2many('openresa.reservation.choice','reservation_id','Choices of dates'),
-                'recurrence_id':fields.many2one('openresa.reservation.recurrence','From recurrence'),
-                'is_template':fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
-                'actions':fields.function(_get_actions, method=True, string="Actions possibles",type="char", store=False),
-                'partner_type': fields.related('partner_id', 'type_id', type='many2one', relation='openstc.partner.type', string='Type du demandeur', help='...'),
+        'site_id': fields.many2one('openstc.site', 'Site (Lieu)'),
+        'prod_id': fields.many2one('product.product', 'Ressource'),
+        'openstc_partner_id': fields.many2one('res.partner', 'Demandeur', help="Personne demandant la réservation."),
+        'resa_checkout_id': fields.many2one('openstc.pret.checkout', 'Etat des Lieux associé'),
+        'amount_total': fields.function(_get_amount_total, type='float', string='Amount Total', method=True,
+                                        multi="resa",
+                                        help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
+        'all_dispo': fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
+        'date_choices': fields.one2many('openresa.reservation.choice', 'reservation_id', 'Choices of dates'),
+        'recurrence_id': fields.many2one('openresa.reservation.recurrence', 'From recurrence'),
+        'is_template': fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
+        'actions': fields.function(_get_actions, method=True, string="Actions possibles", type="char", store=False),
+        'partner_type': fields.related('partner_id', 'type_id', type='many2one', relation='openstc.partner.type',
+                                       string='Type du demandeur', help='...'),
 
-                'contact_phone': fields.related('partner_invoice_id', 'phone', type='char', string='Phone contact', help='...'),
-                'partner_mail':fields.char('Email Demandeur', size=128, required=False),
+        'contact_phone': fields.related('partner_invoice_id', 'phone', type='char', string='Phone contact', help='...'),
+        'partner_mail': fields.char('Email Demandeur', size=128, required=False),
 
 
-                'people_name': fields.char('Name', size=128),
-                'people_phone': fields.char('Phone', size=10),
-                #'people_email': fields.char('Email', size=128),
-                'is_citizen': fields.boolean('Claimer is a citizen'),
+        'people_name': fields.char('Name', size=128),
+        'people_phone': fields.char('Phone', size=10),
+        #'people_email': fields.char('Email', size=128),
+        'is_citizen': fields.boolean('Claimer is a citizen'),
 
-                'note': fields.text('Note de validation'),
-                'confirm_note': fields.text('Note de validation'),
-                'cancel_note': fields.text('Note de refus'),
-                'done_note': fields.text('Note de clôture'),
-                'send_invoicing':fields.boolean('Send invoicing by email'),
-
-        }
+        'note': fields.text('Note de validation'),
+        'confirm_note': fields.text('Note de validation'),
+        'cancel_note': fields.text('Note de refus'),
+        'done_note': fields.text('Note de clôture'),
+        'send_invoicing': fields.boolean('Send invoicing by email'),
+        'invoice_attachment_id': fields.integer('Attachment ID')
+    }
     _defaults = {
                  'in_option': lambda *a :0,
                  'state': lambda *a: 'remplir',
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
+#                 #default values for PART bookings
+                 'partner_invoice_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
+                 'partner_shipping_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
+                 'partner_order_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
         }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -730,10 +747,10 @@ class hotel_reservation(osv.osv):
                 #TOCHECK: as long as form is written by employee, we let him all latitude to manage prices
                 form_amount = resa.amount_total
                 line_ids = []
-                attach_vals = self._create_report_folio_attach(cr, uid, resa)
-                if form_amount > 0.0 and (not resa.recurrence_id or resa.is_template):
-                #Si montant > 0 euros, générer sale order puis dérouler wkf jusqu'a édition facture
+                if not resa.recurrence_id or resa.is_template:
                     folio_id = self.create_folio(cr, uid, [resa.id])
+                    attachment_id = self._create_report_folio_attach(cr, uid, resa)
+                    resa.write({'invoice_attachment_id': attachment_id})
                     wf_service = netsvc.LocalService('workflow')
                     wf_service.trg_validate(uid, 'hotel.folio', folio_id, 'order_confirm', cr)
                     folio = self.pool.get("hotel.folio").browse(cr, uid, folio_id)
@@ -749,7 +766,7 @@ class hotel_reservation(osv.osv):
                     self.pool.get("stock.move").action_done(cr, uid, move_ids)
                     #Send invoicing only if user wants to
                     if resa.send_invoicing:
-                        attach_sale_id.append(attach_vals)
+                        attach_sale_id.append(attachment_id)
                 #send mail with optional attaches on products and the sale order pdf attached
                 self.envoyer_mail(cr, uid, ids, {'state':'validated'}, attach_ids=attach_sale_id)
                 self.write(cr, uid, ids, {'state':'confirm'})
