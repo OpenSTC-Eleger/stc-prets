@@ -577,7 +577,12 @@ class hotel_reservation(osv.osv):
             #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
             ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
         return ret
-
+    
+    def get_data_from_xml(self, cr, uid, module, model, context=None):
+        ret = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, model)
+        ret = ret[1] if ret else False
+        return ret
+    
     _columns = {
                 'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
                 'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
@@ -628,6 +633,10 @@ class hotel_reservation(osv.osv):
                  'in_option': lambda *a :0,
                  'state': lambda *a: 'remplir',
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
+#                 #default values for PART bookings
+                 'partner_invoice_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
+                 'partner_shipping_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
+                 'partner_order_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
         }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
