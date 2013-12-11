@@ -747,11 +747,10 @@ class hotel_reservation(osv.osv):
                 #TOCHECK: as long as form is written by employee, we let him all latitude to manage prices
                 form_amount = resa.amount_total
                 line_ids = []
-                attachment_id = self._create_report_folio_attach(cr, uid, resa)
-                resa.write({'invoice_attachment_id': attachment_id})
-                if form_amount > 0.0 and (not resa.recurrence_id or resa.is_template):
-                #Si montant > 0 euros, générer sale order puis dérouler wkf jusqu'a édition facture
+                if not resa.recurrence_id or resa.is_template:
                     folio_id = self.create_folio(cr, uid, [resa.id])
+                    attachment_id = self._create_report_folio_attach(cr, uid, resa)
+                    resa.write({'invoice_attachment_id': attachment_id})
                     wf_service = netsvc.LocalService('workflow')
                     wf_service.trg_validate(uid, 'hotel.folio', folio_id, 'order_confirm', cr)
                     folio = self.pool.get("hotel.folio").browse(cr, uid, folio_id)
