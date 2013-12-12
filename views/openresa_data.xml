@@ -428,18 +428,23 @@
 	<data>
 
 	 <record model="res.groups" id="hotel.group_hotel_manager">
+	     <field name="name">OpenResa /  Réservations / gestionnaire</field>
     	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
     	 <field name="code">HOTEL_MANA</field>
 	 </record>
 	 <record model="res.groups" id="hotel.group_hotel_user">
+	      <field name="name">OpenResa /  Réservations / agent interne</field>
     	 <field name="code">HOTEL_USER</field>
 	 </record>
 
-	 <record model="res.groups" id="group_hotel_officer">
-	     <field name="name">Réservations / Agent</field>
+	 <!-- <delete id="group_hotel_officer" model="res.groups"/>  -->
+
+	 <!--  	<record model="res.groups" id="group_hotel_officer">
+	     <field name="name">OpenResa / Réservations / Agent</field>
     	 <field name="code">HOTEL_OFFI</field>
     	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
 	 </record>
+	  -->
 
 	<record model="res.groups" id="openresa_api_group">
         <field name="name">API Reservation Group</field>
@@ -472,6 +477,7 @@
         <field eval="1" name="perm_read"/>
         <field eval="1" name="perm_create"/>
     </record>
+
 
 	</data>
 </openerp>
