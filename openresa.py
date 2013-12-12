@@ -657,6 +657,9 @@ class hotel_reservation(osv.osv):
         'people_name': fields.char('Name', size=128),
         'people_phone': fields.char('Phone', size=10),
         #'people_email': fields.char('Email', size=128),
+        'people_street':fields.char('Street',size=128),
+        'people_city':fields.char('City',size=64),
+        'people_zip':fields.char('Zip',size=5),
         'is_citizen': fields.boolean('Claimer is a citizen'),
 
         'note': fields.text('Note de validation'),
@@ -664,7 +667,8 @@ class hotel_reservation(osv.osv):
         'cancel_note': fields.text('Note de refus'),
         'done_note': fields.text('Note de clôture'),
         'send_invoicing': fields.boolean('Send invoicing by email'),
-        'invoice_attachment_id': fields.integer('Attachment ID')
+        'invoice_attachment_id': fields.integer('Attachment ID'),
+        'whole_day':fields.boolean('Whole day'),
     }
     _defaults = {
                  'in_option': lambda *a :0,
