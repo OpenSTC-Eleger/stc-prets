@@ -111,12 +111,12 @@
     <paraStyle name="P3" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT"/>
     <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT"/>
-    <paraStyle name="P6" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P8" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P11" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT"/>
+    <paraStyle name="P6" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT"/>
+    <paraStyle name="P7" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P8" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P11" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -194,8 +194,8 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <para style="terp_header">[[ o.state&lt;&gt;'draft' and removeParentNode('para') ]] <font face="Helvetica">Facture Brouillon</font> N° [[ o.name ]]</para>
-    <para style="terp_header">[[ o.state=='draft' and removeParentNode('para') ]] <font face="Helvetica">Facture</font> N° [[ o.name ]]</para>
+    <para style="terp_header">[[ o.amount_total  and removeParentNode('para')  ]]<font face="Helvetica">Bon de Réservation </font><font face="Helvetica">N° </font><font face="Helvetica">[[ o.name ]]</font></para>
+    <para style="terp_header">[[ not o.amount_total and removeParentNode('para')    ]]<font face="Helvetica">Facture </font><font face="Helvetica">N° </font><font face="Helvetica">[[ o.name ]]</font></para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
@@ -220,16 +220,16 @@
     <blockTable colWidths="132.0,134.0,269.0" style="Tableau2">
       <tr>
         <td>
-          <para style="P7">
+          <para style="P8">
             <font face="Helvetica">Votre Réservation</font>
           </para>
         </td>
         <td>
-          <para style="P7">[[ o.state=='draft' and removeParentNode('para') ]]<font face="Helvetica">Validée le</font></para>
-          <para style="P7">[[ o.state &lt;&gt; 'draft' and removeParentNode('para') ]] Date <font face="Helvetica">Demande</font></para>
+          <para style="P8">[[ o.state=='draft' and removeParentNode('para') ]]<font face="Helvetica">Validée le</font></para>
+          <para style="P8">[[ o.state &lt;&gt; 'draft' and removeParentNode('para') ]] Date <font face="Helvetica">Demande</font></para>
         </td>
         <td>
-          <para style="P7">
+          <para style="P8">
             <font face="Helvetica">Conditions de paiement</font>
           </para>
         </td>
@@ -255,22 +255,22 @@
     <blockTable colWidths="170.0,81.0,80.0,79.0,56.0,71.0" repeatRows="1" style="Tableau4">
       <tr>
         <td>
-          <para style="P10">Description</para>
+          <para style="P11">Description</para>
         </td>
         <td>
-          <para style="P10">Quantité(1)</para>
+          <para style="P11">Quantité(1)</para>
         </td>
         <td>
-          <para style="P9">Unité</para>
+          <para style="P10">Unité</para>
         </td>
         <td>
-          <para style="P9">P.U.</para>
+          <para style="P10">P.U.</para>
         </td>
         <td>
-          <para style="P10">Rem.(%)</para>
+          <para style="P11">Rem.(%)</para>
         </td>
         <td>
-          <para style="P9">Montant</para>
+          <para style="P10">Montant</para>
         </td>
       </tr>
     </blockTable>
@@ -282,7 +282,7 @@
             <para style="terp_default_9">[[ line['prod'] ]]</para>
           </td>
           <td>
-            <para style="P8">[[ line['qty'] ]]</para>
+            <para style="P9">[[ line['qty'] ]]</para>
           </td>
           <td>
             <para style="P2"><font face="Helvetica">Forfait </font><font face="Helvetica">[[ line['uom_qty']  ]]</font><font face="Helvetica">[[ ' ' ]]</font>[[ line['uom_name']  ]]</para>
@@ -369,7 +369,7 @@
           </para>
         </td>
         <td>
-          <para style="P6">Total Net</para>
+          <para style="P7">Total Net</para>
         </td>
         <td>
           <para style="terp_default_Right_9">[[ formatLang(o.amount_untaxed , digits=get_digits(dp='Sale Price')) ]] [[ o.pricelist_id.currency_id. symbol ]]</para>
@@ -382,7 +382,7 @@
           </para>
         </td>
         <td>
-          <para style="P6">Taxes</para>
+          <para style="P7">Taxes</para>
         </td>
         <td>
           <para style="terp_default_Right_9">[[ formatLang(o.amount_tax , digits=get_digits(dp='Sale Price')) ]] [[ o.pricelist_id.currency_id. symbol ]]</para>
@@ -434,7 +434,7 @@
         <td>
           <para style="P4">[[ getResa(o).state != 'done' and removeParentNode('blocktable') or ''      ]]</para>
           <para style="P12">Etat des lieux de sortie</para>
-          <para style="P11">[[ getResa(o).done_note and getResa(o).done_note or 'Rien à Signaler'    ]]</para>
+          <para style="P6">[[ getResa(o).done_note and getResa(o).done_note or 'Rien à Signaler'    ]]</para>
         </td>
       </tr>
     </blockTable>
