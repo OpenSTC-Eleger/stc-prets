@@ -535,10 +535,37 @@ class hotel_reservation(osv.osv):
             prod_ids = []
             for item in field_ids:
                 if 'resource_names' in name:
-                    val.append([item.id,item.reserve_product.name_get()[0][1]])#,item.qte_dispo
+                    val.append([item.reserve_product.id,item.reserve_product.name_get()[0][1]])#,item.qte_dispo
                 prod_ids.append(item.reserve_product.id)
             res[obj.id].update({'resource_names':val,
-                                'resource_ids':prod_ids})
+                                'resource_ids':prod_ids
+                               })
+        return res
+
+    def _get_fields_resources(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = {}
+            field_ids = obj.reservation_line
+            val = []
+            prod_ids = []
+            prod_types = []
+            i=0
+            for item in field_ids:
+                product = item.reserve_product
+                if obj.state != 'remplir':
+                    tooltip = " " + str(item.qte_reserves)
+                    if len(field_ids)-1 < i :
+                        tooltip += ", "
+                else :
+                    tooltip = " souhaitée: " + str(item.qte_reserves)
+                    if item.dispo :
+                        tooltip += " ,dispo: " + str(item.qte_dispo)
+                    else :
+                        tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
+                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod, 'tooltip' : tooltip, 'quantity' : item.qte_reserves})
+                i+=1;
+            res[obj.id].update({'resources':val})
         return res
 
     def _get_field_resource_quantities(self, cr, uid, ids, name, args, context=None):
@@ -577,12 +604,12 @@ class hotel_reservation(osv.osv):
             #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
             ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
         return ret
-    
+
     def get_data_from_xml(self, cr, uid, module, model, context=None):
         ret = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, model)
         ret = ret[1] if ret else False
         return ret
-    
+
     _columns = {
         'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
         'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
@@ -604,6 +631,8 @@ class hotel_reservation(osv.osv):
         'resource_quantities': fields.function(_get_field_resource_quantities, type='char', method=True,
                                                multi='field_resource_quantities', store=False),
         'resource_ids': fields.function(_get_fields_resources_names, multi='field_resource_names', method=True,
+                                        type='char', store=False),
+        'resources': fields.function(_get_fields_resources, multi='field_resources', method=True,
                                         type='char', store=False),
 
         'site_id': fields.many2one('openstc.site', 'Site (Lieu)'),
