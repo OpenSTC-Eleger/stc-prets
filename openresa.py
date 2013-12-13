@@ -392,6 +392,7 @@ class hotel_reservation(osv.osv):
                                                                        'res_id': record.id},
                                                                       context=context)
                 ret = ir_attachment
+                record.write({'invoice_attachment_id': ret})
         return ret
 
 
@@ -716,8 +717,8 @@ class hotel_reservation(osv.osv):
                 line_ids = []
                 if not resa.recurrence_id or resa.is_template:
                     folio_id = self.create_folio(cr, uid, [resa.id])
+
                     attachment_id = self._create_report_folio_attach(cr, uid, resa)
-                    resa.write({'invoice_attachment_id': attachment_id})
                     wf_service = netsvc.LocalService('workflow')
                     wf_service.trg_validate(uid, 'hotel.folio', folio_id, 'order_confirm', cr)
                     folio = self.pool.get("hotel.folio").browse(cr, uid, folio_id)
@@ -779,10 +780,9 @@ class hotel_reservation(osv.osv):
                 wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
                 inv_ids.append(inv.id)
         #send mail to notify user if opt_out not checked and if there is invoice(s)
-        if inv_ids:
-            #attaches = self.pool.get("ir.attachment").search(cr, uid, [('res_model_','=','account.invoice'),('res_id','in',inv_ids)])
-            cr.execute("select id from ir_attachment where res_model = %s and res_id in %s", ('account.invoice',tuple(inv_ids)))
-            attaches = [item[0] for item in cr.fetchall()]
+        attach_id = self._create_report_folio_attach(cr, uid, resa)
+        if inv_ids and resa.send_invoicing:
+            attaches = [attach_id]
             self.envoyer_mail(cr, uid, [ids], vals={'state':'done'}, attach_ids=attaches)
         self.write(cr, uid, ids, {'state':'done'})
         return True
