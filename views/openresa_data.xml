@@ -95,7 +95,14 @@
 	endif%>
 	<ul>
 	% for line in object.reservation_line:
-	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
+	<li>
+	<%
+	qtity = 0
+	if line.qte_reserves > 0 :
+		qtity = int(line.qte_reserves)
+	endif%>
+	${line.reserve_product.name or ''} : ${qtity}
+	</li>
 	% endfor
 	</ul>
 	</li>
@@ -114,9 +121,12 @@
    </ul>
    </ul>
    <p>afin d'organiser <b> ${object.name or ''} </b></p></br>
-   <p>Nous avons bien pris en considération votre note </br> </br>: <b> ${object.confirm_note or ''} </b></p>
+   <p>Nous avons bien pris en considération votre note </br> </br>:
+   <b> ${object.confirm_note or ''} </b></p>
 
-   <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br> <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b></p>
+   <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br>
+   <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b>
+   </p>
 
    <p>${object.write_uid.signature} or 'Le service Vie Associative et événementiel'<br />
    ${object.shop_id.company_id.name or ''} </p>
@@ -139,7 +149,12 @@
 			endif%>
 
 			% for line in object.reservation_line:
-			${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
+			<%
+			qtity = 0
+			if line.qte_reserves > 0 :
+				qtity = int(line.qte_reserves)
+			endif%>
+			${line.reserve_product.name or ''} : ${qtity}
 			% endfor
 
 			% for resa in resas:
@@ -158,7 +173,8 @@
 
    			Nous avons bien pris en considération votre note : ${object.confirm_note or ''}
 
-   			Un contrat de location a été envoyé à l’adresse suivante :  ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
+   			Un contrat de location a été envoyé à l’adresse suivante :
+   			${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
 
 		   ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
 		   ${object.shop_id.company_id.name or ''}
