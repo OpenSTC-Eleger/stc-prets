@@ -9,7 +9,7 @@
     "name": "OpenResa",
     "version": "0.1",
     "depends": ['web','web_calendar','base','openbase','purchase','stock','hotel','hotel_reservation','email_template'],
-    "author": "BP",
+    "author": "SICLIC",
     "category": "SICLIC",
     "description": """
     Module de Gestion des Réservations (salles et équipements de la Mairie) auprès de particuliers / associations / professionnels.
