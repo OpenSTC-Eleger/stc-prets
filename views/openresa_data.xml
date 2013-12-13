@@ -288,13 +288,40 @@
 	from datetime import datetime
 	import pytz
 
-	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
-	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
-	my_checkin_str = my_checkin_str.decode('utf-8')
-	my_checkout_str = my_checkout_str.decode('utf-8')
+	my_last_checkout = None
+	resas = []
+
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
 	%>
+
+	% for resa in resas:
+	<%
+		my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+		my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+                if my_last_checkout == None:
+			my_last_checkout = my_checkout
+
+
+		if my_checkout > my_last_checkout:
+			my_last_checkout = my_checkout
+
+
+		my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+		my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+		my_last_checkout_str = my_last_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+
+		my_checkin_str = my_checkin_str.decode('utf-8')
+		my_checkout_str = my_checkout_str.decode('utf-8')
+		my_last_checkout_str = my_last_checkout_str.decode('utf-8')
+
+
+	%>
+	% endfor
 
 	<p>Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
 	${object.done_note or ''}.</br></br>
@@ -313,22 +340,44 @@
 	from datetime import datetime
 	import pytz
 
-	my_checkin = datetime.strptime(str(object.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkout = datetime.strptime(str(object.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
-	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
-	my_checkin_str = my_checkin_str.decode('utf-8')
-	my_checkout_str = my_checkout_str.decode('utf-8')
+	my_last_checkout = None
+	resas = []
+
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
 	%>
 
-	Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant :
+	% for resa in resas:
+	<%
+		my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+		my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+                if my_last_checkout == None:
+			my_last_checkout = my_checkout
+
+		if my_checkout > my_last_checkout :
+			my_last_checkout = my_checkout
+
+		my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+		my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+		my_last_checkout_str = my_last_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+
+		my_checkin_str = my_checkin_str.decode('utf-8')
+		my_checkout_str = my_checkout_str.decode('utf-8')
+		my_last_checkout_str = my_last_checkout_str.decode('utf-8')
+	%>
+	% endfor
+
+	Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_last_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant :
 
 	${object.done_note or ''}.
 
 	Cette réservation est clôturée.
 
    ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
-   ${object.shop_id.company_id.name or ''}
    ]]></field>
     </record>
 

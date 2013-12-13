@@ -52,9 +52,9 @@ class openresa_reservation_recurrence(osv.osv):
 
 
     _actions = {
-        'confirm': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
         'cancel': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
         'done': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','confirm')]) > 0,
+        'confirm': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
     }
 
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
@@ -66,7 +66,7 @@ class openresa_reservation_recurrence(osv.osv):
         #evaluation of each _actions item, if test returns True, adds key to actions possible for this record
         for record in self.browse(cr, uid, ids, context=context):
             #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
-            ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
+            ret.update({record.id:[key for key,func in self._actions.items()[::-1] if func(self,cr,uid,record,groups_code)]})
         return ret
 
     _columns = {
