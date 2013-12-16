@@ -22,7 +22,6 @@
 #
 #############################################################################
 from datetime import datetime,timedelta
-
 from osv import fields, osv
 import netsvc
 from tools.translate import _
@@ -39,6 +38,9 @@ import openerp
 import os
 import tools
 from datetime import datetime
+from siclic_time_extensions import weeks_between
+import html_builder
+
 #----------------------------------------------------------
 # Fournitures
 #----------------------------------------------------------
@@ -545,6 +547,81 @@ class hotel_reservation(osv.osv):
         ret = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, model)
         ret = ret[1] if ret else False
         return ret
+
+    def generate_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):
+        """
+        This function generate weekly html plannings of the given resources.
+
+        :param bookable_ids: The bookable resources ids included in plannings
+        :param start_date: The start date of the planning
+        :param end_date: Then end date of the planning
+        :return: List[Tuple[Tuple[Integer,String], List[hotel_reservation]]]
+        """
+        weeks = weeks_between(datetime.strptime(start_date), datetime.strptime(end_date))
+        plannings = list()
+        for bookable_id in bookable_ids:
+            bookable_name = product_product.read(cr, uid, [bookable_id], ['name'])
+            plannings.append(((bookable_id, bookable_name), self.event_list_for_weeks(cr, uid, bookable_id, weeks)))
+        return plannings
+
+    def event_list_for_weeks(self, cr, uid, bookable_id, weeks):
+        """
+        Retrieve events for a given bookable, and given weeks
+
+        :param bookable_id: Integer the bookable id
+        :param weeks: a list of tuple [(datetime,datetime)]
+        :return: List[List[hotel_reservation]]
+        """
+        bookable_events = list()
+        for week in weeks:
+            bookable_events.append(self.event_list_for_week(cr, uid, bookable_id, week))
+        return bookable_events
+
+    def event_list_for_week(self, cr, uid, bookable_id, week):
+        """
+        Retrieve events ids for a given bookable, and given week
+
+        :param bookable_id: Integer the bookable id
+        :param week: Tuple[Datetime, Datetime]
+        :return: List[hotel_reservation_ids]
+        """
+        first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M%:%S')
+        last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M%:%S')
+        week_events = self.search(cr, uid,
+                                  [('reservation_line.reserve_product.id', '=', bookable_id),
+                                   ('status', '=', 'confirmed'),
+                                   '|',
+                                   '&', ('checkin', '>=', first_day), ('checkin', '<=', last_day),
+                                   '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
+        return week_events
+
+    def build_events_data_dictionary(self, cr, uid, event_ids):
+        """
+        Format data to expose weekly planning through API
+
+        :param event_ids: List[Integer]
+        :return: List[Dict]
+        """
+        events = self.read(cr, uid, event_ids,
+                           ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resource_names'])
+        events_dictionaries = map(lambda event:
+                                  {
+                                      'name': event.name,
+                                      'start_hour': datetime.strftime(event.checkin, '%H:%M'),
+                                      'end_hour': datetime.strftime(event.checkout, '%H:%M'),
+                                      'booker_name': event.partner_id[0],
+                                      'contact_name': event.partner_order_id[0],
+                                      'resource_names': event.resource_names,
+                                      'note': event.confirm_note
+                                  },
+                                  events
+                                  )
+        return events_dictionaries
+
+    def format_plannings_with(self, plannings, format):
+        if format == 'html':
+            return html_builder.format_plannings(plannings)
+
 
     _columns = {
         'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
