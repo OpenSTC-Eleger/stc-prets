@@ -448,10 +448,7 @@ class hotel_reservation(osv.osv):
                 amount_total += line.amount
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         return ret
-
-    def _get_ressource_ids(self, cr, uid, ids, name, args, context=None):
-        return
-
+    
     """
     action rights for manager only
     - only manager can do it, because imply stock evolutions and perharps treatment of some conflicts
@@ -459,7 +456,7 @@ class hotel_reservation(osv.osv):
     def managerOnly(self, cr, uid, record, groups_code):
         return 'HOTEL_MANA' in groups_code
 
-    """wkf_service.trg_validate(
+    """
     action rights for manager or owner of a record
     - claimer can do these actions on its own records,
     - officer can make these actions for claimer which does not have account,
@@ -492,9 +489,9 @@ class hotel_reservation(osv.osv):
             val = []
             prod_ids = []
             for item in field_ids:
-                if 'resource_names' in name:
-                    val.append([item.reserve_product.id,item.reserve_product.name_get()[0][1]])#,item.qte_dispo
                 prod_ids.append(item.reserve_product.id)
+            if 'resource_names' in name:
+                    val = self.pool.get('product.product').name_get(cr, uid, prod_ids, context=context)
             res[obj.id].update({'resource_names':val,
                                 'resource_ids':prod_ids
                                })
@@ -712,8 +709,6 @@ class hotel_reservation(osv.osv):
                     raise osv.except_osv(_("Error"),_("""Your resa is blocked because your expected date is too early so that we can not supply your products at time"""))
 
                 attach_sale_id = []
-                #TODO: check as long as form is written by employee, we let him all latitude to manage prices
-                form_amount = resa.amount_total
                 line_ids = []
                 if not resa.recurrence_id or resa.is_template:
                     folio_id = self.create_folio(cr, uid, [resa.id])
@@ -873,7 +868,7 @@ class hotel_reservation(osv.osv):
     #=> Problème lorsque quelqu'un d'autre réserve un même produit
     def is_all_dispo(self, cr, uid, id, context=None):
         for line in self.browse(cr, uid, id, context).reservation_line:
-            if not line.dispo:
+            if line.reserve_product.block_booking and not line.dispo:
                 return False
         return True
 
