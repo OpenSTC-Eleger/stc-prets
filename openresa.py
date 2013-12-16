@@ -439,6 +439,16 @@ class hotel_reservation(osv.osv):
 
     def _get_amount_total(self, cr, uid, ids, name, args, context=None):
         ret = {}
+#        line_obj = self.pool.get('hotel_reservation.line')
+#        for resa in self.read(cr,uid,ids, ['reservation_line']):
+#            amount_total = 0.0
+#            all_dispo = True
+#            for line_id in resa['reservation_line']:
+#                line = line_obj.read(cr,uid,[line_id], ['amount','dispo'])
+#                if all_dispo and not line['dispo']:
+#                    all_dispo = False
+#                amount_total += line['amount']
+#            ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         for resa in self.browse(cr, uid, ids, context=None):
             amount_total = 0.0
             all_dispo = True
@@ -448,9 +458,6 @@ class hotel_reservation(osv.osv):
                 amount_total += line.amount
             ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         return ret
-
-    def _get_ressource_ids(self, cr, uid, ids, name, args, context=None):
-        return
 
     """
     action rights for manager only
@@ -483,53 +490,38 @@ class hotel_reservation(osv.osv):
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
     }
 
-
-    def _get_fields_resources_names(self, cr, uid, ids, name, args, context=None):
-        res = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = {}
-            field_ids = obj.reservation_line
-            val = []
-            prod_ids = []
-            for item in field_ids:
-                if 'resource_names' in name:
-                    val.append([item.reserve_product.id,item.reserve_product.name_get()[0][1]])#,item.qte_dispo
-                prod_ids.append(item.reserve_product.id)
-            res[obj.id].update({'resource_names':val,
-                                'resource_ids':prod_ids
-                               })
-        return res
-
     def _get_fields_resources(self, cr, uid, ids, name, args, context=None):
         res = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = {}
-            field_ids = obj.reservation_line
-            val = []
-            for item in field_ids:
-                product = item.reserve_product
-                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod,  'quantity' : item.qte_reserves})
-            res[obj.id].update({'resources':val})
-        return res
+#        line_obj = pool.get('hotel.reservation.line')
+#        for obj in self.read(cr,uid,ids, ['reservation_line','state']):
+#            res[obj['id']] = {}
+#            field_ids = obj['reservation_line']
+#            val = []
+#            for item in field_ids:
+#                line = line_obj.read(cr,uid,[item], ['state','qte_reserves','dispo','qte_dispo','reserve_product'])
+#                #product = item.reserve_product
+#                if obj['state'] in ('remplir','cancel'):
+#                    tooltip = " souhaitée: " + str(int(line['qte_reserves']))
+#                    if line['dispo'] and obj['state']!='cancel' :
+#                        tooltip += " ,disponible: " + str(int(line['qte_dispo']))
+#                else :
+#                    tooltip = " réservée : " + str(int(line['qte_reserves']))
+#                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod,  'quantity' : item.qte_reserves, 'tooltip' : tooltip})
+#            res[obj['id']].update({'resources':val})
 
-    def _get_field_resource_quantities(self, cr, uid, ids, name, args, context=None):
-        res = {}
-        name = name[0]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = {}
             field_ids = obj.reservation_line
             val = []
             for item in field_ids:
-                product = item.reserve_product
-                product = item.reserve_product
                 if obj.state in ('remplir','cancel'):
                     tooltip = " souhaitée: " + str(int(item.qte_reserves))
                     if item.dispo and obj.state!='cancel' :
                         tooltip += " ,disponible: " + str(int(item.qte_dispo))
                 else :
                     tooltip = " réservée : " + str(int(item.qte_reserves))
-                val.append([product.name_get()[0][1], tooltip])
-            res[obj.id].update({name:val})
+                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod,  'quantity' : item.qte_reserves, 'tooltip' : tooltip})
+            res[obj.id].update({'resources':val})
         return res
 
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
@@ -550,7 +542,7 @@ class hotel_reservation(osv.osv):
         return ret
 
     _columns = {
-        'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
+        #'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
         'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
         'state': fields.selection(_get_state_values, 'Etat', readonly=True),
         'state_num': fields.function(_get_state_num, string='Current state', type='integer', method=True,
@@ -565,12 +557,6 @@ class hotel_reservation(osv.osv):
                                             Une réservation bloquée signifie que la réservation n'est pas prise en compte car nous ne pouvons pas \
                                             garantir la livraison aux dates indiquées")),
         'name': fields.char('Nom Manifestation', size=128, required=True),
-        'resource_names': fields.function(_get_fields_resources_names, type='char', method=True,
-                                          multi='field_resource_names', store=False),
-        'resource_quantities': fields.function(_get_field_resource_quantities, type='char', method=True,
-                                               multi='field_resource_quantities', store=False),
-        'resource_ids': fields.function(_get_fields_resources_names, multi='field_resource_names', method=True,
-                                        type='char', store=False),
         'resources': fields.function(_get_fields_resources, multi='field_resources', method=True,
                                         type='char', store=False),
 
