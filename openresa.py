@@ -608,13 +608,13 @@ class hotel_reservation(osv.osv):
                            ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resource_names'])
         events_dictionaries = map(lambda event:
                                   {
-                                      'name': event.name,
-                                      'start_hour': datetime.strftime(event.checkin, '%H:%M'),
-                                      'end_hour': datetime.strftime(event.checkout, '%H:%M'),
-                                      'booker_name': event.partner_id[0],
-                                      'contact_name': event.partner_order_id[0],
-                                      'resource_names': event.resource_names,
-                                      'note': event.confirm_note
+                                      'name': event.get('name'),
+                                      'start_hour': datetime.strftime(event.get('checkin'), '%H:%M'),
+                                      'end_hour': datetime.strftime(event.get('checkout'), '%H:%M'),
+                                      'booker_name': event.get('partner_id')[0],
+                                      'contact_name': event.get('partner_order_id')[0],
+                                      'resource_names': event.get('resource_names'),
+                                      'note': event.get('confirm_note')
                                   },
                                   events
         )
