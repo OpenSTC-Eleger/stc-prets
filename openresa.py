@@ -22,7 +22,6 @@
 #
 #############################################################################
 from datetime import datetime,timedelta
-
 from osv import fields, osv
 import netsvc
 from tools.translate import _
@@ -39,6 +38,9 @@ import openerp
 import os
 import tools
 from datetime import datetime
+from siclic_time_extensions import weeks_between
+import html_builder
+
 #----------------------------------------------------------
 # Fournitures
 #----------------------------------------------------------
@@ -439,16 +441,6 @@ class hotel_reservation(osv.osv):
 
     def _get_amount_total(self, cr, uid, ids, name, args, context=None):
         ret = {}
-#        line_obj = self.pool.get('hotel_reservation.line')
-#        for resa in self.read(cr,uid,ids, ['reservation_line']):
-#            amount_total = 0.0
-#            all_dispo = True
-#            for line_id in resa['reservation_line']:
-#                line = line_obj.read(cr,uid,[line_id], ['amount','dispo'])
-#                if all_dispo and not line['dispo']:
-#                    all_dispo = False
-#                amount_total += line['amount']
-#            ret[resa.id] = {'amount_total':amount_total,'all_dispo':all_dispo}
         for resa in self.browse(cr, uid, ids, context=None):
             amount_total = 0.0
             all_dispo = True
@@ -466,7 +458,7 @@ class hotel_reservation(osv.osv):
     def managerOnly(self, cr, uid, record, groups_code):
         return 'HOTEL_MANA' in groups_code
 
-    """wkf_service.trg_validate(
+    """
     action rights for manager or owner of a record
     - claimer can do these actions on its own records,
     - officer can make these actions for claimer which does not have account,
@@ -492,22 +484,6 @@ class hotel_reservation(osv.osv):
 
     def _get_fields_resources(self, cr, uid, ids, name, args, context=None):
         res = {}
-#        line_obj = pool.get('hotel.reservation.line')
-#        for obj in self.read(cr,uid,ids, ['reservation_line','state']):
-#            res[obj['id']] = {}
-#            field_ids = obj['reservation_line']
-#            val = []
-#            for item in field_ids:
-#                line = line_obj.read(cr,uid,[item], ['state','qte_reserves','dispo','qte_dispo','reserve_product'])
-#                #product = item.reserve_product
-#                if obj['state'] in ('remplir','cancel'):
-#                    tooltip = " souhaitée: " + str(int(line['qte_reserves']))
-#                    if line['dispo'] and obj['state']!='cancel' :
-#                        tooltip += " ,disponible: " + str(int(line['qte_dispo']))
-#                else :
-#                    tooltip = " réservée : " + str(int(line['qte_reserves']))
-#                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod,  'quantity' : item.qte_reserves, 'tooltip' : tooltip})
-#            res[obj['id']].update({'resources':val})
 
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = {}
@@ -540,6 +516,83 @@ class hotel_reservation(osv.osv):
         ret = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, model)
         ret = ret[1] if ret else False
         return ret
+
+    def generate_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):
+        """
+        This function generate weekly html plannings of the given resources.
+
+        :param bookable_ids: The bookable resources ids included in plannings
+        :param start_date: The start date of the planning
+        :param end_date: Then end date of the planning
+        :return: List[Tuple[Tuple[Integer,String], List[hotel_reservation]]]
+        """
+        weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S"),
+                              datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S"))
+        plannings = list()
+        bookables = self.pool.get('product.product').read(cr, uid, bookable_ids, ['name'])
+        for bookable in bookables:
+            plannings.append((bookable['name'], self.event_list_for_weeks(cr, uid, bookable['id'], weeks)))
+        return plannings
+
+    def event_list_for_weeks(self, cr, uid, bookable_id, weeks):
+        """
+        Retrieve events for a given bookable, and given weeks
+
+        :param bookable_id: Integer the bookable id
+        :param weeks: a list of tuple [(datetime,datetime)]
+        :return: List[List[hotel_reservation]]
+        """
+        bookable_events = list()
+        for week in weeks:
+            bookable_events.append(self.event_list_for_week(cr, uid, bookable_id, week))
+        return bookable_events
+
+    def event_list_for_week(self, cr, uid, bookable_id, week):
+        """
+        Retrieve events ids for a given bookable, and given week
+
+        :param bookable_id: Integer the bookable id
+        :param week: Tuple[Datetime, Datetime]
+        :return: List[hotel_reservation]
+        """
+        first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M:%S')
+        last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
+
+        week_events = self.search(cr, uid,
+                                  [('reservation_line.reserve_product.id', '=', bookable_id),
+                                   ('state', '=', 'confirm'),
+                                   '|',
+                                   '&', ('checkin', '>=', first_day), ('checkin', '<=', last_day),
+                                   '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
+        return first_day, last_day, self.build_events_data_dictionary(cr, uid, week_events)
+
+    def build_events_data_dictionary(self, cr, uid, event_ids):
+        """
+        Format data to expose weekly planning through API
+
+        :param event_ids: List[Integer]
+        :return: List[Dict]
+        """
+        events = self.read(cr, uid, event_ids,
+                           ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resource_names'])
+        events_dictionaries = map(lambda event:
+                                  {
+                                      'name': event.get('name'),
+                                      'start_hour': datetime.strftime(datetime.strptime(event.get('checkin'), "%Y-%m-%d %H:%M:%S"), '%H:%M'),
+                                      'end_hour': datetime.strftime(datetime.strptime(event.get('checkout'),"%Y-%m-%d %H:%M:%S"), '%H:%M'),
+                                      'booker_name': event.get('partner_id')[0],
+                                      'contact_name': event.get('partner_order_id')[0],
+                                      'resource_names': event.get('resource_names'),
+                                      'note': event.get('confirm_note')
+                                  },
+                                  events
+        )
+        return events_dictionaries
+
+    def format_plannings_with(self, plannings, format):
+        if format == 'html':
+            return html_builder.format_plannings(plannings)
+
 
     _columns = {
         #'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
@@ -698,8 +751,6 @@ class hotel_reservation(osv.osv):
                     raise osv.except_osv(_("Error"),_("""Your resa is blocked because your expected date is too early so that we can not supply your products at time"""))
 
                 attach_sale_id = []
-                #TODO: check as long as form is written by employee, we let him all latitude to manage prices
-                form_amount = resa.amount_total
                 line_ids = []
                 if not resa.recurrence_id or resa.is_template:
                     folio_id = self.create_folio(cr, uid, [resa.id])
@@ -859,7 +910,7 @@ class hotel_reservation(osv.osv):
     #=> Problème lorsque quelqu'un d'autre réserve un même produit
     def is_all_dispo(self, cr, uid, id, context=None):
         for line in self.browse(cr, uid, id, context).reservation_line:
-            if not line.dispo:
+            if line.reserve_product.block_booking and not line.dispo:
                 return False
         return True
 
