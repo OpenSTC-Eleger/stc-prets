@@ -506,23 +506,9 @@ class hotel_reservation(osv.osv):
             res[obj.id] = {}
             field_ids = obj.reservation_line
             val = []
-            prod_ids = []
-            prod_types = []
-            i=0
             for item in field_ids:
                 product = item.reserve_product
-                if obj.state != 'remplir':
-                    tooltip = " " + str(item.qte_reserves)
-                    if len(field_ids)-1 < i :
-                        tooltip += ", "
-                else :
-                    tooltip = " souhaitée: " + str(item.qte_reserves)
-                    if item.dispo :
-                        tooltip += " ,dispo: " + str(item.qte_dispo)
-                    else :
-                        tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
-                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod, 'tooltip' : tooltip, 'quantity' : item.qte_reserves})
-                i+=1;
+                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod,  'quantity' : item.qte_reserves})
             res[obj.id].update({'resources':val})
         return res
 
@@ -533,21 +519,16 @@ class hotel_reservation(osv.osv):
             res[obj.id] = {}
             field_ids = obj.reservation_line
             val = []
-            i=0
             for item in field_ids:
                 product = item.reserve_product
-                if obj.state != 'remplir':
-                    tooltip = " " + str(item.qte_reserves)
-                    if len(field_ids)-1 < i :
-                        tooltip += ", "
+                product = item.reserve_product
+                if obj.state in ('remplir','cancel'):
+                    tooltip = " souhaitée: " + str(int(item.qte_reserves))
+                    if item.dispo and obj.state!='cancel' :
+                        tooltip += " ,disponible: " + str(int(item.qte_dispo))
                 else :
-                    tooltip = " souhaitée: " + str(item.qte_reserves)
-                    if item.dispo :
-                        tooltip += " ,dispo: " + str(item.qte_dispo)
-                    else :
-                        tooltip +=  " ,manquante: " + str(item.qte_reserves - item.qte_dispo)
+                    tooltip = " réservée : " + str(int(item.qte_reserves))
                 val.append([product.name_get()[0][1], tooltip])
-                i+=1;
             res[obj.id].update({name:val})
         return res
 
