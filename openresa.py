@@ -560,10 +560,9 @@ class hotel_reservation(osv.osv):
         weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S"),
                               datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S"))
         plannings = list()
-        for bookable_id in bookable_ids:
-            bookable_name = self.pool.get('product.product').read(cr, uid, [bookable_id], ['name'])
-
-            plannings.append((bookable_name, self.event_list_for_weeks(cr, uid, bookable_id, weeks)))
+        bookables = self.pool.get('product.product').read(cr, uid, bookable_ids, ['name'])
+        for bookable in bookables:
+            plannings.append((bookable['name'], self.event_list_for_weeks(cr, uid, bookable['id'], weeks)))
         return plannings
 
     def event_list_for_weeks(self, cr, uid, bookable_id, weeks):
