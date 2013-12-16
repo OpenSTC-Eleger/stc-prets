@@ -584,17 +584,18 @@ class hotel_reservation(osv.osv):
 
         :param bookable_id: Integer the bookable id
         :param week: Tuple[Datetime, Datetime]
-        :return: List[hotel_reservation_ids]
+        :return: List[hotel_reservation]
         """
         first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M:%S')
         last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
+
         week_events = self.search(cr, uid,
                                   [('reservation_line.reserve_product.id', '=', bookable_id),
                                    ('state', '=', 'confirm'),
                                    '|',
                                    '&', ('checkin', '>=', first_day), ('checkin', '<=', last_day),
                                    '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
-        return first_day, last_day, week_events
+        return first_day, last_day, self.build_events_data_dictionary(cr, uid, week_events)
 
     def build_events_data_dictionary(self, cr, uid, event_ids):
         """
