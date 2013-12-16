@@ -590,7 +590,7 @@ class hotel_reservation(osv.osv):
         last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
         week_events = self.search(cr, uid,
                                   [('reservation_line.reserve_product.id', '=', bookable_id),
-                                   ('state', '=', 'confirme'),
+                                   ('state', '=', 'confirm'),
                                    '|',
                                    '&', ('checkin', '>=', first_day), ('checkin', '<=', last_day),
                                    '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
