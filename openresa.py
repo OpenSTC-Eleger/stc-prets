@@ -575,7 +575,7 @@ class hotel_reservation(osv.osv):
         """
         bookable_events = list()
         for week in weeks:
-            bookable_events.append(self.event_list_for_week(cr, uid, bookable_id, week))
+            bookable_events.append((week, self.event_list_for_week(cr, uid, bookable_id, week)))
         return bookable_events
 
     def event_list_for_week(self, cr, uid, bookable_id, week):
