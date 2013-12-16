@@ -605,7 +605,7 @@ class hotel_reservation(osv.osv):
         :return: List[Dict]
         """
         events = self.read(cr, uid, event_ids,
-                           ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resource_names'])
+                           ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resource_names', 'confirm_note'])
         events_dictionaries = map(lambda event:
                                   {
                                       'name': event.get('name'),
