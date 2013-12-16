@@ -557,7 +557,8 @@ class hotel_reservation(osv.osv):
         :param end_date: Then end date of the planning
         :return: List[Tuple[Tuple[Integer,String], List[hotel_reservation]]]
         """
-        weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+        weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S"),
+                              datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S"))
         plannings = list()
         for bookable_id in bookable_ids:
             bookable_name = self.pool.get('product.product').read(cr, uid, [bookable_id], ['name'])
@@ -586,8 +587,8 @@ class hotel_reservation(osv.osv):
         :param week: Tuple[Datetime, Datetime]
         :return: List[hotel_reservation_ids]
         """
-        first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M%:%S')
-        last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M%:%S')
+        first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M:%S')
+        last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
         week_events = self.search(cr, uid,
                                   [('reservation_line.reserve_product.id', '=', bookable_id),
                                    ('state', '=', 'confirmed'),
@@ -616,7 +617,7 @@ class hotel_reservation(osv.osv):
                                       'note': event.confirm_note
                                   },
                                   events
-                                  )
+        )
         return events_dictionaries
 
     def format_plannings_with(self, plannings, format):
