@@ -557,7 +557,7 @@ class hotel_reservation(osv.osv):
         :param end_date: Then end date of the planning
         :return: List[Tuple[Tuple[Integer,String], List[hotel_reservation]]]
         """
-        weeks = weeks_between(datetime.strptime(start_date), datetime.strptime(end_date))
+        weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
         plannings = list()
         for bookable_id in bookable_ids:
             bookable_name = product_product.read(cr, uid, [bookable_id], ['name'])
