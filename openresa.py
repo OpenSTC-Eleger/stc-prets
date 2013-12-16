@@ -563,7 +563,7 @@ class hotel_reservation(osv.osv):
         for bookable_id in bookable_ids:
             bookable_name = self.pool.get('product.product').read(cr, uid, [bookable_id], ['name'])
 
-            plannings.append(((bookable_id, bookable_name), self.event_list_for_weeks(cr, uid, bookable_id, weeks)))
+            plannings.append((bookable_name, self.event_list_for_weeks(cr, uid, bookable_id, weeks)))
         return plannings
 
     def event_list_for_weeks(self, cr, uid, bookable_id, weeks):
