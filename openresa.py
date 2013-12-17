@@ -478,7 +478,7 @@ class hotel_reservation(osv.osv):
 
     _actions = {
         'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
-        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'remplir',
+        'cancel': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
     }
 
@@ -595,7 +595,7 @@ class hotel_reservation(osv.osv):
 
 
     _columns = {
-        #'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
+        'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
         'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
         'state': fields.selection(_get_state_values, 'Etat', readonly=True),
         'state_num': fields.function(_get_state_num, string='Current state', type='integer', method=True,
