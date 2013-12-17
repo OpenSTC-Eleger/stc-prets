@@ -569,11 +569,12 @@ class hotel_reservation(osv.osv):
                        'bookings': self.build_events_data_dictionary(cr, uid, week_events_ids)}
 
         week_days = days_between(week[0], week[1])
-        events_by_day = dict()
+        events_by_day = list()
         for day in week_days:
-            events_by_day[datetime.strftime(day, "%Y-%m-%d")] = filter(lambda event: (event.get('start_hour').date() <= day.date()) &
-                                                                                     (event.get('end_hour').date() >= day.date()),
-                                        week_events.get('bookings'))
+            events_by_day.append((
+            datetime.strftime(day, "%Y-%m-%d"), filter(lambda event: (event.get('start_hour').date() <= day.date()) &
+                                                                     (event.get('end_hour').date() >= day.date()),
+                                                       week_events.get('bookings'))))
         week_events['bookings'] = events_by_day
         return week_events
 
@@ -587,6 +588,7 @@ class hotel_reservation(osv.osv):
         events = self.read(cr, uid, event_ids,
                            ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resources',
                             'confirm_note'])
+
         events_dictionaries = map(lambda event:
                                   {
                                       'name': event.get('name'),
