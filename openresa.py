@@ -524,14 +524,15 @@ class hotel_reservation(osv.osv):
         :param bookable_ids: The bookable resources ids included in plannings
         :param start_date: The start date of the planning
         :param end_date: Then end date of the planning
-        :return: List[Tuple[Tuple[Integer,String], List[hotel_reservation]]]
+        :return: List[Dict['bookable_name':String, weeks: List[hotel_reservation]]]
         """
         weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S"),
                               datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S"))
         plannings = list()
         bookables = self.pool.get('product.product').read(cr, uid, bookable_ids, ['name'])
         for bookable in bookables:
-            plannings.append((bookable['name'], self.event_list_for_weeks(cr, uid, bookable['id'], weeks)))
+            plannings.append(
+                {'bookable_name': bookable['name'], 'weeks': self.event_list_for_weeks(cr, uid, bookable['id'], weeks)})
         return plannings
 
     def event_list_for_weeks(self, cr, uid, bookable_id, weeks):
@@ -553,7 +554,7 @@ class hotel_reservation(osv.osv):
 
         :param bookable_id: Integer the bookable id
         :param week: Tuple[Datetime, Datetime]
-        :return: List[hotel_reservation]
+        :return: Dict['first_day':String,'last_day': String, 'bookings': List[hotel_reservation]]
         """
         first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M:%S')
         last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
@@ -564,7 +565,8 @@ class hotel_reservation(osv.osv):
                                        '|',
                                        '&', ('checkin', '>=', first_day), ('checkin', '<=', last_day),
                                        '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
-        week_events = (first_day, last_day, self.build_events_data_dictionary(cr, uid, week_events_ids))
+        week_events = {'first_day': first_day, 'last_day': last_day,
+                       'bookings': self.build_events_data_dictionary(cr, uid, week_events_ids)}
         return week_events
 
     def build_events_data_dictionary(self, cr, uid, event_ids):
