@@ -517,9 +517,9 @@ class hotel_reservation(osv.osv):
         ret = ret[1] if ret else False
         return ret
 
-    def generate_html_plannings_for(self,cr,uid,bookable_ids,start_date, end_date):
+    def generate_html_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):
         for planning in self.generate_plannings_for(cr, uid, bookable_ids, start_date, end_date):
-            html_planning = self.format_plannings_with(planning,'html')
+            html_planning = self.format_plannings_with(planning, 'html')
         return html_planning
 
     def generate_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):

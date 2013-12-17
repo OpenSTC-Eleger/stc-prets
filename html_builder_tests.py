@@ -1,162 +1,49 @@
 import unittest
 import html_builder
+import datetime
 
 
 class TestTemplateBuildFunction(unittest.TestCase):
-
     def setUp(self):
-        self.planning_data_sample = {"bookable_name": "Salle Aristide Briand", "weeks": [
-            {"bookings":
-                 [{"start_hour": "19:00",
-                   "name": "Cours de gymnastique",
-                   "booker_name": "GYM TONIC",
-                   "end_hour": "20:00",
-                   "note": False,
-                   "contact_name":
-                       " THIEVIN  Fabrice, La Montagne, 24 rue de la république",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "19:00",
-                   "name": "Cours de gymnastique",
-                   "booker_name": "GYM TONIC",
-                   "end_hour": "20:00",
-                   "note": False,
-                   "contact_name":
-                       " THIEVIN  Fabrice, La Montagne, 24 rue de la république",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "09:30",
-                   "name": "Ménage ",
-                   "booker_name": "Technique",
-                   "end_hour": "10:30",
-                   "note": False,
-                   "contact_name": "MALAISÉ  Jannick",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "09:30",
-                   "name": "Ménage ",
-                   "booker_name": "Technique",
-                   "end_hour": "10:30",
-                   "note": False,
-                   "contact_name": "MALAISÉ  Jannick",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "20:15",
-                   "name": "Section Chant répétition",
-                   "booker_name": "A.L.M",
-                   "end_hour": "21:30",
-                   "note": False,
-                   "contact_name":
-                       " MARTIN  Jacques, La Montagne, Foyer Laïc - 45, rue Violin",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "12:00",
-                   "name": "Réunion",
-                   "booker_name": "BEL AUTOMNE",
-                   "end_hour": "18:00",
-                   "note": False,
-                   "contact_name": " MOREAU  Colette, La Montagne, 5 rue Aristide Briand",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "13:00",
-                   "name": "Scrabble",
-                   "booker_name": "A.S.C.L.M SCRABBLE",
-                   "end_hour": "17:00",
-                   "note": False,
-                   "contact_name": " LUCAS  Renée, La Montagne, 37, rue Alphonse Daudet",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "13:00",
-                   "name": "Scrabble",
-                   "booker_name": "A.S.C.L.M SCRABBLE",
-                   "end_hour": "17:00",
-                   "note": False,
-                   "contact_name": " LUCAS  Renée, La Montagne, 37, rue Alphonse Daudet",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "18:00",
-                   "name": "Cours de Krav Maga",
-                   "booker_name": "ASCLM KRAV MAGA ",
-                   "end_hour": "19:30",
-                   "note": False,
-                   "contact_name": "PORCHER Bernard",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "17:30",
-                   "name": "Cours de Capoeira",
-                   "booker_name": "ALM CAPOEIRA",
-                   "end_hour": "20:15",
-                   "note": False,
-                   "contact_name":
-                       "DOS SANTOS  Karine, La Montagne, Foyer Laïc - 45, rue Violin",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]}],
-             "first_day": "2013-11-25 00:00:00",
-             "last_day": "2013-12-01 00:00:00"},
-            {"bookings":
-                 [{"start_hour": "19:00",
-                   "name": "Cours de gymnastique",
-                   "booker_name": "GYM TONIC",
-                   "end_hour": "20:00",
-                   "note": False,
-                   "contact_name":
-                       " THIEVIN  Fabrice, La Montagne, 24 rue de la république",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "09:30",
-                   "name": "Ménage ",
-                   "booker_name": "Technique",
-                   "end_hour": "10:30",
-                   "note": False,
-                   "contact_name": "MALAISÉ  Jannick",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "20:15",
-                   "name": "Section Chant répétition",
-                   "booker_name": "A.L.M",
-                   "end_hour": "21:30",
-                   "note": False,
-                   "contact_name":
-                       " MARTIN  Jacques, La Montagne, Foyer Laïc - 45, rue Violin",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "19:00",
-                   "name": "Cours de danse",
-                   "booker_name": "DANSERIEN AR MENEZ",
-                   "end_hour": "21:00",
-                   "note": False,
-                   "contact_name": " THOUZEAU, La Montagne, 2J, allée du 8 Mai 45",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "08:00",
-                   "name": "Repas",
-                   "booker_name": "BEL AUTOMNE",
-                   "end_hour": "20:00",
-                   "note": False,
-                   "contact_name": " MOREAU  Colette, La Montagne, 5 rue Aristide Briand",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "13:00",
-                   "name": "Scrabble",
-                   "booker_name": "A.S.C.L.M SCRABBLE",
-                   "end_hour": "17:00",
-                   "note": False,
-                   "contact_name": " LUCAS  Renée, La Montagne, 37, rue Alphonse Daudet",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "13:00",
-                   "name": "Scrabble",
-                   "booker_name": "A.S.C.L.M SCRABBLE",
-                   "end_hour": "17:00",
-                   "note": False,
-                   "contact_name": " LUCAS  Renée, La Montagne, 37, rue Alphonse Daudet",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "18:00",
-                   "name": "Cours de Krav Maga",
-                   "booker_name": "ASCLM KRAV MAGA ",
-                   "end_hour": "19:30",
-                   "note": False,
-                   "contact_name": "PORCHER Bernard",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
-                  {"start_hour": "17:30",
-                   "name": "Cours de Capoeira",
-                   "booker_name": "ALM CAPOEIRA",
-                   "end_hour": "20:15",
-                   "note": False,
-                   "contact_name":
-                       "DOS SANTOS  Karine, La Montagne, Foyer Laïc - 45, rue Violin",
-                   "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]}],
-             "first_day": "2013-12-02 00:00:00",
-             "last_day": "2013-12-08 00:00:00"}]}
+        self.planning_data_sample = [{"bookable_name": "Salle Aristide Briand",
+                                      "weeks":
+                                          [{"bookings": [
+                                              [datetime(2013, 11, 25, 0, 0, 0),
+                                               [{"start_hour": datetime(2013, 11, 25, 19, 0, 0),
+                                                 "name": "Cours de gymnastique",
+                                                 "booker_name": "GYM TONIC",
+                                                 "end_hour": datetime(2013, 11, 25, 20, 0, 0),
+                                                 "note": false,
+                                                 "contact_name":
+                                                     " THIEVIN  Fabrice, La Montagne, 24 rue de la république",
+                                                 "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
+                                                {"start_hour": datetime(2013, 25, 11, 9, 30, 0)
+                                                    ,
+                                                 "name": "Ménage ",
+                                                 "booker_name": "Technique",
+                                                 "end_hour": datetime(2013, 11, 25, 10, 30)
+                                                    ,
+                                                 "note": false,
+                                                 "contact_name": "MALAISÉ  Jannick",
+                                                 "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]},
+                                                {"start_hour": datetime(2013, 25, 11, 20, 15, 0)
+                                                    ,
+                                                 "name": "Section Chant répétition",
+                                                 "booker_name": "A.L.M",
+                                                 "end_hour": datetime(2013, 11, 25, 21, 30, 0)
+                                                    ,
+                                                 "note": false,
+                                                 "contact_name":
+                                                     " MARTIN  Jacques, La Montagne, Foyer Laïc - 45, rue Violin",
+                                                 "resources": [{"name": "Salle Aristide Briand", "quantity": 1.0}]}]
+                                              ]]}]
+                                     }]
 
     def test_output_sample(self):
         document = html_builder.format_resource_plannings(self.planning_data_sample)
         print(document)
         self.assertEqual(document, True)
+
 
 if __name__ == '__main__':
     unittest.main()
