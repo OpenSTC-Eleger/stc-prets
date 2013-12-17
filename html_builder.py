@@ -13,7 +13,7 @@ def format_resource_plannings(plannings):
 def format_resource_planning(planning):
     output = [planning_template_header.substitute(planning), '<table><tbody>']
     for week_day in planning.get('bookings'):
-        output.append(planning_day_row(day=week_day[0]))
+        output.append(planning_day_row.substitute(day=week_day[0]))
         for booking in week_day[1]:
             booking['resources'] = ''.join(map(lambda r: planning_resource_string.substitute(r), booking.get('resources')))
             output.append(format_event_line(booking))
