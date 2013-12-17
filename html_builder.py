@@ -1,19 +1,23 @@
 from string import Template
-
+from datetime import datetime
+from siclic_time_extensions import week_days_list
 
 def format_resource_plannings(plannings):
+    output = ['<html>', '<head>', '</head>', '<body>']
     for planning in plannings.get('weeks'):
-        output = ['<html>', '<head>', '</head>', '<body>']
         planning['bookable_name'] = plannings.get('bookable_name')
         output.append(format_resource_planning(planning))
-        output.append('</body></html>')
+
+    output.append('</body></html>')
     return ''.join(output)
 
 
 def format_resource_planning(planning):
+    planning['first_day'] = datetime.strftime(planning.get('first_day', '%d-%m-%Y'))
+
     output = [planning_template_header.substitute(planning), '<table><tbody>']
     for week_day in planning.get('bookings'):
-        output.append(planning_day_row.substitute(day=week_day[0]))
+        output.append(planning_day_row.substitute(day=week_days_list[week_day[0].day().weekday()]))
         for booking in week_day[1]:
             booking['resources'] = ''.join(map(lambda r: planning_resource_string.substitute(r), booking.get('resources')))
             output.append(format_event_line(booking))
@@ -29,25 +33,10 @@ def format_resource_string(resource):
     return planning_resource_string.substitute(resource)
 
 
-planning_template_header = Template("""
-<h1>$bookable_name  <small>$first_day / $last_day</small></h1>
-""")
+planning_template_header = Template("<h1>$bookable_name  <small>$first_day / $last_day</small></h1>")
 
-planning_day_row = Template("""
-<tr><td colspan="6">$day</td></tr>
-""")
+planning_day_row = Template("<tr><td colspan='6'>$day</td></tr>")
 
-planning_event_row = Template("""
-<tr>
-<td>$start_hour - $end_hour</td>
-<td>$name</td>
-<td>$booker_name</td>
-<td>$contact_name</td>
-<td><ul>$resources</ul></td>
-<td>$note</td>
-</tr>
-""")
+planning_event_row = Template("<tr><td>$start_hour - $end_hour</td><td>$name</td><td>$booker_name</td><td>$contact_name</td><td><ul>$resources</ul></td><td>$note</td></tr>")
 
-planning_resource_string = Template("""
-<li>$quantity x $name</li>
-""")
+planning_resource_string = Template("<li>$quantity x $name</li>")

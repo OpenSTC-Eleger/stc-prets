@@ -27,3 +27,5 @@ def days_between(first_date, last_date):
         days.append(first_date + datetime.timedelta(days=delta))
     return days
 
+
+week_days_list = ('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche')
