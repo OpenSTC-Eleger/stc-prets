@@ -12,9 +12,11 @@ def format_resource_plannings(plannings):
 
 def format_resource_planning(planning):
     output = [planning_template_header.substitute(planning), '<table><tbody>']
-    for booking in planning.get('bookings'):
-        booking['resources'] = ''.join(map(lambda r: planning_resource_string.substitute(r), booking.get('resources')))
-        output.append(format_event_line(booking))
+    for week_day in planning.get('bookings'):
+        output.append(planning_day_row(day=week_day[0]))
+        for booking in week_day[1]:
+            booking['resources'] = ''.join(map(lambda r: planning_resource_string.substitute(r), booking.get('resources')))
+            output.append(format_event_line(booking))
     output.append('</tbody></table>')
     return ''.join(output)
 
@@ -29,6 +31,10 @@ def format_resource_string(resource):
 
 planning_template_header = Template("""
 <h1>$bookable_name  <small>$first_day / $last_day</small></h1>
+""")
+
+planning_day_row = Template("""
+<tr><td colspan="6">$day</td></tr>
 """)
 
 planning_event_row = Template("""
