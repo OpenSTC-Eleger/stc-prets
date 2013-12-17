@@ -586,7 +586,7 @@ class hotel_reservation(osv.osv):
                                           datetime.strptime(event.get('checkout'), "%Y-%m-%d %H:%M:%S"), '%H:%M'),
                                       'booker_name': event.get('partner_id')[1],
                                       'contact_name': event.get('partner_order_id')[1],
-                                      'resources': map(lambda r: {'name': r.name, 'quantity': r.quantity},
+                                      'resources': map(lambda r: {'name': r.get('name'), 'quantity': r.get('quantity')},
                                                        event.get('resources')),
                                       'note': event.get('confirm_note')
                                   },
