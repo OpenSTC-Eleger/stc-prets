@@ -13,7 +13,7 @@ def format_resource_plannings(plannings):
 
 
 def format_resource_planning(planning):
-    planning['first_day'] = datetime.strftime(planning.get('first_day', '%d-%m-%Y'))
+    planning['first_day'] = datetime.strftime(planning.get('first_day'), '%d-%m-%Y')
 
     output = [planning_template_header.substitute(planning), '<table><tbody>']
     for week_day in planning.get('bookings'):
