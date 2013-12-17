@@ -3,10 +3,11 @@ from datetime import datetime
 from siclic_time_extensions import week_days_list
 
 def format_resource_plannings(plannings):
-    output = ['<html>', '<head>', '</head>', '<body>']
+    output = ['<html>', '<head>','<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">', '</head>', '<body>']
     for planning in plannings.get('weeks'):
         planning['bookable_name'] = plannings.get('bookable_name')
         output.append(format_resource_planning(planning))
+        output.append('<hr/>')
 
     output.append('</body></html>')
     return ''.join(output)
@@ -15,7 +16,7 @@ def format_resource_plannings(plannings):
 def format_resource_planning(planning):
     planning['first_day'] = datetime.strftime(datetime.strptime(planning.get('first_day'), '%Y-%m-%d %H:%M:%S'), '%d-%m-%Y')
     planning['last_day'] = datetime.strftime(datetime.strptime(planning.get('last_day'), '%Y-%m-%d %H:%M:%S'), '%d-%m-%Y')
-    output = [planning_template_header.substitute(planning), '<table><tbody>']
+    output = [planning_template_header.substitute(planning), '<table class="table table-condensed"><tbody>']
     for week_day in planning.get('bookings'):
         output.append(planning_day_row.substitute(day=week_days_list[week_day[0].weekday()]))
         for booking in week_day[1]:
@@ -28,6 +29,7 @@ def format_resource_planning(planning):
 def format_event_line(event):
     event['start_hour'] = datetime.strftime(event.get('start_hour'), "%H:%M")
     event['end_hour'] = datetime.strftime(event.get('end_hour'), "%H:%M")
+    event['note'] = event.get('note') if event.get('note') else ''
     return planning_event_row.substitute(event)
 
 
