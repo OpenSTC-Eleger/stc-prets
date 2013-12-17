@@ -13,10 +13,11 @@ def format_resource_plannings(plannings):
 
 
 def format_resource_planning(planning):
-    planning['first_day'] = datetime.strftime(datetime.strptime(planning.get('first_day'), '%Y-%m%d %H:%M:%S'), '%d-%m-%Y')
+    planning['first_day'] = datetime.strftime(datetime.strptime(planning.get('first_day'), '%Y-%m-%d %H:%M:%S'), '%d-%m-%Y')
+    planning['last_day'] = datetime.strftime(datetime.strptime(planning.get('last_day'), '%Y-%m-%d %H:%M:%S'), '%d-%m-%Y')
     output = [planning_template_header.substitute(planning), '<table><tbody>']
     for week_day in planning.get('bookings'):
-        output.append(planning_day_row.substitute(day=week_days_list[week_day[0].day().weekday()]))
+        output.append(planning_day_row.substitute(day=week_days_list[week_day[0].weekday()]))
         for booking in week_day[1]:
             booking['resources'] = ''.join(map(lambda r: planning_resource_string.substitute(r), booking.get('resources')))
             output.append(format_event_line(booking))
@@ -25,6 +26,8 @@ def format_resource_planning(planning):
 
 
 def format_event_line(event):
+    event['start_hour'] = datetime.strftime(event.get('start_hour'), "%H:%M")
+    event['end_hour'] = datetime.strftime(event.get('end_hour'), "%H:%M")
     return planning_event_row.substitute(event)
 
 
