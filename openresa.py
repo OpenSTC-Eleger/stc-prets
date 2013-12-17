@@ -571,7 +571,8 @@ class hotel_reservation(osv.osv):
         week_days = days_between(week[0], week[1])
         events_by_day = dict()
         for day in week_days:
-            events_by_day[datetime.strftime(day, "%Y-%m-%d")] = filter(lambda event: (event.get('start_hour') >= day) & (event.get('end_hour') <= day),
+            events_by_day[datetime.strftime(day, "%Y-%m-%d")] = filter(lambda event: (event.get('start_hour').date() <= day.date()) &
+                                                                                     (event.get('end_hour').date() >= day.date()),
                                         week_events.get('bookings'))
         week_events['bookings'] = events_by_day
         return week_events
