@@ -603,6 +603,7 @@ class hotel_reservation(osv.osv):
     _columns = {
         'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
         'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
+        'deleted_at': fields.date('Deleted date'),
         'state': fields.selection(_get_state_values, 'Etat', readonly=True),
         'state_num': fields.function(_get_state_num, string='Current state', type='integer', method=True,
                                      store={'hotel.reservation': (get_resa_modified, ['state'], 20)}),
@@ -667,6 +668,12 @@ class hotel_reservation(osv.osv):
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if order in (' ',''): order=None
         #Keep simple resa and only template for reccurence
+        deleted_domain = []
+        for s in args :
+            if 'deleted_at' in s  :
+                args.remove(s)
+                deleted_domain = [('deleted_at','=', False)]
+        args.extend(deleted_domain)
         return super(hotel_reservation, self).search(cr, uid, args, offset, limit, order, context, count)
 
 
