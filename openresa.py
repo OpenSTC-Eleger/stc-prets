@@ -524,14 +524,15 @@ class hotel_reservation(osv.osv):
         :param bookable_ids: The bookable resources ids included in plannings
         :param start_date: The start date of the planning
         :param end_date: Then end date of the planning
-        :return: List[Tuple[Tuple[Integer,String], List[hotel_reservation]]]
+        :return: List[Dict['bookable_name':String, weeks: List[hotel_reservation]]]
         """
         weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S"),
                               datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S"))
         plannings = list()
         bookables = self.pool.get('product.product').read(cr, uid, bookable_ids, ['name'])
         for bookable in bookables:
-            plannings.append((bookable['name'], self.event_list_for_weeks(cr, uid, bookable['id'], weeks)))
+            plannings.append(
+                {'bookable_name': bookable['name'], 'weeks': self.event_list_for_weeks(cr, uid, bookable['id'], weeks)})
         return plannings
 
     def event_list_for_weeks(self, cr, uid, bookable_id, weeks):
@@ -553,18 +554,20 @@ class hotel_reservation(osv.osv):
 
         :param bookable_id: Integer the bookable id
         :param week: Tuple[Datetime, Datetime]
-        :return: List[hotel_reservation]
+        :return: Dict['first_day':String,'last_day': String, 'bookings': List[hotel_reservation]]
         """
         first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M:%S')
         last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
 
-        week_events = self.search(cr, uid,
-                                  [('reservation_line.reserve_product.id', '=', bookable_id),
-                                   ('state', '=', 'confirm'),
-                                   '|',
-                                   '&', ('checkin', '>=', first_day), ('checkin', '<=', last_day),
-                                   '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
-        return first_day, last_day, self.build_events_data_dictionary(cr, uid, week_events)
+        week_events_ids = self.search(cr, uid,
+                                      [('reservation_line.reserve_product.id', '=', bookable_id),
+                                       ('state', '=', 'confirm'),
+                                       '|',
+                                       '&', ('checkin', '>=', first_day), ('checkin', '<=', last_day),
+                                       '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
+        week_events = {'first_day': first_day, 'last_day': last_day,
+                       'bookings': self.build_events_data_dictionary(cr, uid, week_events_ids)}
+        return week_events
 
     def build_events_data_dictionary(self, cr, uid, event_ids):
         """
@@ -574,19 +577,22 @@ class hotel_reservation(osv.osv):
         :return: List[Dict]
         """
         events = self.read(cr, uid, event_ids,
-                           ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resource_names'])
+                           ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resources',
+                            'confirm_note'])
         events_dictionaries = map(lambda event:
                                   {
                                       'name': event.get('name'),
-                                      'start_hour': datetime.strftime(datetime.strptime(event.get('checkin'), "%Y-%m-%d %H:%M:%S"), '%H:%M'),
-                                      'end_hour': datetime.strftime(datetime.strptime(event.get('checkout'),"%Y-%m-%d %H:%M:%S"), '%H:%M'),
-                                      'booker_name': event.get('partner_id')[0],
-                                      'contact_name': event.get('partner_order_id')[0],
-                                      'resource_names': event.get('resource_names'),
+                                      'start_hour': datetime.strftime(
+                                          datetime.strptime(event.get('checkin'), "%Y-%m-%d %H:%M:%S"), '%H:%M'),
+                                      'end_hour': datetime.strftime(
+                                          datetime.strptime(event.get('checkout'), "%Y-%m-%d %H:%M:%S"), '%H:%M'),
+                                      'booker_name': event.get('partner_id')[1],
+                                      'contact_name': event.get('partner_order_id')[1],
+                                      'resources': map(lambda r: {'name': r.get('name'), 'quantity': r.get('quantity')},
+                                                       event.get('resources')),
                                       'note': event.get('confirm_note')
                                   },
-                                  events
-        )
+                                  events)
         return events_dictionaries
 
     def format_plannings_with(self, plannings, format):
