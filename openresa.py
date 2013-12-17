@@ -38,7 +38,7 @@ import openerp
 import os
 import tools
 from datetime import datetime
-from siclic_time_extensions import weeks_between
+from siclic_time_extensions import weeks_between, days_between
 import html_builder
 
 #----------------------------------------------------------
@@ -554,7 +554,7 @@ class hotel_reservation(osv.osv):
 
         :param bookable_id: Integer the bookable id
         :param week: Tuple[Datetime, Datetime]
-        :return: Dict['first_day':String,'last_day': String, 'bookings': List[hotel_reservation]]
+        :return: Dict['first_day':String,'last_day': String, 'bookings': Dict[datetime: List[hotel_reservation]]]
         """
         first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M:%S')
         last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
@@ -567,6 +567,13 @@ class hotel_reservation(osv.osv):
                                        '&', ('checkout', '>=', first_day), ('checkout', '<=', last_day)])
         week_events = {'first_day': first_day, 'last_day': last_day,
                        'bookings': self.build_events_data_dictionary(cr, uid, week_events_ids)}
+
+        week_days = days_between(week[0], week[1])
+        events_by_day = dict()
+        for day in week_days:
+            events_by_day[day] = filter(lambda event: (event.get('start_hour') >= day) & (even.get('end_hour') <= day),
+                                        week_events.get('bookings'))
+        week_events['bookings'] = events_by_day
         return week_events
 
     def build_events_data_dictionary(self, cr, uid, event_ids):
@@ -582,10 +589,8 @@ class hotel_reservation(osv.osv):
         events_dictionaries = map(lambda event:
                                   {
                                       'name': event.get('name'),
-                                      'start_hour': datetime.strftime(
-                                          datetime.strptime(event.get('checkin'), "%Y-%m-%d %H:%M:%S"), '%H:%M'),
-                                      'end_hour': datetime.strftime(
-                                          datetime.strptime(event.get('checkout'), "%Y-%m-%d %H:%M:%S"), '%H:%M'),
+                                      'start_hour': datetime.strptime(event.get('checkin'), "%Y-%m-%d %H:%M:%S"),
+                                      'end_hour':  datetime.strptime(event.get('checkout'), "%Y-%m-%d %H:%M:%S"),
                                       'booker_name': event.get('partner_id')[1],
                                       'contact_name': event.get('partner_order_id')[1],
                                       'resources': map(lambda r: {'name': r.get('name'), 'quantity': r.get('quantity')},

@@ -1,6 +1,7 @@
 import datetime
 
 
+
 def weeks_between(first_date, last_date):
     """
     Returns list of date tuples representing weeks bounds [(first_day_of_week,last_day_of_week),...]
@@ -18,3 +19,11 @@ def weeks_between(first_date, last_date):
         week_list.append((first_day_of_week, find_last_day_of_week(first_day_of_week)))
         first_day_of_week = first_day_of_week + datetime.timedelta(days=7)
     return week_list
+
+
+def days_between(first_date, last_date):
+    days = list()
+    for delta in range((last_date - first_date).days + 1):
+        days.append(first_date + datetime.timedelta(days=delta))
+    return days
+
