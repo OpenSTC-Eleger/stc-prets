@@ -70,6 +70,15 @@ class openresa_folio_report(report_sxw.rml_parse):
             ret = self.pool.get('hotel.reservation').browse(self.cr, self.uid, ret_ids[0],self.localcontext)
         return ret
     
+    def getCitizenInfos(self, record):
+        ret = ''
+        resa = self.getResa(record)
+        postal_infos = '%s\n%s %s' % (resa.people_street and resa.people_street or '', 
+                                     resa.people_city and resa.people_city or '', 
+                                     resa.people_zip and resa.people_zip or '')
+        ret = '%s\n%s\n' % (resa.people_name, postal_infos)
+        return ret
+    
     def __init__(self, cr, uid, name, context):
         super(openresa_folio_report, self).__init__(cr, uid, name, context)
         self.localcontext.update({
@@ -77,6 +86,7 @@ class openresa_folio_report(report_sxw.rml_parse):
             'datetime':datetime,
             'getLines':self.get_lines,
             'getResa':self.getResa,
+            'getCitizenInfos':self.getCitizenInfos,
         })
 
 report_sxw.report_sxw('report.openresa.folio.report', 'hotel.folio',

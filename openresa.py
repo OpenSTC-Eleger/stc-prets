@@ -930,9 +930,7 @@ class hotel_reservation(osv.osv):
             prod_dispo[str(prod_id)] -= qty_reserved
         return prod_dispo
 
-    #Vérifies les champs dispo de chaque ligne de résa pour dire si oui ou non la résa est OK pour la suite
-    #TODO: Voir comment gérer le cas de la reprise d'une résa à revalider / incomplète où des champs dispo sont à True
-    #=> Problème lorsque quelqu'un d'autre réserve un même produit
+    #computed flag to know if booking can be validated or not 
     def is_all_dispo(self, cr, uid, id, context=None):
         for line in self.browse(cr, uid, id, context).reservation_line:
             if line.reserve_product.block_booking and not line.dispo:
