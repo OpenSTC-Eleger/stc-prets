@@ -4,11 +4,13 @@ from siclic_time_extensions import week_days_list
 
 def format_resource_plannings(plannings):
     output = ['<html>', '<head>',
-              "<link href='//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css' rel='stylesheet'>", '</head>', '<body>']
+              "<link href='http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css' rel='stylesheet'>",
+              "<style type='text/css'>.pagebreak { page-break-after: always; } td { font-size: 80%; } h1 { font-size: 180%; }</style>",
+              '</head>', '<body>']
     for planning in plannings.get('weeks'):
         planning['bookable_name'] = plannings.get('bookable_name')
         output.append(format_resource_planning(planning))
-        output.append('<hr/>')
+        output.append('<hr class="pagebreak"/>')
 
     output.append('</body></html>')
     return ''.join(output)
@@ -19,7 +21,8 @@ def format_resource_planning(planning):
     planning['last_day'] = datetime.strftime(datetime.strptime(planning.get('last_day'), '%Y-%m-%d %H:%M:%S'), '%d-%m-%Y')
     output = [planning_template_header.substitute(planning), "<table class='table table-condensed'><tbody>"]
     for week_day in planning.get('bookings'):
-        output.append(planning_day_row.substitute(day=week_days_list[week_day[0].weekday()]))
+        day_of_week_cell = ' '.join([week_days_list[week_day[0].weekday()], datetime.strftime(week_day[0], '%d-%m-%Y')])
+        output.append(planning_day_row.substitute(day=day_of_week_cell))
         for booking in week_day[1]:
             booking['resources'] = ''.join(map(lambda r: planning_resource_string.substitute(r), booking.get('resources')))
             output.append(format_event_line(booking))
@@ -40,7 +43,7 @@ def format_resource_string(resource):
 
 planning_template_header = Template("<h1>$bookable_name  <small>$first_day / $last_day</small></h1>")
 
-planning_day_row = Template("<tr><td colspan='6'>$day</td></tr>")
+planning_day_row = Template("<tr><td colspan='6' class='active'><h4>$day</h4></td></tr>")
 
 planning_event_row = Template("<tr><td>$start_hour - $end_hour</td><td>$name</td><td>$booker_name</td><td>$contact_name</td><td><ul>$resources</ul></td><td>$note</td></tr>")
 
