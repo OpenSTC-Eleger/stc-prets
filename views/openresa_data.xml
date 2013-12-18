@@ -336,7 +336,7 @@
 	%>
 	% endfor
 
-	<p>Suite à l'événement <b>${object.name}</b> qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
+	<p>Suite à l'événement <b>${object.name}</b> qui s'est tenu du ${my_checkin_str} au ${my_last_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
 	<b>${object.done_note or ''}</b>.</br></br>
 
 	Cette réservation est clôturée.</p>
