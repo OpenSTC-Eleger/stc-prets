@@ -10,7 +10,7 @@ def format_resource_plannings(plannings):
     for planning in plannings.get('weeks'):
         planning['bookable_name'] = plannings.get('bookable_name')
         output.append(format_resource_planning(planning))
-        output.append('<hr class="pagebreak"/>')
+        output.append("<hr class='pagebreak'/>")
 
     output.append('</body></html>')
     return ''.join(output)
