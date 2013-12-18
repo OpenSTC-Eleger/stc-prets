@@ -120,15 +120,15 @@
    % endfor
    </ul>
    </ul>
-   <p>afin d'organiser <b> ${object.name or ''} </b></p></br>
-   <p>Nous avons bien pris en considération votre note </br> </br>:
-   <b> ${object.confirm_note or ''} </b></p>
+   <p>afin d'organiser <b> ${object.name or ''} </b></p>
+   <p>Nous avons bien pris en considération votre note : <p>
+   <p><b> ${object.confirm_note or ''} </b></p>
 
    <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br>
    <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b>
    </p>
 
-   <p>${object.write_uid.signature} or ''<br />
+   <p>${object.write_uid.signature} or ''}<br />
    ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
@@ -336,8 +336,8 @@
 	%>
 	% endfor
 
-	<p>Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
-	${object.done_note or ''}.</br></br>
+	<p>Suite à l'événement <b>${object.name}</b> qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
+	<b>${object.done_note or ''}</b>.</br></br>
 
 	Cette réservation est clôturée.</p>
 
@@ -436,11 +436,11 @@
    </ul>
    </ul>
 	<br />
-	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de  : </br>
+	<p><b>afin d’organiser ${object.name or 'inconnu'}</b>  en raison de  : </br>
 		${object.cancel_note or ''}
 	</p>
 	<br />
-   <p>	   ${object.write_uid.signature} or '' <br />
+   <p>	   ${object.write_uid.signature} or '' }<br />
 		   ${object.shop_id.company_id.name or ''} </p>
 			    ]]></field>
 			<field name="body_text"><![CDATA[
@@ -478,7 +478,7 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	afin d’organiser ${object.name or 'inconnu'}  en raison de :
+	afin d’organiser <b>${object.name or 'inconnu'}  en raison de :
 	${object.cancel_note or ''}
 
 	${object.write_uid.signature or ''}
