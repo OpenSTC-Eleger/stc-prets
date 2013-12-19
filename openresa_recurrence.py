@@ -362,6 +362,7 @@ class openresa_reservation_recurrence(osv.osv):
     def validate(self, cr, uid, ids, vals, context=None):
         wkf_service = netsvc.LocalService('workflow')
         now = datetime.now().strftime('%Y-%m-%d')
+        state = vals['state']
         for recurrence in self.browse(cr, uid, ids, context=context):
             #count to know how many resa have been requested to be confirmed,
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
@@ -369,7 +370,8 @@ class openresa_reservation_recurrence(osv.osv):
             for resa in recurrence.reservation_ids:
                 if resa.all_dispo and resa.state in ['remplir','draft']:
                     resa_count += 1
-                state = vals['state']
+                #update confirm, refused or closed note
+                resa.write({ state+'_note': vals[state+'_note'] })
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
             if resa_count > 0:
                 recurrence.write({'date_confirm':now, 'recurrence_state':'in_use'})
