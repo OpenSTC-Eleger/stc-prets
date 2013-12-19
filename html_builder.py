@@ -24,16 +24,18 @@ def format_resource_planning(planning):
         day_of_week_cell = ' '.join([week_days_list[week_day[0].weekday()], datetime.strftime(week_day[0], '%d-%m-%Y')])
         output.append(planning_day_row.substitute(day=day_of_week_cell))
         for booking in week_day[1]:
-            booking['resources'] = ''.join(map(lambda r: planning_resource_string.substitute(r), booking.get('resources')))
+            resources = booking.get('resources')
+            templated_resources = map(lambda r: planning_resource_string.substitute(r), resources)
+            booking['templated_resources'] = ''.join(templated_resources)
             output.append(format_event_line(booking))
     output.append('</tbody></table>')
     return ''.join(output)
 
 
 def format_event_line(event):
-    event['start_hour'] = datetime.strftime(event.get('start_hour'), "%H:%M")
-    event['end_hour'] = datetime.strftime(event.get('end_hour'), "%H:%M")
-    event['note'] = event.get('note') if event.get('note') else ''
+    event['formated_start_hour'] = datetime.strftime(event.get('start_hour'), "%H:%M")
+    event['formated_end_hour'] = datetime.strftime(event.get('end_hour'), "%H:%M")
+    event['formated_note'] = event.get('note') if event.get('note') else ''
     return planning_event_row.substitute(event)
 
 
@@ -45,6 +47,6 @@ planning_template_header = Template("<h1>$bookable_name  <small>$first_day / $la
 
 planning_day_row = Template("<tr><td colspan='6' class='active'><h4>$day</h4></td></tr>")
 
-planning_event_row = Template("<tr><td>$start_hour - $end_hour</td><td>$name</td><td>$booker_name</td><td>$contact_name</td><td><ul>$resources</ul></td><td>$note</td></tr>")
+planning_event_row = Template("<tr><td>$formated_start_hour - $formated_end_hour</td><td>$name</td><td>$booker_name</td><td>$contact_name</td><td><ul>$templated_resources</ul></td><td>$formated_note</td></tr>")
 
 planning_resource_string = Template("<li>$quantity x $name</li>")
