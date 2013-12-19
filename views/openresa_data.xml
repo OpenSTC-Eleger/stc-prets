@@ -116,19 +116,19 @@
 	my_checkin_str = my_checkin_str.decode('utf-8')
 	my_checkout_str = my_checkout_str.decode('utf-8')
 	%>
-	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
+	<li>du ${my_checkin_str} au ${my_checkout_str}</li>
    % endfor
    </ul>
    </ul>
-   <p>afin d'organiser <b> ${object.name or ''} </b></p></br>
-   <p>Nous avons bien pris en considération votre note </br> </br>:
-   <b> ${object.confirm_note or ''} </b></p>
+   <p>afin d'organiser <b> ${object.name or ''} </b></p>
+   <p>Nous avons bien pris en considération votre note : <p>
+   <p><b> ${object.confirm_note or ''} </b></p>
 
    <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br>
    <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b>
    </p>
 
-   <p>${object.write_uid.signature} or 'Le service Vie Associative et événementiel'<br />
+   <p>${object.write_uid.signature or ''}<br />
    ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
@@ -170,13 +170,12 @@
 		   % endfor
 
 		    afin d'organiser  ${object.name or ''}
-
    			Nous avons bien pris en considération votre note : ${object.confirm_note or ''}
 
    			Un contrat de location a été envoyé à l’adresse suivante :
    			${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
 
-		   ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
+		   ${object.write_uid.signature or ''}
 		   ${object.shop_id.company_id.name or ''}
 
 	    ]]></field>
@@ -319,10 +318,8 @@
 	<%
 		my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
 		my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-                if my_last_checkout == None:
+		if my_last_checkout == None:
 			my_last_checkout = my_checkout
-
-
 		if my_checkout > my_last_checkout:
 			my_last_checkout = my_checkout
 
@@ -339,13 +336,13 @@
 	%>
 	% endfor
 
-	<p>Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
-	${object.done_note or ''}.</br></br>
+	<p>Suite à l'événement <b>${object.name}</b> qui s'est tenu du ${my_checkin_str} au ${my_last_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
+	<b>${object.done_note or ''}</b>.</br></br>
 
 	Cette réservation est clôturée.</p>
 
    <br />
-   <p>${object.write_uid.signature or 'Le service Vie Associative et événementiel'} <br />
+   <p>${object.write_uid.signature or ''} <br />
    ${object.shop_id.company_id.name or ''} </p>
 
 			    ]]></field>
@@ -371,9 +368,8 @@
 	<%
 		my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
 		my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-                if my_last_checkout == None:
+		if my_last_checkout == None:
 			my_last_checkout = my_checkout
-
 		if my_checkout > my_last_checkout :
 			my_last_checkout = my_checkout
 
@@ -393,7 +389,7 @@
 
 	Cette réservation est clôturée.
 
-   ${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
+   ${object.write_uid.signature or ''}
    ]]></field>
     </record>
 
@@ -440,11 +436,11 @@
    </ul>
    </ul>
 	<br />
-	<p>afin d’organiser ${object.name or 'inconnu'}  en raison de  : </br>
+	<p><b>afin d’organiser ${object.name or 'inconnu'}</b>  en raison de  : </br>
 		${object.cancel_note or ''}
 	</p>
 	<br />
-   <p>	   ${object.write_uid.signature} or 'Le service Vie Associative et événementiel' <br />
+   <p>	   ${object.write_uid.signature or '' }<br />
 		   ${object.shop_id.company_id.name or ''} </p>
 			    ]]></field>
 			<field name="body_text"><![CDATA[
@@ -482,10 +478,10 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	afin d’organiser ${object.name or 'inconnu'}  en raison de :
+	afin d’organiser <b>${object.name or 'inconnu'}  en raison de :
 	${object.cancel_note or ''}
 
-	${object.write_uid.signature or 'Le service Vie Associative et événementiel'}
+	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
 		    ]]></field>
 		</record>

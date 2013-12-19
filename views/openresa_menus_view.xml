@@ -20,7 +20,7 @@
 -->
 <openerp>
 	<data>
-	    
+
 	    <!-- Actions Mouvements Internes -->
 		<record id="action_openstock_view_fournitures" model="ir.actions.act_window">
 			<field name="name">Ressources</field>
@@ -49,7 +49,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 		</record>
-	
+
 		<record id="action_openstock_view_reservation_new" model="ir.actions.act_window">
 			<field name="name">Créer une nouvelle réservation</field>
 			<field name="type">ir.actions.act_window</field>
@@ -57,7 +57,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">form</field>
 		</record>
-	    
+
 		<record id="action_openstock_view_reservation_calendar" model="ir.actions.act_window">
 			<field name="name">Planning des Réservations</field>
 			<field name="type">ir.actions.act_window</field>
@@ -67,9 +67,9 @@
 			<field name="context">{}</field>
 			<field name="domain">[('state','not in',('done','cancel','remplir'))]</field>
 		</record>
-		
 
-		
+
+
 		<record id="action_openstc_pret_voir_emprunts_ext" model="ir.actions.act_window">
 			<field name="name">Emprunts aux mairies extérieures encore à retourner</field>
 			<field name="type">ir.actions.act_window</field>
@@ -79,19 +79,19 @@
 			<!-- <field name="domain">[('state','in',('approved',)),('amount_total','=',0.0),('order_line','&lt;&gt;',None)]</field>-->
 			<field name="domain">[('is_emprunt','=',True)]</field>
 		</record>
-		
-		<menuitem icon="terp-project" id="base.menu_main_openstock" 
+
+		<menuitem icon="terp-project" id="base.menu_main_openstock"
 		    name="OpenResa" sequence="10" />
 
 		<menuitem id="menu_action_view_reservations" name="Gestion des Réservations"
 			parent="base.menu_main_openstock" sequence="1" />
-		
+
 		<!-- MenuItems Gestion des Ressources -->
 		<menuitem id="menu_configuration_openresa"
 			name="Gestion des Réservations"
 			parent="openbase.menu_configuration"
 			sequence="3" />
-		
+
 		<!-- MenuItems Gestion des Ressources -->
 		<menuitem id="menu_action_view_fournitures" action="action_openstock_view_fournitures"
 			name="Catalogue des ressources" parent="menu_configuration_openresa"
@@ -105,23 +105,26 @@
 <!-- 			action="action_openstc_pret_voir_emprunts_ext" name="Nos Emprunts externes à retourner" -->
 <!-- 			parent="menu_action_view_articles" sequence="3" /> -->
 
-		<menuitem id="menu_action_openstc_pret_view_checkout"
+		<delete id="menu_action_openstc_pret_view_checkout" model="ir.ui.menu"/>
+		<!-- <menuitem id="menu_action_openstc_pret_view_checkout"
 			action="action_openstc_pret_view_checkout" name="Voir Etats des lieux retour d'articles"
 			parent="menu_action_view_reservations" sequence="4" />
-		
+		-->
+
 		<menuitem id="menu_action_openstock_view_reservation" action="action_openstock_view_reservation"
 			name="Réservations" parent="menu_action_view_reservations"
 			sequence="2" />
-		
+
 		<menuitem id="menu_action_openstock_view_reservation_calendar"
 			action="action_openstock_view_reservation_calendar"
 			parent="menu_action_view_reservations" sequence="3" />
-		
-		
-		<menuitem id="menu_action_openresa_view_recurrence"
+
+		<delete id="menu_action_openresa_view_recurrence" model="ir.ui.menu"/>
+		<!--  <menuitem id="menu_action_openresa_view_recurrence"
 		    action="action_openresa_view_recurrence"
 		    parent="menu_action_view_reservations" sequence="4"/>
-		
+		   -->
+
 		<record model="ir.ui.menu" id="hotel.hotel_management_menu">
 		    <field name="groups_id" eval="[(6,0,[ref('openbase.group_view_all_menus')])]"/>
 		</record>
