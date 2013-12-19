@@ -616,6 +616,9 @@ class hotel_reservation(osv.osv):
         'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
         'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
         'deleted_at': fields.date('Deleted date'),
+        'confirm_at': fields.date('Confirm date'),
+        'done_at': fields.date('Done date'),
+        'cancel_at': fields.date('Cancel date'),
         'state': fields.selection(_get_state_values, 'Etat', readonly=True),
         'state_num': fields.function(_get_state_num, string='Current state', type='integer', method=True,
                                      store={'hotel.reservation': (get_resa_modified, ['state'], 20)}),
@@ -743,10 +746,14 @@ class hotel_reservation(osv.osv):
         if 'checkout' in vals:
             if len(vals['checkout']) >10:
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
-
-        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        state = None
         if vals.has_key('state_event') :
-            vals.update( { 'state' : vals.get('state_event'), 'state_event': '' } )
+            state = vals.get('state_event')
+            vals[state+'_at'] = datetime.now().strftime('%Y-%m-%d')
+            vals.pop('state_event')
+        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        if state!= None :
+            vals.update( { 'state' : state } )
             self.validate(cr, uid, ids, vals, context)
 
         return res
@@ -930,7 +937,7 @@ class hotel_reservation(osv.osv):
             prod_dispo[str(prod_id)] -= qty_reserved
         return prod_dispo
 
-    #computed flag to know if booking can be validated or not 
+    #computed flag to know if booking can be validated or not
     def is_all_dispo(self, cr, uid, id, context=None):
         for line in self.browse(cr, uid, id, context).reservation_line:
             if line.reserve_product.block_booking and not line.dispo:
