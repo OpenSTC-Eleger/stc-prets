@@ -498,19 +498,17 @@
     	 <field name="code">HOTEL_USER</field>
 	 </record>
 
-	 <!-- <delete id="group_hotel_officer" model="res.groups"/>  -->
-
-	 <!--  	<record model="res.groups" id="group_hotel_officer">
-	     <field name="name">OpenResa / Réservations / Agent</field>
-    	 <field name="code">HOTEL_OFFI</field>
-    	 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
+	 <record model="res.groups" id="group_openresa_external_claimer">
+	      <field name="name">OpenResa /  Réservations / utilisateur externe</field>
+    	 <field name="code">HOTEL_USER_EXT</field>
 	 </record>
-	  -->
+	 
 
 	<record model="res.groups" id="openresa_api_group">
         <field name="name">API Reservation Group</field>
         <field name="code">APIRESA</field>
         <field name="category_id" ref="base.module_category_project_management"/>
+        <field name="implied_ids" eval="[(6,0,[ref('hotel.group_hotel_manager')])]"/>
 	</record>
 
 	<record model="res.partner" id="openresa_partner_part">

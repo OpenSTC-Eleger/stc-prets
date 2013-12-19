@@ -23,7 +23,7 @@
     "data": [
         'security/ir.model.access.csv',
         'views/openresa_data.xml',
-
+        'security/openresa_security.xml',
         "wizard/openresa_view_wizard.xml",
 
         "views/openresa_checkout_view.xml",
