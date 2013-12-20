@@ -671,10 +671,6 @@ class hotel_reservation(osv.osv):
                  'in_option': lambda *a :0,
                  'state': lambda *a: 'remplir',
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
-#                 #default values for PART bookings
-                 'partner_invoice_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
-                 'partner_shipping_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
-                 'partner_order_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
         }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
