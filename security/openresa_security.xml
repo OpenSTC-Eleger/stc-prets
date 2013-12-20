@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    OpenSTC Interventions - Openerp Module to manage Cityhall technical department
+    Copyright (C) 2013 Siclic www.siclic.fr
+
+    This file is part of OpenSTC Interventions.
+
+    OpenSTC Interventions is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    OpenSTC Interventions is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with OpenSTC Interventions.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<openerp>
+	<data noupdate="0">
+	    
+	    <record model="ir.rule" id="equipment_user_rule_access">
+	        <field name="name">Equipment User Rule Access </field>
+	        <field name="model_id" ref="openbase.model_openstc_equipment"/>
+	         <field name="domain_force">[('internal_booking','=',True),'|',('service_bookable_ids.id','child_of',[s.id for s in user.service_ids]),('service_bookable_ids','=',False)]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_user')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+	    
+	    <record model="ir.rule" id="equipment_external_claimer_rule_access">
+	        <field name="name">Equipment External User Rule Access </field>
+	        <field name="model_id" ref="openbase.model_openstc_equipment"/>
+	         <field name="domain_force">[('external_booking','=',True),'|',
+	             ('partner_type_bookable_ids.id','child_of',[c.partner_id.type_id.id for c in user.contact_id if c.partner_id and c.partner_id.type_id.id]),
+	             ('partner_type_bookable_ids','=',False)]</field>
+	        <field name="groups" eval="[(6,0,[ref('group_openresa_external_claimer')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
+		<record model="ir.rule" id="site_external_claimer_rule_access">
+	        <field name="name">Equipment External User Rule Access </field>
+	        <field name="model_id" ref="openbase.model_openstc_site"/>
+	         <field name="domain_force">[('external_booking','=',True),'|',
+	             ('partner_type_bookable_ids.id','child_of',[c.partner_id.type_id.id for c in user.contact_id if c.partner_id and c.partner_id.type_id.id]),
+	             ('partner_type_bookable_ids','=',False)]</field>
+	        <field name="groups" eval="[(6,0,[ref('group_openresa_external_claimer')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
+	    <record model="ir.rule" id="site_user_rule_user_access">
+	        <field name="name">Site User Rule Access </field>
+	        <field name="model_id" ref="openbase.model_openstc_site"/>
+	         <field name="domain_force">[('internal_booking','=',True),'|',('service_bookable_ids.id','child_of',[s.id for s in user.service_ids]),('service_bookable_ids','=',False)]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_user')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
+	   	<record model="ir.rule" id="equipment_director_rule_access">
+	        <field name="name">Equipment Director Rule Access </field>
+	        <field name="model_id" ref="openbase.model_openstc_equipment"/>
+	         <field name="domain_force">[(1,'=',1)]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_manager')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
+	   	<record model="ir.rule" id="site_director_rule_access">
+	        <field name="name">Site Director Rule Access </field>
+	        <field name="model_id" ref="openbase.model_openstc_site"/>
+	         <field name="domain_force">[(1,'=',1)]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_manager')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
+
+	   	<record model="ir.rule" id="res_partner_user_rule_access">
+	        <field name="name">Partner User Rule Access </field>
+	        <field name="model_id" ref="openbase.model_res_partner"/>
+	         <field name="domain_force">[('id','child_of',[contact.partner_id.id for contact in user.contact_id if contact.partner_id])]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_user')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
+
+	   	<record model="ir.rule" id="res_partner_director_rule_access">
+	        <field name="name">Partner Director Rule Access </field>
+	        <field name="model_id" ref="openbase.model_res_partner"/>
+	         <field name="domain_force">[(1,'=',1)]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_manager'),ref('group_openresa_external_claimer')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+	    
+	</data>
+</openerp>

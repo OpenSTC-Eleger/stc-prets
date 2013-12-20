@@ -882,7 +882,7 @@ class hotel_reservation(osv.osv):
 
     def ARemplir_reservation(self, cr, uid, ids):
         for resa in self.browse(cr, uid, ids):
-            if not resa.is_template and not resa.recurrence_id:
+            if resa.is_template or not resa.recurrence_id:
                 self.envoyer_mail(cr, uid, ids, {'state':'waiting'})
         self.write(cr, uid, ids, {'state':'remplir'})
         return True
@@ -1354,7 +1354,8 @@ class res_partner(osv.osv):
         values = [(item['prod_id'],length_fnct(cr, uid, item['prod_id'],length_resa, context=context) * item['qty'], partner_id)for item in prod_ids_and_qties]
         #get prices from pricelist_obj
         res = pricelist_obj.price_get_multi(cr, uid, [pricelist_id], values, context=context)
-        item_id = res.pop('item_id')
+        if 'item_id' in res:
+            item_id = res.pop('item_id')
         #format return to be callable by xmlrpc (because dict with integer on keys raises exceptions)
         ret = {}
         for key,val in res.items():
