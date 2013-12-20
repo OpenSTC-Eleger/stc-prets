@@ -21,8 +21,8 @@
 
     """,
     "data": [
-        'security/ir.model.access.csv',
         'views/openresa_data.xml',
+        'security/ir.model.access.csv',
         'security/openresa_security.xml',
         "wizard/openresa_view_wizard.xml",
 
