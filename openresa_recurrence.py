@@ -50,11 +50,17 @@ class openresa_reservation_recurrence(osv.osv):
     def _check_rights(self, cr, uid, record, criteria):
         return self.pool.get('hotel.reservation').search(cr, uid, criteria, offset=0, limit=None, order=None, context=None, count=True)
 
+    """
+    action rights for manager only
+    - only manager can do it, because imply stock evolutions and perharps treatment of some conflicts
+    """
+    def managerOnly(self, cr, uid, record, groups_code):
+        return 'HOTEL_MANA' in groups_code
 
     _actions = {
-        'cancel': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
-        'done': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','confirm')]) > 0,
-        'confirm': lambda self,cr,uid,record, groups_code: self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
+        'cancel': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir'),('deleted_at','=',False)]) > 0,
+        'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','confirm'),('deleted_at','=',False)]) > 0,
+        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir'),('deleted_at','=',False)]) > 0,
     }
 
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
@@ -371,7 +377,8 @@ class openresa_reservation_recurrence(osv.osv):
                 if resa.all_dispo and resa.state in ['remplir','draft']:
                     resa_count += 1
                 #update confirm, refused or closed note
-                resa.write({ state+'_note': vals[state+'_note'] })
+                date =   datetime.now().strftime('%Y-%m-%d')
+                resa.write({ state+'_note': vals[state+'_note'], state+'_at':  date })
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
             if resa_count > 0:
                 recurrence.write({'date_confirm':now, 'recurrence_state':'in_use'})
@@ -382,13 +389,13 @@ class openresa_reservation_recurrence(osv.osv):
         if isList == False :
             ids = [ids]
 
-        state = ''
+        state = None
         if vals.has_key('state_event') :
             state = vals.get('state_event')
             vals.pop('state_event')
         res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
-        if state != '' :
-            vals.update( { 'state' : state, 'state_event': '' } )
+        if state != None :
+            vals.update( { 'state' : state } )
             self.validate(cr, uid, ids, vals, context)
 
         return res
