@@ -607,8 +607,8 @@ class hotel_reservation(osv.osv):
                                   events)
         return events_dictionaries
 
-    def format_plannings_with(self, plannings, format):
-        if format == 'html':
+    def format_plannings_with(self, plannings, req_format):
+        if req_format == 'html':
             return html_builder.format_resource_plannings(plannings)
 
 
@@ -616,6 +616,9 @@ class hotel_reservation(osv.osv):
         'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
         'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
         'deleted_at': fields.date('Deleted date'),
+        'confirm_at': fields.date('Confirm date'),
+        'done_at': fields.date('Done date'),
+        'cancel_at': fields.date('Cancel date'),
         'state': fields.selection(_get_state_values, 'Etat', readonly=True),
         'state_num': fields.function(_get_state_num, string='Current state', type='integer', method=True,
                                      store={'hotel.reservation': (get_resa_modified, ['state'], 20)}),
@@ -671,10 +674,6 @@ class hotel_reservation(osv.osv):
                  'in_option': lambda *a :0,
                  'state': lambda *a: 'remplir',
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
-#                 #default values for PART bookings
-                 'partner_invoice_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
-                 'partner_shipping_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
-                 'partner_order_id':lambda self,cr,uid,ctx=None: self.get_data_from_xml(cr, uid, 'openresa','openresa_partner_contact_default_part'),
         }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -682,7 +681,7 @@ class hotel_reservation(osv.osv):
         #Keep simple resa and only template for reccurence
         deleted_domain = []
         for s in args :
-            if 'deleted_at' in s  :
+            if 'deleted_at' in s:
                 args.remove(s)
                 deleted_domain = [('deleted_at','=', False)]
         args.extend(deleted_domain)
@@ -707,16 +706,31 @@ class hotel_reservation(osv.osv):
         checkout = force_seconds_date(checkout)
         return True
 
-    def create(self, cr, uid, vals, context=None):
-        if not 'state' in vals or vals['state'] == 'remplir':
-            vals['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
-        if 'checkin' in vals:
-            if len(vals['checkin']) > 10:
-                vals['checkin'] = vals['checkin'][:-3] + ':00'
-        if 'checkout' in vals:
-            if len(vals['checkout']) >10:
-                vals['checkout'] = vals['checkout'][:-3] + ':00'
-        return super(hotel_reservation, self).create(cr, uid, vals, context)
+    def resolve_default_booking_contact(self, cr, uid, partner_id):
+        """
+        Return default booking contact for given partner
+        :param partner_id: int
+        :return:
+        """
+        partner_ids = self.pool.get('res.partner.address').search(cr, uid, [('partner_id.id', '=', partner_id)])
+        if not partner_ids:
+            raise osv.except_osv('Inconsistent Data', 'The partner is missing a contact')
+        else:
+            return partner_ids[0]
+
+    def create(self, cr, uid, values, context=None):
+        if not 'state' in values or values['state'] == 'remplir':
+            values['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
+        if 'checkin' in values:
+            if len(values['checkin']) > 10:
+                values['checkin'] = values['checkin'][:-3] + ':00'
+        if 'checkout' in values:
+            if len(values['checkout']) >10:
+                values['checkout'] = values['checkout'][:-3] + ':00'
+        if not (type(values['partner_order_id']) is int):
+            values['partner_order_id'] = self.resolve_default_booking_contact_id(cr, uid, values['openstc_partner_id'])
+
+        return super(hotel_reservation, self).create(cr, uid, values, context)
 
     def validate(self, cr, uid, ids, vals, context=None):
         if not isinstance(ids, list):
@@ -743,10 +757,14 @@ class hotel_reservation(osv.osv):
         if 'checkout' in vals:
             if len(vals['checkout']) >10:
                 vals['checkout'] = vals['checkout'][:-3] + ':00'
-
-        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        state = None
         if vals.has_key('state_event') :
-            vals.update( { 'state' : vals.get('state_event'), 'state_event': '' } )
+            state = vals.get('state_event')
+            vals[state+'_at'] = datetime.now().strftime('%Y-%m-%d')
+            vals.pop('state_event')
+        res = super(hotel_reservation, self).write(cr, uid, ids, vals, context)
+        if state!= None :
+            vals.update( { 'state' : state } )
             self.validate(cr, uid, ids, vals, context)
 
         return res
@@ -930,7 +948,7 @@ class hotel_reservation(osv.osv):
             prod_dispo[str(prod_id)] -= qty_reserved
         return prod_dispo
 
-    #computed flag to know if booking can be validated or not 
+    #computed flag to know if booking can be validated or not
     def is_all_dispo(self, cr, uid, id, context=None):
         for line in self.browse(cr, uid, id, context).reservation_line:
             if line.reserve_product.block_booking and not line.dispo:
