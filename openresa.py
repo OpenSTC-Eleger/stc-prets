@@ -706,17 +706,34 @@ class hotel_reservation(osv.osv):
         checkout = force_seconds_date(checkout)
         return True
 
-    def resolve_default_booking_contact(self, cr, uid, partner_id):
+    def resolve_default_partner_values(self, cr, uid, vals):
         """
-        Return default booking contact for given partner
-        :param partner_id: int
-        :return:
+        @note: Return default values for partner, partner_adresses and pricelist
+        @param vals: dict of data to store in db (from write or create methods)
+        @return: new dict 'vals' overriden with default values (if needed)
         """
-        partner_ids = self.pool.get('res.partner.address').search(cr, uid, [('partner_id.id', '=', partner_id)])
-        if not partner_ids:
-            raise osv.except_osv('Inconsistent Data', 'The partner is missing a contact')
-        else:
-            return partner_ids[0]
+        partner_id = vals.get('partner_id', False)
+        #raise an exception if data are not correct
+        if not partner_id and not vals.get('is_citizen',False):
+            raise osv.except_osv('Inconsistent Data', 'The booking is missing a partner')
+        #for citizen claimers, retrieve default partner created in xml
+        elif not partner_id:
+            partner_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openresa','openresa_partner_part')[1]
+            if not partner_id:
+                raise osv.except_osv('Inconsistent Data', 'The default value for citizen Claimer is missing, please restart your server')
+            else:
+                vals.update({'partner_id':partner_id})
+        #then, if contact is missing, retrieve first address linked with partner    
+        partner = self.pool.get('res.partner').read(cr, uid, partner_id, ['address', 'property_product_pricelist'])
+        addresses = partner['address']
+        if not vals.get('partner_order_id', False) and addresses:
+            vals.update({'partner_order_id':addresses[0],
+                         'partner_shipping_id':addresses[0],
+                         'partner_invoice_id':addresses[0]})
+        elif not addresses:
+            raise osv.except_osv('Inconsistent Data', 'The default value for citizen Claimer-Contact is missing, please restart your server')
+        vals.update({'pricelist_id':partner.get('property_product_pricelist',[False,'none'])[0]})
+        return vals
 
     def create(self, cr, uid, values, context=None):
         if not 'state' in values or values['state'] == 'remplir':
@@ -727,8 +744,7 @@ class hotel_reservation(osv.osv):
         if 'checkout' in values:
             if len(values['checkout']) >10:
                 values['checkout'] = values['checkout'][:-3] + ':00'
-        if not (type(values['partner_order_id']) is int):
-            values['partner_order_id'] = self.resolve_default_booking_contact_id(cr, uid, values['openstc_partner_id'])
+        values = self.resolve_default_partner_values(cr, uid, values)
 
         return super(hotel_reservation, self).create(cr, uid, values, context)
 
