@@ -123,9 +123,6 @@ class hotel_reservation(osv.osv):
                         etape_validation = True
         return etape_validation
         #return True
-    #TODO: check if useless ?
-    def not_need_confirm(self, cr, uid, ids):
-        return not self.need_confirm(cr, uid, ids)
 
     def ARemplir_reservation(self, cr, uid, ids):
         for resa in self.browse(cr, uid, ids):

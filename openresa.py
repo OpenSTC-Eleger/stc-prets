@@ -64,16 +64,6 @@ class hotel_reservation_line(osv.osv):
         for line in self.browse(cr, uid, ids, context):
             ret.append((line.id,'%s %s' % (line.qte_reserves, line.reserve_product)))
         return ret
-    #TODO: check if useless ?
-    #Ligne valide si (infos XOR no_infos)
-    def _calc_line_is_valid(self, cr, uid, ids, name, args, context=None):
-        ret = {}
-        for line in self.browse(cr, uid, ids):
-            ret.update({line.id: (line.infos and not line.no_infos) or (not line.infos and line.no_infos)})
-        return ret
-    #TODO: check if useless ?
-    def _get_line_to_valide(self, cr, uid, ids, context=None):
-        return ids
 
     def _get_state_line(self, cr, uid, context=None):
         res = self.pool.get("hotel.reservation").fields_get(cr, uid, 'state', context=context)
@@ -91,10 +81,11 @@ class hotel_reservation_line(osv.osv):
                 if line.line_id and not line.line_id.id in resa_ids:
                     resa_ids.append(line.line_id.id)
             #for each resa, compute the qty_available
-            for resa in self.pool.get("hotel.reservation").browse(cr, uid, resa_ids):
+            resa_obj = self.pool.get("hotel.reservation")
+            for resa in resa_obj.browse(cr, uid, resa_ids):
                 prod_ids = [x.reserve_product.id for x in resa.reservation_line]
                 #get available prods_qty : {prod_id:qty}
-                available = self.pool.get("hotel.reservation").get_prods_available_and_qty( cr, uid, resa.checkin, resa.checkout, prod_ids=prod_ids, where_optionnel='and hr.id <> ' + str(resa.id), context=context)
+                available = resa_obj.get_prods_available_and_qty( cr, uid, resa.checkin, resa.checkout, prod_ids=prod_ids, where_optionnel='and hr.id <> ' + str(resa.id), context=context)
                 #link prod qty available to resa_line associated
                 for line in resa.reservation_line:
                     ret.update({line.id:{'qte_dispo':available[str(line.reserve_product.id)]}})
@@ -157,33 +148,6 @@ class hotel_reservation_line(osv.osv):
             if line.line_id and line.line_id.state == 'remplir':
                 ret[line.id] = self.get_global_conflicting_lines(cr, uid, [{'prod_id':line.reserve_product.id,'qty':line.qte_reserves}], line.line_id.checkin, line.line_id.checkout, context)
         return ret
-
-    ''' get conflicting lines for each reservation 's line'''
-    def _get_conflicting_lines_old(self, cr, uid, ids, name, args, context=None):
-        conflicting_lines = {}
-        #for each line
-        for line in self.browse(cr, uid, ids, context=context):
-            conflicting_lines[line.id] = []
-            temp_lines = []
-            sum_qty = 0
-            if line.line_id.id != False and line.reserve_product.id != False and line.checkin!=False and line.checkout!=False:
-                #get reservation
-                resa_obj = self.pool.get("hotel.reservation").browse(cr, uid, line.line_id.id)
-                if rsa_obj.state == "remplir":
-                    #get product for line reservation
-                    prod_obj = self.pool.get("product.product").browse(cr, uid, line.reserve_product.id)
-                    #Get conflicting lines on line 's product
-                    results = self.get_lines_by_prod(cr, line.reserve_product.id, line.checkin, line.checkout, where_optionnel='and hr.id <> ' + str(line.line_id.id)).fetchall()
-                    if len(results)> 0 :
-                        #sum quantity of product request on all conflicting lines
-                        for line_id, qty_reserved  in results :
-                            sum_qty += qty_reserved
-                            temp_lines.append(line_id)
-                        #If there is not enough quantiy of product set conflicting lines for this line
-                        if (prod_obj.virtual_available - sum_qty) < line.qte_reserves :
-                                conflicting_lines[line.id] = temp_lines
-
-        return conflicting_lines
 
     _columns = {
         'categ_id': fields.many2one('product.category','Type d\'article'),
@@ -329,11 +293,6 @@ class hotel_reservation(osv.osv):
         for record in self.browse(cr, uid, ids, context=context):
             #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
             ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
-        return ret
-
-    def get_data_from_xml(self, cr, uid, module, model, context=None):
-        ret = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, model)
-        ret = ret[1] if ret else False
         return ret
 
     def generate_html_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):
@@ -488,8 +447,6 @@ class hotel_reservation(osv.osv):
         args.extend(deleted_domain)
         return super(hotel_reservation, self).search(cr, uid, args, offset, limit, order, context, count)
 
-
-
     def _check_dates(self, cr, uid, ids, context=None):
         for resa in self.browse(cr, uid, ids, context):
             if resa.checkin >= resa.checkout:
@@ -498,14 +455,16 @@ class hotel_reservation(osv.osv):
 
     _constraints = [(_check_dates, _("Your checkin is greater than your checkout, please modify them"), ['checkin','checkout'])]
 
-    def format_vals(self, cr, uid, checkin, checkout, context=None):
+    def format_vals(self, cr, uid, values, context=None):
         def force_seconds_date(vals):
             if vals and len(vals) > 16:
                 vals = vals[:16] + ':00'
-        return vals
-        checkin = force_seconds_date(checkin)
-        checkout = force_seconds_date(checkout)
-        return True
+            return vals
+        if 'checkin' in values:
+            values['checkin'] = force_seconds_date(values.get('checkin'))
+        if 'checkout' in values:
+            values['checkout'] = force_seconds_date(values.get('checkout'))
+        return values
 
     def resolve_default_booking_contact(self, cr, uid, partner_id):
         """
@@ -522,12 +481,7 @@ class hotel_reservation(osv.osv):
     def create(self, cr, uid, values, context=None):
         if not 'state' in values or values['state'] == 'remplir':
             values['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
-        if 'checkin' in values:
-            if len(values['checkin']) > 10:
-                values['checkin'] = values['checkin'][:-3] + ':00'
-        if 'checkout' in values:
-            if len(values['checkout']) >10:
-                values['checkout'] = values['checkout'][:-3] + ':00'
+        self.format_vals(cr, uid, values, context=context)
         if not (type(values['partner_order_id']) is int):
             values['partner_order_id'] = self.resolve_default_booking_contact_id(cr, uid, values['openstc_partner_id'])
 
@@ -547,17 +501,11 @@ class hotel_reservation(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
-        isList = isinstance(ids, types.ListType)
-        if isList == False :
+        if not isinstance(ids,list):
             ids = [ids]
         if context == None:
             context = {}
-        if 'checkin' in vals:
-            if len(vals['checkin']) > 10:
-                vals['checkin'] = vals['checkin'][:-3] + ':00'
-        if 'checkout' in vals:
-            if len(vals['checkout']) >10:
-                vals['checkout'] = vals['checkout'][:-3] + ':00'
+        self.format_vals(cr, uid, vals, context=context)
         state = None
         if vals.has_key('state_event') :
             state = vals.get('state_event')
@@ -616,12 +564,6 @@ class hotel_reservation(osv.osv):
             prod_dispo[str(prod_id)] -= qty_reserved
         return prod_dispo
 
-    def is_all_valid(self, cr, uid, id, context=None):
-        for line in self.browse(cr, uid, id, context).reservation_line:
-            if not line.valide and line.reserve_product.need_infos_supp:
-                return False
-        return True
-
     """
     @param prod_dict: [{prod_id:id,qty_desired:qty}] a dict mapping prod and corresponding qty desired to check
     @param checkin: str containg begining date of the range of the check
@@ -635,7 +577,6 @@ class hotel_reservation(osv.osv):
         resa_ids = self.search(cr, uid, [('reservation_line.reserve_product.id','in',prod_ids),'|',
                                              '&',('checkin','>=',checkin),('checkin','<=',checkout),
                                              '&',('checkout','>=',checkin),('checkout','<=',checkout)],order='checkin',context=context)
-
         #i store all checkin - checkout in dates_limit, i order this list,
         #and then, i'll have all dates delimiting (checkin-checkout) checks of qty
         dates_limit = []
@@ -676,7 +617,7 @@ class openresa_reservation_choice(osv.osv):
     """
     def _get_choice_dispo(self, cr, uid, ids, name, args, context=None):
         #by default, returns available
-
+        ret = {}.fromkeys(ids, 'unavailable')
         return ret
 
     _columns = {

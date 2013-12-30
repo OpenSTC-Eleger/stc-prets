@@ -65,7 +65,7 @@
 			<field name="act_from" ref="act_remplir" />
 			<field name="act_to" ref="hotel_reservation.act_confirm" />
 			<field name="signal">confirm</field>
-			<field name="condition">not_need_confirm()</field>
+			<field name="condition">not need_confirm()</field>
 		</record>
 
 		<record model="workflow.transition" id="trans_openstc_pret_draft_waiting_confirm">
