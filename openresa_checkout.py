@@ -173,3 +173,32 @@ class openstc_pret_checkout_line_wizard(osv.osv):
     
 openstc_pret_checkout_line_wizard()
 
+class hotel_reservation(osv.osv):
+    _inherit = "hotel.reservation"
+    def open_checkout(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        ret = {
+            'type':'ir.actions.act_window',
+            'res_model':'openstc.pret.checkout',
+            'view_type':'form',
+            'view_mode':'form',
+            'target':'new',
+            }
+        if not context:
+            context = {}
+        context.update({'reservation_id':ids})
+        #if a checkout already exists, we open to the existing id
+        resa = self.browse(cr, uid, ids, context)
+        if resa.resa_checkout_id:
+            ret.update({'res_id':resa.resa_checkout_id.id})
+        else:
+            #else, we create a new checkout and display it in a new window(we force the creation to be sure that the checkout is saved in db)
+            #we get default_values defined in default_get
+            values = self.pool.get("openstc.pret.checkout").default_get(cr, uid, [], context=context)
+            res_id = self.pool.get("openstc.pret.checkout").create(cr, uid, values)
+            ret.update({'res_id':res_id})
+        #and display it
+        return ret
+    
+hotel_reservation()

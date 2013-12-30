@@ -14,6 +14,7 @@
     groups_id: 
       - openbase.openstc_agent
       - hotel.group_hotel_user
+      - openresa.group_openresa_external_claimer
 -
   !record {model: openstc.service, id: openstc_prets_tests_service_voirie, view: false}:
     name: Voirie
