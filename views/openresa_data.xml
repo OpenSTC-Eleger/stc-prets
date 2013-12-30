@@ -521,7 +521,7 @@
 	</record>
 
 	<record model="res.partner" id="openresa_partner_part">
-	    <field name="name">Particuliers</field>
+	    <field name="name">Particuliers Commune</field>
 	    <field name="type_id" ref="openbase.openstc_prets_partner_type_part"/>
 		<field name="customer" eval="True"/>
 		<field name="supplier" eval="False"/>

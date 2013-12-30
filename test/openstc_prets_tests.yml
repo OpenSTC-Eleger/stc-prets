@@ -105,6 +105,24 @@
 -
   Start of the tests
 -
+  First, I test creating resa for citizen (no partner supplied), pricelist_id must be set as well as partner and partner_address
+-
+  !record {model: hotel.reservation, id: openstc_prets_tests_resa_remove_1, forcecreate: true, view: False}:
+    name: Reservation 1
+    checkin: "2013-06-01 08:00:00"
+    checkout: "2013-06-02 10:00:00"
+    is_citizen: True
+    partner_mail: bruno.plancer@siclic.fr
+-
+  Then, I test creating resa for non-citizen claimer without address
+-
+  !record {model: hotel.reservation, id: openstc_prets_tests_resa_remove_2, forcecreate: true, view: False}:
+    name: Reservation 1
+    checkin: "2013-06-01 08:00:00"
+    checkout: "2013-06-02 10:00:00"
+    partner_id: openstc_prets_tests_partner1
+    partner_mail: bruno.plancer@siclic.fr
+-
   creating resa used for this test session
 -
 
