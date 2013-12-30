@@ -20,7 +20,7 @@
 -->
 <openerp>
 	<data noupdate="0">
-	    
+
 	    <record model="ir.rule" id="equipment_user_rule_access">
 	        <field name="name">Equipment User Rule Access </field>
 	        <field name="model_id" ref="openbase.model_openstc_equipment"/>
@@ -31,7 +31,7 @@
 	        <field eval="1" name="perm_read"/>
 	        <field eval="1" name="perm_create"/>
 	    </record>
-	    
+
 	    <record model="ir.rule" id="equipment_external_claimer_rule_access">
 	        <field name="name">Equipment External User Rule Access </field>
 	        <field name="model_id" ref="openbase.model_openstc_equipment"/>
@@ -114,6 +114,33 @@
 	        <field eval="1" name="perm_read"/>
 	        <field eval="1" name="perm_create"/>
 	    </record>
-	    
+
+
+
+
+
+	   	<record model="ir.rule" id="booking_user_rule_access">
+	        <field name="name">Booking User Rule Access </field>
+	        <field name="model_id" ref="model_hotel_reservation"/>
+	         <field name="domain_force">[('partner_id.address.id','in',[contact.id for contact in user.contact_id]), ('deleted_at', '=', False)]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_user')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
+
+	   	<record model="ir.rule" id="booking_director_rule_access">
+	        <field name="name">Booking Director Rule Access </field>
+	        <field name="model_id" ref="model_hotel_reservation"/>
+	         <field name="domain_force">[('deleted_at', '=', False)]</field>
+	        <field name="groups" eval="[(6,0,[ref('hotel.group_hotel_manager')])]" />
+	        <field eval="1" name="perm_unlink"/>
+	        <field eval="1" name="perm_write"/>
+	        <field eval="1" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+
 	</data>
 </openerp>
