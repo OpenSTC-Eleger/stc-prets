@@ -41,9 +41,9 @@ from datetime import datetime
 from siclic_time_extensions import weeks_between, days_between
 import html_builder
 
-# i create model in this file to avoid inter-dependance between hotel.reservation and this one
-# actually, they have many2one on each other
-#this object is fully implemented in openresa_recurrence.py file
+""""i create model in this file to avoid inter-dependance between hotel.reservation and this one
+actually, they have many2one on each other
+this object is fully implemented in openresa_recurrence.py file"""
 class openresa_reservation_recurrence(osv.osv):
     _name = 'openresa.reservation.recurrence'
     _inherits = {'hotel.reservation':'template_id'}
@@ -58,17 +58,26 @@ class hotel_reservation_line(osv.osv):
     _inherit = "hotel_reservation.line"
 
     _AVAILABLE_ACTION_VALUES = [('nothing','Pas d\'intervention'),('inter','Intervention à générer'),('inter_ok','Intervention générée')]
-
+    
+    """@return: string as "qte_reserves bookable", for example : "1 Salle Georges Brassens" """
     def name_get(self, cr, uid, ids, context=None):
         ret = []
         for line in self.browse(cr, uid, ids, context):
             ret.append((line.id,'%s %s' % (line.qte_reserves, line.reserve_product)))
         return ret
-
+    
+    """@return: available-values of 'state' field """
     def _get_state_line(self, cr, uid, context=None):
         res = self.pool.get("hotel.reservation").fields_get(cr, uid, 'state', context=context)
         return res['state']['selection']
 
+    """
+    @note: method for OpenERP functionnal field
+    @param ids: ids of line to compute values
+    @param name: values to compute ('qte_dispo' and/or 'dispo')
+    @return: qte_dispo (float): qty of bookable available for this parent booking
+             dispo (bool): True if qte_reserves < qte_dispo, else False
+    """
     def _calc_qte_dispo(self, cr, uid, ids, name, args, context=None):
         prod_id_to_line = {}
         if not context:
@@ -97,7 +106,11 @@ class hotel_reservation_line(osv.osv):
         return ret
 
 
-
+    """
+    @note: method for OpenERP functionnal field
+    @param ids: ids of line to compute values
+    @return: human understanding name to be displayed on OpenERP calendar as string : "checkin - checkout qty x bookable"
+    """
     def _get_complete_name(self, cr, uid, ids, name, args, context=None):
         ret = {}
         weekday_to_str = {0:'Lundi',1:'Mardi',2:'Mercredi',3:'Jeudi',4:'Vendredi',5:'Samedi',6:'Dimanche'}
@@ -139,7 +152,11 @@ class hotel_reservation_line(osv.osv):
                                    context=context))
         return ret
 
-
+    """
+    @note: method for OpenERP functionnal field
+    @param ids: ids of line to compute values
+    @return: list of ids of bookingLines in conflict with current line
+    """
     def _get_conflicting_lines(self, cr, uid, ids, name, args, context=None):
         #by default, returns empty list
         ret = {}.fromkeys(ids,[])
@@ -174,15 +191,18 @@ class hotel_reservation_line(osv.osv):
         }
 
     #TODO: check if useless ?
+    """ write flag on bookingLine used later in wkf to generate intervention"""
     def plan_inter(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'action':'inter'})
         return {'type':'ir.actions.act_window.close'}
+    
     #@TOCHECK: useless ?
+    """ write flag on bookingLine used later in wkf to not generate intervention (must always has a value)"""
     def unplan_inter(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'action':'nothing'})
         return {'type':'ir.actions.act_window.close'}
 
-    '''' Get conflicting lines by product '''
+    ''''@return: conflicting lines by product '''
     def get_lines_by_prod(self, cr, prod, checkin, checkout, states=['remplir'], where_optionnel=""):
         cr.execute("select hrl.id, hrl.qte_reserves \
                     from hotel_reservation_line as hrl \
@@ -193,7 +213,10 @@ class hotel_reservation_line(osv.osv):
                     " + where_optionnel , (prod, tuple(states), checkin, checkout))
         return cr
 
-    #TODO : check lines (for non manager user only) : if product has max_qty, lines must not reserve more than max_qty of this product
+    """ 
+    @note: used in OpenERP constraints to avoid or not creation of record according to the boolean returned by this method
+    @return: check lines (for non manager user only) : if product has max_qty, lines must not reserve more than max_qty of this product
+    """
     def _check_max_qties(self, cr, uid, ids, context=None):
         is_manager = self.pool.get("res.users").search(cr, uid, [('id','=',uid),('groups_id.code','=','HOTEL_MANA')])
         if not is_manager:
@@ -212,23 +235,35 @@ class hotel_reservation(osv.osv):
     _order = "state_num, create_date desc"
     _inherit = "hotel.reservation"
     _description = "Réservations"
-
+    
+    """
+    @param str: string containing accents to be removed
+    @return: return a new string without any accent
+    @note: use unicodedata to remove accents, it actually only keep character in category 'L' according to unicode RFC
+    """
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
-
+    
+    """@return: default value for 'name' field of this object, uses ir.sequence defined in xml (eventually updated by customer) """
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'resa.number',context)
         return seq
-
+    
+    """@return: used in OpenERP functional fields on the 'store' parameter """
     def get_resa_modified(self, cr, uid, ids, context=None):
         return ids
-
+    
+    """@return: available values for 'state' field, allows other module to add new available values by overriding this method """
     def return_state_values(self, cr, uid, context=None):
         return [('draft', 'Saisie des infos personnelles'),('confirm','Réservation confirmée'),('cancel','Annulée'),('in_use','Réservation planifiée'),('done','Réservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
-
+    
+    """@return: used in OpenERP to define 'state' field """
     def _get_state_values(self, cr, uid, context=None):
         return self.return_state_values(cr, uid, context)
-
+    
+    """
+    @note: method for OpenERP functionnal field
+    @return: integer (according to state) to order lists """
     def _get_state_num(self, cr, uid, ids,  name, args, context=None):
         res={}
         for obj in self.browse(cr, uid, ids, context):
@@ -236,17 +271,17 @@ class hotel_reservation(osv.osv):
         return res
 
     """
-    action rights for manager only
-    - only manager can do it, because imply stock evolutions and perharps treatment of some conflicts
+    @return: action rights for manager only
+    @note: only manager can do it, because imply stock evolutions and perharps treatment of some conflicts
     """
     def managerOnly(self, cr, uid, record, groups_code):
         return 'HOTEL_MANA' in groups_code
 
     """
-    action rights for manager or owner of a record
-    - claimer can do these actions on its own records,
-    - officer can make these actions for claimer which does not have account,
-    - else, manager can also do it
+    @return: action rights for manager or owner of a record
+    @note:  - claimer can do these actions on its own records,
+            - officer can make these actions for claimer which does not have account,
+            - else, manager can also do it
     """
     def ownerOrOfficer(self, cr, uid, record, groups_code):
         #if not rights, compute rights for offi/manager
@@ -266,6 +301,9 @@ class hotel_reservation(osv.osv):
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
     }
 
+    """
+    @note: method for OpenERP functionnal field
+    @return: bookable infos of this booking (usable for tooltip for example) """
     def _get_fields_resources(self, cr, uid, ids, name, args, context=None):
         res = {}
 
@@ -283,7 +321,10 @@ class hotel_reservation(osv.osv):
                 val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod,  'quantity' : item.qte_reserves, 'tooltip' : tooltip})
             res[obj.id].update({'resources':val})
         return res
-
+    
+    """
+    @note: method for OpenERP functionnal field
+    @return: actions authorized for current user (uid) by evaluating '_actions' attribute """
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
         #default value: empty string for each id
         ret = {}.fromkeys(ids,'')
@@ -294,7 +335,7 @@ class hotel_reservation(osv.osv):
             #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
             ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
         return ret
-
+    
     def generate_html_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):
         for planning in self.generate_plannings_for(cr, uid, bookable_ids, start_date, end_date):
             html_planning = self.format_plannings_with(planning, 'html')
@@ -302,12 +343,12 @@ class hotel_reservation(osv.osv):
 
     def generate_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):
         """
-        This function generate weekly html plannings of the given resources.
+        @note: This function generate weekly html plannings of the given resources.
 
-        :param bookable_ids: The bookable resources ids included in plannings
-        :param start_date: The start date of the planning
-        :param end_date: Then end date of the planning
-        :return: List[Dict['bookable_name':String, weeks: List[hotel_reservation]]]
+        @param bookable_ids: The bookable resources ids included in plannings
+        @param start_date: The start date of the planning
+        @param end_date: Then end date of the planning
+        @return: List[Dict['bookable_name':String, weeks: List[hotel_reservation]]]
         """
         weeks = weeks_between(datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S"),
                               datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S"))
@@ -435,7 +476,8 @@ class hotel_reservation(osv.osv):
                  'state': lambda *a: 'remplir',
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
         }
-
+    
+    """@return: override of OpenERP 'search' ORM method to force retrieving records with deleted_at is False when 'deleted_at' is on the domain """
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if order in (' ',''): order=None
         #Keep simple resa and only template for reccurence
@@ -447,6 +489,10 @@ class hotel_reservation(osv.osv):
         args.extend(deleted_domain)
         return super(hotel_reservation, self).search(cr, uid, args, offset, limit, order, context, count)
 
+    """ 
+    @note: used in OpenERP constraints to avoid or not creation of record according to the boolean returned by this method
+    @return: True if checkin < checkout, else False
+    """
     def _check_dates(self, cr, uid, ids, context=None):
         for resa in self.browse(cr, uid, ids, context):
             if resa.checkin >= resa.checkout:
@@ -454,7 +500,11 @@ class hotel_reservation(osv.osv):
         return True
 
     _constraints = [(_check_dates, _("Your checkin is greater than your checkout, please modify them"), ['checkin','checkout'])]
-
+    
+    """
+    @param values: values to be stored in db
+    @return: 'values' param updated with custom behaviour (datetimes with seconds = 00)
+    """
     def format_vals(self, cr, uid, values, context=None):
         def force_seconds_date(vals):
             if vals and len(vals) > 16:
@@ -495,6 +545,8 @@ class hotel_reservation(osv.osv):
         vals.update({'pricelist_id':partner.get('property_product_pricelist',[False,'none'])[0]})
         return vals
 
+    """ override of OpenERP 'create' ORM method to format data to store 
+        and to put default values for partner,partner_address and pricelist (when using other client than openerp-web) """
     def create(self, cr, uid, values, context=None):
         if not 'state' in values or values['state'] == 'remplir':
             values['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
@@ -502,7 +554,12 @@ class hotel_reservation(osv.osv):
         values = self.resolve_default_partner_values(cr, uid, values)
 
         return super(hotel_reservation, self).create(cr, uid, values, context)
-
+    
+    """
+    @param ids: list of ids of records to fire wkf events
+    @param vals: dict used in OpenERP create/write ORM methods, must contains 'state' key
+    @note: used for custom UI (other than openerp-web) to fire the wkf events stored in 'state' key
+    """
     def validate(self, cr, uid, ids, vals, context=None):
         if not isinstance(ids, list):
             ids = [ids]
@@ -515,7 +572,9 @@ class hotel_reservation(osv.osv):
             if resa.recurrence_id and resa_count > 0 :
                 resa.recurrence_id.write({'recurrence_state':'in_use'})
         return True
-
+    
+    """ override of OpenERP 'write' ORM method to format data to store in db and to catch 'state_event', 
+        use it to evolve wkf and remove it from data to write in db   """
     def write(self, cr, uid, ids, vals, context=None):
         if not isinstance(ids,list):
             ids = [ids]
@@ -533,7 +592,8 @@ class hotel_reservation(osv.osv):
             self.validate(cr, uid, ids, vals, context)
 
         return res
-
+    
+    """ override of OpenERP 'unlink' ORM method to make 'on_cascade' behaviour on one2many 'reservation_line' """
     def unlink(self, cr, uid, ids, context=None):
         if not isinstance(ids, list):
             ids = [ids]
@@ -542,16 +602,25 @@ class hotel_reservation(osv.osv):
             line_ids.extend([x.id for x in resa.reservation_line])
         self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
         return super(hotel_reservation, self).unlink(cr, uid, ids, context)
-
+    
+    """ OpenERP webclient onchange to bubble-up 'openstc_partner_id' to 'partner_id' """
     def onchange_openstc_partner_id(self, cr, uid, ids, openstc_partner_id=False):
         return {'value':{'partner_id':openstc_partner_id}}
-
+    
+    """ OpenERP webclient onchange to retrieve email from partner_address and to copy 'partner_shipping_id' to 'invoice' and 'order' many2one"""
     def onchange_partner_shipping_id(self, cr, uid, ids, partner_shipping_id=False):
         email = False
         if partner_shipping_id:
             email = self.pool.get("res.partner.address").browse(cr, uid, partner_shipping_id).email
         return {'value':{'partner_mail':email,'partner_invoice_id':partner_shipping_id,'partner_order_id':partner_shipping_id}}
-
+    
+    """
+    @param prod_list: list of id of bookable to compute availability
+    @param checkin: date_start (datetime) of the scope
+    @param checkout: date_end (datetime) of the scope
+    @param states: list of string containing states to exclude from the search
+    @param where_optionnel: additionnal SQL clauses to complete the SQL request
+    @return: db cursor with SQL request loaded (used to retrieve qty of bookable booked according to checkin-checkout"""
     def get_nb_prod_reserved(self, cr, prod_list, checkin, checkout, states=['cancel','done','remplir'], where_optionnel=""):
         cr.execute("select reserve_product, sum(qte_reserves) as qte_reservee \
                     from hotel_reservation as hr, \
@@ -564,7 +633,14 @@ class hotel_reservation(osv.osv):
                     group by reserve_product; ", (tuple(prod_list), tuple(states), checkin, checkout))
         return cr
 
-    #main method to control availability of products : returns availability of each prod : {prod_id:qty} matching dates
+    """"
+    @param checkin: date_start (datetime) of the scope
+    @param checkout: date_end (datetime) of the scope
+    @param prod_ids: list of id of bookable to compute availability
+    @param where_optionnel: additionnal SQL clauses to complete the SQL request
+    @param states: list of string containing states to exclude from the search
+    @note: main method to control availability of products
+    @return: availability of each prod : {prod_id:qty} matching dates"""
     def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', states=['cancel','done','remplir'], context=None):
         #if no prod_ids put, we check all prods
         if not prod_ids:
@@ -648,7 +724,8 @@ class openresa_reservation_choice(osv.osv):
     _defaults = {
             'state':lambda *a: 'waiting',
         }
-    #override create method to force seconds of dates to '00'
+    
+    """override create method to force seconds of dates to '00'"""
     def create(self, cr, uid, vals, context=None):
         if 'checkin' in vals:
             if len(vals['checkin']) > 16:
@@ -658,7 +735,7 @@ class openresa_reservation_choice(osv.osv):
                 vals['checkout'] = vals['checkout'][0:16] + ':00'
         return super(openstc_reservation_choice,self).create(cr, uid, vals, context=context)
 
-    #override write method to force seconds of dates to '00'
+    """override write method to force seconds of dates to '00'"""
     def write(self, cr, uid, ids, vals, context=None):
         if 'checkin' in vals:
             if len(vals['checkin']) > 16:
