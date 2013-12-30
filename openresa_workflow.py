@@ -27,6 +27,8 @@ import netsvc
 class hotel_reservation(osv.osv):
     _inherit = "hotel.reservation"
     
+    """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 
+        and add it to email if 'send_invoicing' field is True """
     def confirmed_reservation(self,cr,uid,ids):
         for resa in self.browse(cr, uid, ids):
             if self.is_all_dispo(cr, uid, ids[0]):
@@ -60,7 +62,8 @@ class hotel_reservation(osv.osv):
                 raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
                 return False
         return True
-
+    
+    """@note: OpenERP Workflow method, send mail notification"""
     def waiting_confirm(self, cr, uid, ids):
         if self.is_all_dispo(cr, uid, ids[0]):
             self.envoyer_mail(cr, uid, ids, {'state':'waiting'})
@@ -68,17 +71,20 @@ class hotel_reservation(osv.osv):
             return True
         raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
         return False
-
+    
+    """@note: OpenERP Workflow method, send mail notification"""
     def cancelled_reservation(self, cr, uid, ids):
         self.envoyer_mail(cr, uid, ids, {'state':'error'})
         self.write(cr, uid, ids, {'state':'cancel'})
         return True
 
-
+    """@note: OpenERP Workflow method, send mail notification"""
     def redrafted_reservation(self, cr, uid, ids):
         self.write(cr, uid, ids, {'state':'remplir'})
         return True
-
+    
+    """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 
+    and add it to email if 'send_invoicing' field is True """
     def done_reservation(self, cr, uid, ids):
         if isinstance(ids, list):
             ids = ids[0]
@@ -103,7 +109,9 @@ class hotel_reservation(osv.osv):
             self.envoyer_mail(cr, uid, [ids], vals={'state':'done'}, attach_ids=attaches)
         self.write(cr, uid, ids, {'state':'done'})
         return True
-
+    
+    """ OpenERP workflow transition method to know if resa must be validated by manager or not.
+    booking need validation if user is not manager and if lines.bookable.seuil_confirm < lines.qte_reserves """
     def need_confirm(self, cr, uid, ids):
         reservations = self.browse(cr, uid, ids)
         etape_validation = False
@@ -123,7 +131,8 @@ class hotel_reservation(osv.osv):
                         etape_validation = True
         return etape_validation
         #return True
-
+        
+    """@note: OpenERP Workflow method, send mail notification"""
     def ARemplir_reservation(self, cr, uid, ids):
         for resa in self.browse(cr, uid, ids):
             if resa.is_template or not resa.recurrence_id:
@@ -131,7 +140,8 @@ class hotel_reservation(osv.osv):
         self.write(cr, uid, ids, {'state':'remplir'})
         return True
     
-        #computed flag to know if booking can be validated or not
+    """ OpenERP workflow transition method to know if resa can be validated or not.
+    booking can be validated if lines.dispo is True or if lines.block_booking is False """
     def is_all_dispo(self, cr, uid, id, context=None):
         for line in self.browse(cr, uid, id, context).reservation_line:
             if line.reserve_product.block_booking and not line.dispo:
