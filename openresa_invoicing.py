@@ -34,7 +34,10 @@ class sale_order(osv.osv):
     _inherit = "sale.order"
     _name = "sale.order"
 
-    #TODO: create custom jasper report instead of classic pdf report
+    """
+    @param record: browse_record to create report
+    @return: id of created ir.attachment, using first ir.actions.report.xml found for this object
+    """
     def _create_report_attach(self, cr, uid, record, context=None):
         #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
@@ -72,7 +75,10 @@ class account_invoice(osv.osv):
     _columns = {
         }
 
-        #TODO: create custom jasper report instead of classic pdf report
+    """
+    @param record: browse_record to create report
+    @return: id of created ir.attachment, using first ir.actions.report.xml found for this object
+    """
     def _create_report_attach(self, cr, uid, record, context=None):
         #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
@@ -101,7 +107,7 @@ class account_invoice(osv.osv):
                 ret = ir_attachment
         return ret
 
-    #override to force creation of pdf report (base function (ir.actions.server) was unlinked and replaced by this one)
+    """ @note: override to force creation of pdf report (base function (ir.actions.server) was unlinked and replaced by this one)"""
     def action_number(self, cr, uid, ids, context=None):
         res = super(account_invoice, self).action_number(cr, uid, ids, context)
         for inv in self.browse(cr, uid, ids, context):
@@ -117,12 +123,13 @@ class purchase_order(osv.osv):
     _defaults = {
                  'is_emprunt':lambda *a: 0,
                  }
-
+    """ @note: OpenERP action button method to end-up this purchase (correspond to a booking by this company to another, to complete bookable stock)
+        @deprecated: the feature with this method is deprecated, to remove"""
     def emprunt_done(self, cr, uid, ids):
         self.write(cr, uid, ids, {'state':'done'})
         return True
 
-    #Force purchase.order workflow to cancel its pickings (subflow returns cancel and reactivate workitem at picking activity)
+    """@note: Force purchase.order workflow to cancel its pickings (subflow returns cancel and reactivate workitem at picking activity)"""
     def do_terminate_emprunt(self, cr, uid, ids, context=None):
         list_picking_ids = []
         wf_service = netsvc.LocalService('workflow')
@@ -142,6 +149,8 @@ purchase_order()
 class hotel_reservation_line(osv.osv):
     _inherit = "hotel_reservation.line"
     
+    """OpenERP functionnal field method, compute amount using qte_reserves and pricelist_amount 
+        (assuming there is no additionnal element, such as taxes, to modifiy this value) """
     def _get_amount(self, cr, uid, ids, name, args, context=None):
         ret = {}.fromkeys(ids, 0.0)
         for line in self.browse(cr, uid, ids, context):
