@@ -272,7 +272,12 @@ class hotel_reservation(osv.osv):
             cr.execute('insert into hotel_folio_reservation_rel (order_id,invoice_id) values (%s,%s)', (reservation.id, folio))
 
         return folio
-
+    
+    """
+    @param checkin: datetime start of booking
+    @param checkout: datetime end of booking
+    @return: length of booking in hour (hour is the default uom for booking pricing)
+    """
     def get_length_resa(self, cr, uid, checkin, checkout, context=None):
         checkin = strptime(checkin, '%Y-%m-%d %H:%M:%S')
         checkout = strptime(checkout, '%Y-%m-%d %H:%M:%S')
@@ -280,7 +285,13 @@ class hotel_reservation(osv.osv):
         return length
 
 
-    #@param record: browse_record hotel.reservation.line
+    """
+    @param product_id: id of bookable to retrieve pricing
+    @param uom_qty: qty computed by get_length_resa used to get pricelist_item
+    @param partner_id: id of claimer, used to retrieve pricelist_item
+    @param pricelist_id: optional param to replace default partner pricelist
+    @return: pricing of booking (float) if found, else False
+    """
     def get_prod_price(self, cr, uid, product_id, uom_qty, partner_id, pricelist_id=False, context=None):
         pricelist_obj = self.pool.get("product.pricelist")
         if not pricelist_id:
@@ -289,7 +300,8 @@ class hotel_reservation(osv.osv):
         return res and (res[product_id][pricelist_id]) or False
 
     """
-    OpenERP internal invoicing compute
+    @note: OpenERP internal invoicing compute, retrieve uom_qty (based on booking_length in hour and bookable.uom_id) 
+            and pricing (using pricelist filled in booking, default is partner-pricelist)
     """
     def compute_lines_price(self, cr, uid, ids, context=None):
         values = []
