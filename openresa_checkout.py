@@ -47,6 +47,8 @@ class openstc_pret_checkout_wizard(osv.osv):
               'state': 'draft',
               }
     
+    """ implementation of OpenERP 'default_get' ORM method to initialize object with data from a booking 
+        (copy bookingLines into checkoutLines)"""
     def default_get(self, cr, uid, fields, context=None):
         ret = super(openstc_pret_checkout_wizard, self).default_get(cr, uid, fields, context)
         if 'reservation_id' in context:
@@ -62,11 +64,17 @@ class openstc_pret_checkout_wizard(osv.osv):
             ret.update({'checkout_lines':values})    
         return ret
     
+    """ override of OpenERP 'create' ORM method to link booking ('resa_checkout_id' field) with newly created Checkout"""
     def create(self, cr, uid, vals,context=None):
         res = super(openstc_pret_checkout_wizard, self).create(cr, uid, vals, context)
         self.pool.get("hotel.reservation").write(cr, uid, [vals['reservation']], {'resa_checkout_id':res}, context=context)
         return res
     
+    """
+    @param prod_dicts: dict containing bookable_id as key and bookable_qty_to_remove as value
+    @note: create stock.move (using default values for location_id and dest_location_id) 
+    to remove bookable_qty from internal stock
+    """
     def remove_prods_from_stock(self, cr, uid, prod_dicts, context={}):
         stock_obj = self.pool.get("stock.move")
         stock_ids = []
@@ -76,6 +84,11 @@ class openstc_pret_checkout_wizard(osv.osv):
         stock_obj.action_done(cr, uid, stock_ids, context=context)
         return True
     
+    """
+    @param ids: list of ids of checkout to open a purchase.order
+    @return: action descriptor to open purchase.order form (open newly if no one exist, or open the one linked with Checkout)
+    @note: only for openerp-webclient purpose
+    """
     def open_purchase(self, cr, uid, ids, context=None):
         purchase = self.read(cr, uid, ids[0], ['purchase_id'])
         if purchase['purchase_id']:
@@ -94,6 +107,11 @@ class openstc_pret_checkout_wizard(osv.osv):
                 'res_model':'purchase.order',
                 }
     
+    """
+    @note: OpenERP action button method, according to user inputs, generate purchase.order (and remove qty to buy from stock).
+    Also end-up the Checkout and close the booking
+    @warning: this method is overriden in sub-module of openresa, permitting to create project.project to schedule repair of bookables
+    """
     def generer_actions(self, cr, uid, ids, context=None):
         #TODO: Gérer le cas où des produits n'ont pas le même fournisseur, groupe les produits ayant un fournisseur en commun
         default_location_id = self.pool.get("stock.location").search(cr, uid, [('name','=','Stock')])[0]
@@ -133,6 +151,7 @@ class openstc_pret_checkout_wizard(osv.osv):
             checkout.write({'state':'done'})
         return{'type':'ir.actions.act_window_close'}
     
+    """ @note: End-up the Checkout without generating any purchase.order nor project.project, and close the booking"""
     def generer_no_actions(self, cr, uid, ids, context):
         for checkout in self.browse(cr, uid, ids):
             wf_service = netsvc.LocalService('workflow')
@@ -163,7 +182,8 @@ class openstc_pret_checkout_line_wizard(osv.osv):
             'state':lambda *a: 'draft',
             }
 
-    
+    """ OpenERP constraint method to permit or not creation / update of a record
+        Returns True if qte_reservee >= qte_to_repair + qte_to_purchase, else False"""
     def _check_qties(self, cr, uid, ids, context=None):
         for line in self.browse(cr, uid, ids, context=context):
             if line.qte_reservee < line.qte_to_repair + line.qte_to_purchase:
@@ -175,6 +195,9 @@ openstc_pret_checkout_line_wizard()
 
 class hotel_reservation(osv.osv):
     _inherit = "hotel.reservation"
+    
+    """ @note: OpenERP action button method, for openerp-webclient purpose only
+    @return: returns action descriptor to open Checkout linked with the booking"""
     def open_checkout(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
             ids = ids[0]
