@@ -655,7 +655,7 @@ class hotel_reservation(osv.osv):
 
 
         'people_name': fields.char('Name', size=128),
-        'people_phone': fields.char('Phone', size=10),
+        'people_phone': fields.char('Phone', size=16),
         #'people_email': fields.char('Email', size=128),
         'people_street':fields.char('Street',size=128),
         'people_city':fields.char('City',size=64),
