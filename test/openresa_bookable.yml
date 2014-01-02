@@ -1,0 +1,36 @@
+-
+  test of Bookables features (bookable rights, ...)
+-
+  Products init and their stock qty
+-
+
+  !record {model: product.product, id: openstc_prets_tests_mat01, forcecreate: true}:
+    name: material 01 tests
+    openstc_reservable: true
+
+-
+  creating product 2
+-
+  !record {model: product.product, id: openstc_prets_tests_mat02, forcecreate: true}:
+    name: material 02 tests
+    openstc_reservable: true
+
+-
+  Initializing stock qty of both products
+-
+
+  !python {model: stock.change.product.qty}: |
+    vals = {
+    'product_id': ref("openstc_prets_tests_mat01"),
+    'new_quantity': 30.0,
+    'location_id': ref("stock.stock_location_stock"),
+    }
+    wizard1 = self.create(cr, uid, vals)
+    vals2 = {
+    'product_id': ref("openstc_prets_tests_mat02"),
+    'new_quantity': 12.0,
+    'location_id': ref("stock.stock_location_stock"),
+    }
+    wizard2 = self.create(cr, uid, vals2)
+    self.change_product_qty(cr, uid,[wizard1],{'active_id':ref("openstc_prets_tests_mat01")})
+    self.change_product_qty(cr, uid,[wizard2],{'active_id':ref("openstc_prets_tests_mat02")})
