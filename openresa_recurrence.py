@@ -40,13 +40,19 @@ class openresa_reservation_recurrence(osv.osv):
     DAY_SELECTION = [('monday','Monday'),('tuesday','Tuesday'),('wednesday','Wednesday'),('thursday','Thursday'),('friday','Friday'),('saturday','Saturday'),('sunday','Sunday')]
     TYPE_RECUR = [('daily','Daily'),('weekly','Weekly'),('monthly','Monthly')]
 
-    #TODO : define state on recurrence
+    """@return: available values for 'state' field, allows other module to add new available values by overriding this method """
     def return_state_values(self, cr, uid, context=None):
         return [('draft', 'Saisie des infos personnelles'),('confirm','Réservation confirmée'),('cancel','Annulée'),('in_use','Réservation planifiée'),('done','Réservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
-
+    
+    """@return: used in OpenERP to define 'state' field """
     def _get_state_values(self, cr, uid, context=None):
         return self.return_state_values(cr, uid, context)
-
+    
+    """
+    @param record: recurrence browse_record to compute rights
+    @param criteria: domain to make search with
+    @return: ids of reservation matching the criteria
+    """
     def _check_rights(self, cr, uid, record, criteria):
         return self.pool.get('hotel.reservation').search(cr, uid, criteria, offset=0, limit=None, order=None, context=None, count=True)
 
@@ -63,6 +69,9 @@ class openresa_reservation_recurrence(osv.osv):
         'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir'),('deleted_at','=',False)]) > 0,
     }
 
+    """
+    @note: method for OpenERP functionnal field
+    @return: actions authorized for current user (uid) by evaluating '_actions' attribute """
     def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
         #default value: empty string for each id
         ret = {}.fromkeys(ids,'')
@@ -384,6 +393,8 @@ class openresa_reservation_recurrence(osv.osv):
                 recurrence.write({'date_confirm':now, 'recurrence_state':'in_use'})
         return True
 
+    """ override of OpenERP 'write' ORM method, to evolve wkf according to 'state_event' key from vals, and remove this key from vals to write in db
+    """
     def write(self, cr, uid, ids, vals, context=None):
         isList = isinstance(ids, types.ListType)
         if isList == False :

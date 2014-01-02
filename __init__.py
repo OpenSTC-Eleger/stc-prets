@@ -22,6 +22,9 @@
 ##############################################################################
 import hotel
 import openresa
+import openresa_bookable
+import openresa_invoicing
+import openresa_workflow
 import openresa_recurrence
 import openresa_checkout
 import wizard
