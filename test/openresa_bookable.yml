@@ -3,34 +3,51 @@
 -
   Products init and their stock qty
 -
-
-  !record {model: product.product, id: openstc_prets_tests_mat01, forcecreate: true}:
-    name: material 01 tests
+  creating site type for tests
+-
+  !record {model: openstc.site.type, id: openresa_tests_site_type1, forcecreate: true}:
+    name: Tests site type 1
+    code: TEST_YAML_01
+-
+  creating site 1
+-
+  !record {model: openstc.site, id: openresa_tests_site01, forcecreate: true}:
+    name: site 01 tests
+    type: openresa_tests_site_type1
     openstc_reservable: true
-
+    internal_booking: true
+    external_booking: true
+    default_code: yaml_site1_test
+    partner_type_bookable_ids: 
+      - openbase.openstc_prets_partner_type_part
 -
-  creating product 2
+  (test to move to Openbase) check site is created with a bookable with qty == 1
 -
-  !record {model: product.product, id: openstc_prets_tests_mat02, forcecreate: true}:
-    name: material 02 tests
+  !assert {model: openstc.site, id: openresa_tests_site01, severity: error, string: "Site not correctly created, qty must be 1"}:    
+    - product_id is not False
+    - product_id.qty_available == 1.0
+-
+  creating equipment 2
+-
+  !record {model: openstc.equipment, id: openresa_tests_mat02, forcecreate: true}:
+    name: site 02 tests
     openstc_reservable: true
-
+    internal_booking: true
+    external_booking: true
+    default_code: yaml_equipment1_test
+    service_bookable_ids: 
+    - openstc_prets_tests_service_voirie
 -
-  Initializing stock qty of both products
+  initialise the qty of equipment2
+- 
+  !function {model: openstc.equipment, id: openresa_tests_mat02, name: openbase_change_stock_qty}:
+    - 1.0
 -
+  (test to move to Openbase) check if equipment is created with a bookable with qty == 1
+-
+  !assert {model: openstc.equipment, id: openresa_tests_mat02, severity: error, string: "Equipment not correctly created, qty must be 1"}:    
+    - product_id is not False
+    - product_id.qty_available == 1.0
 
-  !python {model: stock.change.product.qty}: |
-    vals = {
-    'product_id': ref("openstc_prets_tests_mat01"),
-    'new_quantity': 30.0,
-    'location_id': ref("stock.stock_location_stock"),
-    }
-    wizard1 = self.create(cr, uid, vals)
-    vals2 = {
-    'product_id': ref("openstc_prets_tests_mat02"),
-    'new_quantity': 12.0,
-    'location_id': ref("stock.stock_location_stock"),
-    }
-    wizard2 = self.create(cr, uid, vals2)
-    self.change_product_qty(cr, uid,[wizard1],{'active_id':ref("openstc_prets_tests_mat01")})
-    self.change_product_qty(cr, uid,[wizard2],{'active_id':ref("openstc_prets_tests_mat02")})
+    
+    
