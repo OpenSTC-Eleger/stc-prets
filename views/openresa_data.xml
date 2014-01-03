@@ -500,8 +500,8 @@
     	 <field name="category_id" ref="module_category_openresa"/>
 	 </record>
 	 
-	 	 <record model="res.groups" id="hotel.group_user">
-		 <field name="implied_ids" eval="[(6,0,,ref('openbase.openstc_employee'))]"/> 
+	 	 <record model="res.groups" id="hotel.group_hotel_user">
+		 <field name="implied_ids" eval="[(6,0,[ref('openbase.openstc_employee')])]"/> 
 	 </record>
 	 
 	 <record model="res.groups" id="group_openresa_internal_claimer">
