@@ -17,6 +17,8 @@
     - partner_id is not False
     - partner_id.is_department is True
 -
+  I create internal claimer user
+-
   !record {model: res.users, id: openstc_prets_tests_user1, view: false}:
     name: User1 Tests
     login: test1
@@ -26,6 +28,8 @@
       - openbase.openstc_agent
       - hotel.group_hotel_user
 -
+  I create manager user
+-
   !record {model: res.users, id: openstc_prets_tests_user2, view: false}:
     name: User2 Manager Tests
     login: mana1
@@ -34,6 +38,18 @@
     groups_id: 
       - openbase.openstc_agent
       - hotel.group_hotel_manager
+
+-
+  I create external claimer user
+-
+  !record {model: res.users, id: openresa_tests_user3, view: False}:
+    name: User3 Tests
+    login: test3
+    new_password: test3
+    groups_id: 
+      - openbase.openstc_agent
+      - hotel.group_hotel_user
+
 -
   (test to move to Openbase) Check if user is correctly linked with partner of his service_id
 -
@@ -76,14 +92,13 @@
     partner_id: openstc_prets_tests_partner1
     email: bruno.plancher@siclic.fr
 -
-  Partner 2 address
+  Partner 2 address (link user3 with it)
 -
   !record {model: res.partner.address, id: openstc_prets_tests_partner2_address1, view: false}:
     name: Asso2 contact1
     partner_id: openstc_prets_tests_partner2
     email: bruno.plancher@siclic.fr
-
-    
+    user_id: openresa_tests_user3
 -
   Start of the tests
 -
@@ -120,10 +135,4 @@
     - pricelist_id is not False
 -
   creating resa used for this test session
--
-
-  Finally, i rollback database updates
--
-  !python {model: hotel.reservation}: |
-    cr.rollback()
     
