@@ -500,18 +500,32 @@
     	 <field name="category_id" ref="module_category_openresa"/>
 	 </record>
 	 
-	 <record model="res.groups" id="hotel.group_hotel_user">
-		<field name="name">OpenResa / Utilisateur interne</field>
-		<field name="code">HOTEL_USER</field>
+	 	 <record model="res.groups" id="hotel.group_user">
+		 <field name="implied_ids" eval="[(6,0,,ref('openbase.openstc_employee'))]"/> 
+	 </record>
+	 
+	 <record model="res.groups" id="group_openresa_internal_claimer">
+		<field name="name">OpenResa / Utilisateur interne de la Mairie</field>
+		<field name="code">HOTEL_USER_INTERNAL</field>
+		 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
     	<field name="category_id" ref="module_category_openresa"/> 
 	 </record>
 
 	 <record model="res.groups" id="group_openresa_external_claimer">
 		<field name="name">OpenResa / Utilisateur externe</field>
 		<field name="code">HOTEL_USER_EXT</field>
+		 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
     	<field name="category_id" ref="module_category_openresa"/>
 	 </record>
-
+	
+	 <record model="res.groups" id="group_openresa_agent">
+		<field name="name">OpenResa / Agent de Saisie</field>
+		<field name="code">HOTEL_USER_AGENT</field>
+		 <field name="implied_ids" eval="[(4,ref('hotel.group_hotel_user'))]"/>
+    	<field name="category_id" ref="module_category_openresa"/>
+	 </record>
+	
+	 <!-- @deprecated: for new dev, do not use this group anymore, use agent_user group -->
 	<record model="res.groups" id="openresa_api_group">
         <field name="name">OpenResa / API</field>
         <field name="code">APIRESA</field>
