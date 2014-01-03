@@ -1,0 +1,5 @@
+-
+  Finally, i rollback database updates
+-
+  !python {model: hotel.reservation}: |
+    cr.rollback()

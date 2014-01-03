@@ -7,13 +7,17 @@
 -
   user init (internal claimer, manager will be admin)
 -
-  !record {model: openstc.service, id: openstc_prets_tests_service_voirie, view: false}:
+  !record {model: openstc.service, id: openresa_tests_service_voirie, view: false}:
     name: Vie associative YAML Tests
     code: YAML_VIE_ASSO
 -
+  !record {model: openstc.service, id: openresa_tests_service_rh, view: false}:
+    name: Ressources humaines YAML Tests
+    code: YAML_RH
+-
   (test to move to Openbase) Check if partner is created and linked with service_id
 -
-  !assert {model: openstc.service, id: openstc_prets_tests_service_voirie, severity: error, string: service is not correctly linked with a partner}: 
+  !assert {model: openstc.service, id: openresa_tests_service_voirie, severity: error, string: service is not correctly linked with a partner}: 
     - partner_id is not False
     - partner_id.is_department is True
 -
@@ -23,10 +27,9 @@
     name: User1 Tests
     login: test1
     new_password: test1
-    service_id: openstc_prets_tests_service_voirie
+    service_id: openresa_tests_service_voirie
     groups_id: 
-      - openbase.openstc_agent
-      - hotel.group_hotel_user
+      - openresa.group_openresa_internal_claimer
 -
   I create manager user
 -
@@ -34,9 +37,8 @@
     name: User2 Manager Tests
     login: mana1
     new_password: mana1
-    service_id: openstc_prets_tests_service_voirie
+    service_id: openresa_tests_service_voirie
     groups_id: 
-      - openbase.openstc_agent
       - hotel.group_hotel_manager
 
 -
@@ -47,8 +49,7 @@
     login: test3
     new_password: test3
     groups_id: 
-      - openbase.openstc_agent
-      - hotel.group_hotel_user
+      - group_openresa_external_claimer
 
 -
   (test to move to Openbase) Check if user is correctly linked with partner of his service_id

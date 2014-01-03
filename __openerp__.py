@@ -33,7 +33,7 @@
 
         "workflow/openresa_workflow.xml",
         'workflow/purchase_workflow.xml',
-        "test/cr_commit.yml", "test/openresa_tests_data.xml","test/openresa_core.yml", "test/openresa_bookable.yml", "rollback_tests.yml",
+        "test/cr_commit.yml", "test/openresa_tests_data.xml","test/openresa_core.yml", "test/openresa_bookable.yml", "test/rollback_tests.yml",
 
         ],
     "js":['static/src/js/calendar_inherit.js'],

@@ -21,7 +21,7 @@
     partner_type_bookable_ids: 
       - openbase.openstc_prets_partner_type_part
 -
-  (test to move to Openbase) check site is created with a bookable with qty == 1
+  (test to move to Openbase) check if site is created with a bookable with qty == 1
 -
   !assert {model: openstc.site, id: openresa_tests_site01, severity: error, string: "Site not correctly created, qty must be 1"}:    
     - product_id is not False
@@ -36,18 +36,47 @@
     external_booking: true
     default_code: yaml_equipment1_test
     service_bookable_ids: 
-    - openstc_prets_tests_service_voirie
+    - openresa_tests_service_rh
 -
   initialise the qty of equipment2
 - 
-  !function {model: openstc.equipment, id: openresa_tests_mat02, name: openbase_change_stock_qty}:
-    - 1.0
+  !python {model: openstc.equipment}: |
+    equipment_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openresa','openresa_tests_mat02')[1]
+    equipment = self.browse(cr, uid, equipment_id)
+    self.pool.get('product.product').openbase_change_stock_qty(cr, uid, equipment.product_product_id.id, 1.0)
 -
   (test to move to Openbase) check if equipment is created with a bookable with qty == 1
 -
   !assert {model: openstc.equipment, id: openresa_tests_mat02, severity: error, string: "Equipment not correctly created, qty must be 1"}:    
-    - product_id is not False
-    - product_id.qty_available == 1.0
-
-    
-    
+    - product_product_id is not False
+    - product_product_id.qty_available == 1.0
+-
+  then, I test rights for users
+-
+  "1: test of internal_user (services rights)"
+-
+    !python {model: res.users}: |
+      user_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openresa', 'openstc_prets_tests_user1')[1]
+      ret1 = self.pool.get('openstc.site').search(cr, user_id, [('default_code','=','yaml_site1_test')])
+      assert len(ret1) >= 1, 'internal users can not read bookables readable for all departments, check ir.rules'
+      ret2 = self.pool.get('openstc.equipment').search(cr, user_id, [('default_code','=','yaml_equipment1_test')])
+      assert len(ret2) == 0, 'internal users can read bookables even if they are not for their department, check ir.rules'      
+-
+  "2: test of external_claimer (partner_types rights)"
+-
+    !python {model: res.users}: |
+      user_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openresa', 'openresa_tests_user3')[1]
+      ret1 = self.pool.get('openstc.site').search(cr, user_id, [('default_code','=','yaml_site1_test')])
+      assert len(ret1) == 0, 'external users can read bookables even if they are not for their partner_types, check ir.rules'
+      ret2 = self.pool.get('openstc.equipment').search(cr, user_id, [('default_code','=','yaml_equipment1_test')])
+      assert len(ret2) >= 1, 'internal users can not read bookables readable for all partner_types, check ir.rules'      
+-
+  "3: test of manager (all readable)"   
+-
+    !python {model: res.users}: |
+      user_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openresa', 'openstc_prets_tests_user2')[1]
+      ret1 = self.pool.get('openstc.site').search(cr, user_id, [('default_code','=','yaml_site1_test')])
+      assert len(ret1) >= 1, 'Manger users can not read all bookables, check ir.rules'
+      ret2 = self.pool.get('openstc.equipment').search(cr, user_id, [('default_code','=','yaml_equipment1_test')])
+      assert len(ret2) >= 1, 'Manger users can not read all bookables, check ir.rules'
+   
