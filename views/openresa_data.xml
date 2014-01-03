@@ -500,6 +500,10 @@
     	 <field name="category_id" ref="module_category_openresa"/>
 	 </record>
 	 
+	 	 <record model="res.groups" id="hotel.group_user">
+		 <field name="implied_ids" eval="[(6,0,,ref('openbase.openstc_employee'))]"/> 
+	 </record>
+	 
 	 <record model="res.groups" id="group_openresa_internal_claimer">
 		<field name="name">OpenResa / Utilisateur interne de la Mairie</field>
 		<field name="code">HOTEL_USER_INTERNAL</field>
