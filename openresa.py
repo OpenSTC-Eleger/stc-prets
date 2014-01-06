@@ -83,26 +83,18 @@ class hotel_reservation_line(osv.osv):
         if not context:
             context = {}
         resa_ids = []
+        dict_lines = {}
         ret = {}.fromkeys(ids,{'dispo':False,'qte_dispo':0.0})
-        if 'qte_dispo' in name:
-            #get all resa linked with lines
-            for line in self.browse(cr, uid, ids):
-                if line.line_id and not line.line_id.id in resa_ids:
-                    resa_ids.append(line.line_id.id)
-            #for each resa, compute the qty_available
-            resa_obj = self.pool.get("hotel.reservation")
-            for resa in resa_obj.browse(cr, uid, resa_ids):
-                prod_ids = [x.reserve_product.id for x in resa.reservation_line]
-                #get available prods_qty : {prod_id:qty}
-                available = resa_obj.get_prods_available_and_qty( cr, uid, resa.checkin, resa.checkout, prod_ids=prod_ids, where_optionnel='and hr.id <> ' + str(resa.id), context=context)
+        resa_obj = self.pool.get("hotel.reservation")
+        lines = self.read(cr, uid, ids, ['reserve_product','qte_reserves','checkin','checkout','line_id'])
+        #for each line, compute availabilty of their bookable
+        for l in lines:
+            if l['line_id']:
+                available = resa_obj.get_prods_available_and_qty( cr, uid, l['checkin'], l['checkout'], prod_ids=[l['reserve_product'][0]], where_optionnel='and hr.id <> ' + str(l['line_id'][0]), context=context)
                 #link prod qty available to resa_line associated
-                for line in resa.reservation_line:
-                    ret.update({line.id:{'qte_dispo':available[str(line.reserve_product.id)]}})
-                    if 'dispo' in name:
-                        ret[line.id].update({'dispo':available[str(line.reserve_product.id)] >= line.qte_reserves})
-        elif 'dispo' in name:
-            for line in self.browse(cr, uid, ids):
-                ret.update({line.id:{'dispo':line.qte_dispo >= line.qte_reserves}})
+                ret.update({l['id']:{'qte_dispo':available[str(l['reserve_product'][0])]}})
+                if 'dispo' in name:
+                    ret[l['id']].update({'dispo':available[str(l['reserve_product'][0])] >= l['qte_reserves']})
         return ret
 
 
@@ -306,20 +298,20 @@ class hotel_reservation(osv.osv):
     @return: bookable infos of this booking (usable for tooltip for example) """
     def _get_fields_resources(self, cr, uid, ids, name, args, context=None):
         res = {}
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = {}
-            field_ids = obj.reservation_line
+        line_obj = self.pool.get('hotel_reservation.line')
+        prod_obj= self.pool.get('product.product')
+        for obj in self.read(cr, uid, ids, ['state','reservation_line'], context=context):
+            res[obj['id']] = {}
             val = []
-            for item in field_ids:
-                if obj.state in ('remplir','cancel'):
-                    tooltip = " souhaitée: " + str(int(item.qte_reserves))
-                    if item.dispo and obj.state!='cancel' :
-                        tooltip += " ,disponible: " + str(int(item.qte_dispo))
+            for item in line_obj.read(cr, uid, obj['reservation_line'], ['qte_reserves','qte_dispo','reserve_product'], context=context):
+                if obj['state'] in ('remplir','cancel'):
+                    tooltip = " souhaitée: " + str(int(item['qte_reserves']))
+                    if item['qte_dispo'] and obj['state']!='cancel' :
+                        tooltip += " ,disponible: " + str(int(item['qte_dispo']))
                 else :
-                    tooltip = " réservée : " + str(int(item.qte_reserves))
-                val.append({'id': item.reserve_product.id,  'name' : item.reserve_product.name_get()[0][1], 'type': item.reserve_product.type_prod,  'quantity' : item.qte_reserves, 'tooltip' : tooltip})
-            res[obj.id].update({'resources':val})
+                    tooltip = " réservée : " + str(int(item['qte_reserves']))
+                val.append({'id': item['reserve_product'][0],  'name' : item['reserve_product'][1], 'type': prod_obj.read(cr, uid, item['reserve_product'][0], ['type'])['type'],  'quantity' : item['qte_reserves'], 'tooltip' : tooltip})
+            res[obj['id']].update({'resources':val})
         return res
     
     """
