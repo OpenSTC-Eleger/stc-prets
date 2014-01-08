@@ -291,6 +291,7 @@ class hotel_reservation(osv.osv):
         'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
         'cancel': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
+        'update': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state == 'remplir',
     }
 
     """
