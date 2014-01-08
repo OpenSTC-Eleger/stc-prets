@@ -313,6 +313,18 @@ class hotel_reservation(osv.osv):
                 val.append({'id': item['reserve_product'][0],  'name' : item['reserve_product'][1], 'type': prod_obj.read(cr, uid, item['reserve_product'][0], ['type'])['type'],  'quantity' : item['qte_reserves'], 'tooltip' : tooltip})
             res[obj['id']].update({'resources':val})
         return res
+    """
+    @note: method for OpenERP functionnal field
+    @return: list of ids of bookables on this booking
+    """
+    def _get_resource_ids(self, cr, uid, ids, name, args, context=None):
+        ret = {}.fromkeys(ids, [])
+        line_obj = self.pool.get('hotel_reservation.line')
+        for id in ids:
+            line_ids = line_obj.search(cr, uid, [('line_id.id','=', id)],context=context)
+            lines = line_obj.read(cr, uid, line_ids, ['reserve_product'],context=context)
+            ret[id] = [x['reserve_product'][0] for x in lines if x['reserve_product']]
+        return ret
     
     """
     @note: method for OpenERP functionnal field
@@ -439,6 +451,7 @@ class hotel_reservation(osv.osv):
         'name': fields.char('Nom Manifestation', size=128, required=True),
         'resources': fields.function(_get_fields_resources, multi='field_resources', method=True,
                                         type='char', store=False),
+        'resource_ids':fields.function(_get_resource_ids, method=True, type="char", store=False),
 
         'site_id': fields.many2one('openstc.site', 'Site (Lieu)'),
         'prod_id': fields.many2one('product.product', 'Ressource'),
