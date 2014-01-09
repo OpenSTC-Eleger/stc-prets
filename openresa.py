@@ -167,7 +167,7 @@ class hotel_reservation_line(OpenbaseCore):
         'dispo':fields.function(_calc_qte_dispo, string="Disponible", method=True, multi="dispo", type='boolean'),
         "infos":fields.char("Informations supplémentaires",size=256),
         "name":fields.char('Libellé', size=128),
-        'state':fields.related('line_id','state', type='selection',string='Etat Résa', selection=_get_state_line, readonly=True),
+        'state':fields.related('line_id','state', type='selection',string='Etat Resa', selection=_get_state_line, readonly=True),
         'qte_dispo':fields.function(_calc_qte_dispo, method=True, string='Qté Dispo', multi="dispo", type='float'),
         'action':fields.selection(_AVAILABLE_ACTION_VALUES, 'Action'),
         'state':fields.related('line_id','state', type='char'),
@@ -228,7 +228,7 @@ class hotel_reservation(OpenbaseCore):
     _name = "hotel.reservation"
     _order = "state_num, create_date desc"
     _inherit = "hotel.reservation"
-    _description = "Réservations"
+    _description = "Reservations"
     
     """
     @param str: string containing accents to be removed
@@ -249,7 +249,7 @@ class hotel_reservation(OpenbaseCore):
     
     """@return: available values for 'state' field, allows other module to add new available values by overriding this method """
     def return_state_values(self, cr, uid, context=None):
-        return [('draft', 'Saisie des infos personnelles'),('confirm','Réservation confirmée'),('cancel','Annulée'),('in_use','Réservation planifiée'),('done','Réservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
+        return [('draft', 'Saisie des infos personnelles'),('confirm','Reservation confirmée'),('cancel','Annulée'),('in_use','Reservation planifiée'),('done','Reservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
     
     """@return: used in OpenERP to define 'state' field """
     def _get_state_values(self, cr, uid, context=None):
