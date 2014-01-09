@@ -21,6 +21,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+from openbase.openbase_core import OpenbaseCore
 from osv import fields, osv
 import netsvc
 import time
@@ -30,7 +31,7 @@ from datetime import datetime,timedelta
 from datetime import datetime
 from mx.DateTime.mxDateTime import strptime
 
-class sale_order(osv.osv):
+class sale_order(OpenbaseCore):
     _inherit = "sale.order"
     _name = "sale.order"
 
@@ -68,7 +69,7 @@ class sale_order(osv.osv):
 
 sale_order()
 
-class account_invoice(osv.osv):
+class account_invoice(OpenbaseCore):
     _inherit = "account.invoice"
     _name = "account.invoice"
 
@@ -116,7 +117,7 @@ class account_invoice(osv.osv):
 
 account_invoice()
 
-class purchase_order(osv.osv):
+class purchase_order(OpenbaseCore):
     _inherit = "purchase.order"
     _name = "purchase.order"
     _columns = {'is_emprunt':fields.boolean('Demande d\'emprunt', help="Indique qu'il s'agit d'une demande d'emprunt aurpès d'une mairie extèrieure et non d'un bon de commande")}
@@ -146,7 +147,7 @@ class purchase_order(osv.osv):
                 }
 purchase_order()
 
-class hotel_reservation_line(osv.osv):
+class hotel_reservation_line(OpenbaseCore):
     _inherit = "hotel_reservation.line"
     
     """OpenERP functionnal field method, compute amount using qte_reserves and pricelist_amount 
@@ -169,7 +170,7 @@ class hotel_reservation_line(osv.osv):
     
 hotel_reservation_line()
 
-class hotel_reservation(osv.osv):
+class hotel_reservation(OpenbaseCore):
     _inherit = "hotel.reservation"
     
     """

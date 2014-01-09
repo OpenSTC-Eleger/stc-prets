@@ -21,12 +21,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+from openbase.openbase_core import OpenbaseCore
 from osv import fields, osv
 
 #----------------------------------------------------------
 # Fournitures
 #----------------------------------------------------------
-class product_product(osv.osv):
+class product_product(OpenbaseCore):
 
 
     AVAILABLE_ETATS = (("neuf", "Neuf"), ("bon", "Bon"), ("moyen", "Moyen"), ("mauvais", "Mauvais"), ("inutilisable", "Inutilisable"))
@@ -125,7 +126,7 @@ class product_product(osv.osv):
 
 product_product()
 
-class product_category(osv.osv):
+class product_category(OpenbaseCore):
     _name = "product.category"
     _inherit = 'product.category'
     _description = "Product Category"
@@ -138,7 +139,7 @@ class product_category(osv.osv):
     }
 product_category()
 
-class res_partner(osv.osv):
+class res_partner(OpenbaseCore):
     _inherit = "res.partner"
 
     """

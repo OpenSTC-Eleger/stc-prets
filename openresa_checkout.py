@@ -22,12 +22,12 @@
 #
 #############################################################################
 from datetime import datetime,timedelta
-
+from openbase.openbase_core import OpenbaseCore
 from osv import fields, osv
 import netsvc
 from tools.translate import _
 
-class openstc_pret_checkout_wizard(osv.osv):
+class openstc_pret_checkout_wizard(OpenbaseCore):
     AVAILABLE_STATE_VALUES = [('draft','Brouillon'),('done','Cloturé')]
     _name = "openstc.pret.checkout"
     _rec_name = 'name'
@@ -164,7 +164,7 @@ openstc_pret_checkout_wizard()
 
 AVAILABLE_STATE_TREATMENT_SELECTION = [('draft','Non Planifié'),('in_progress','En cours de Traitement'),('done','Remis en Etat')]
 AVAILABLE_ETAT_SELECTION = [('ras','Ne Rien Planifier'),('to_repair','A Réparer'),('to_purchase','A Racheter')]
-class openstc_pret_checkout_line_wizard(osv.osv):
+class openstc_pret_checkout_line_wizard(OpenbaseCore):
     _name = "openstc.pret.checkout.line"
     _columns = {
                 'checkout_id':fields.many2one('openstc.pret.checkout','Etat des Lieux'),
@@ -193,7 +193,7 @@ class openstc_pret_checkout_line_wizard(osv.osv):
     
 openstc_pret_checkout_line_wizard()
 
-class hotel_reservation(osv.osv):
+class hotel_reservation(OpenbaseCore):
     _inherit = "hotel.reservation"
     
     """ @note: OpenERP action button method, for openerp-webclient purpose only

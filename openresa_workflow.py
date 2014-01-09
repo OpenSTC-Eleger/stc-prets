@@ -21,10 +21,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+from openbase.openbase_core import OpenbaseCore
 from osv import fields, osv
 import netsvc
 
-class hotel_reservation(osv.osv):
+class hotel_reservation(OpenbaseCore):
     _inherit = "hotel.reservation"
     
     """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 

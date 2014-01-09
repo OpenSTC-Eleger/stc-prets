@@ -21,6 +21,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+from openbase.openbase_core import OpenbaseCore
+
 from datetime import datetime,timedelta
 from osv import fields, osv
 import netsvc
@@ -44,7 +46,7 @@ import html_builder
 """"i create model in this file to avoid inter-dependance between hotel.reservation and this one
 actually, they have many2one on each other
 this object is fully implemented in openresa_recurrence.py file"""
-class openresa_reservation_recurrence(osv.osv):
+class openresa_reservation_recurrence(OpenbaseCore):
     _name = 'openresa.reservation.recurrence'
     _inherits = {'hotel.reservation':'template_id'}
     _columns = {
@@ -53,7 +55,7 @@ class openresa_reservation_recurrence(osv.osv):
 
 openresa_reservation_recurrence()
 
-class hotel_reservation_line(osv.osv):
+class hotel_reservation_line(OpenbaseCore):
     _name = "hotel_reservation.line"
     _inherit = "hotel_reservation.line"
 
@@ -222,7 +224,7 @@ class hotel_reservation_line(osv.osv):
 
 hotel_reservation_line()
 
-class hotel_reservation(osv.osv):
+class hotel_reservation(OpenbaseCore):
     _name = "hotel.reservation"
     _order = "state_num, create_date desc"
     _inherit = "hotel.reservation"
@@ -704,7 +706,7 @@ class hotel_reservation(osv.osv):
 
 hotel_reservation()
 
-class openresa_reservation_choice(osv.osv):
+class openresa_reservation_choice(OpenbaseCore):
     _name = "openresa.reservation.choice"
 
     """

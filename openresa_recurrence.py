@@ -23,7 +23,7 @@
 #############################################################################
 
 import types
-
+from openbase.openbase_core import OpenbaseCore
 from osv import fields, osv
 from datetime import datetime, timedelta
 import calendar
@@ -34,7 +34,7 @@ import netsvc
 import pytz
 from tools.translate import _
 
-class openresa_reservation_recurrence(osv.osv):
+class openresa_reservation_recurrence(OpenbaseCore):
     _inherit = 'openresa.reservation.recurrence'
     WEIGHT_SELECTION = [('first','First'),('second','Second'),('third','Third'),('fourth','Fourth'),('last','Last')]
     DAY_SELECTION = [('monday','Monday'),('tuesday','Tuesday'),('wednesday','Wednesday'),('thursday','Thursday'),('friday','Friday'),('saturday','Saturday'),('sunday','Sunday')]

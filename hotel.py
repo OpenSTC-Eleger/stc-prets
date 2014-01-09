@@ -18,6 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+from openbase.openbase_core import OpenbaseCore
 from osv import fields, osv
 import time
 import netsvc
@@ -26,7 +27,7 @@ import datetime
 from tools import config
 from tools.translate import _
 
-class hotel_folio(osv.osv):
+class hotel_folio(OpenbaseCore):
     
     _inherit = "hotel.folio"
     _name = "hotel.folio"
