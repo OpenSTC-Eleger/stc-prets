@@ -130,7 +130,17 @@
 	        <field eval="1" name="perm_create"/>
 	    </record>
 
-
+		<record model="ir.rule" id="booking_director_rule_access">
+	        <field name="name">Booking Agent Rule Access </field>
+	        <field name="model_id" ref="model_hotel_reservation"/>
+	         <field name="domain_force">[('deleted_at', '=', False)]</field>
+	        <field name="groups" eval="[(6,0,[ref('openresa.group_openresa_agent')])]" />
+	        <field eval="0" name="perm_unlink"/>
+	        <field eval="0" name="perm_write"/>
+	        <field eval="0" name="perm_read"/>
+	        <field eval="1" name="perm_create"/>
+	    </record>
+	   	
 	   	<record model="ir.rule" id="booking_director_rule_access">
 	        <field name="name">Booking Director Rule Access </field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
