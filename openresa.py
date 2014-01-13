@@ -328,21 +328,7 @@ class hotel_reservation(OpenbaseCore):
             lines = line_obj.read(cr, uid, line_ids, ['reserve_product'],context=context)
             ret[id] = [x['reserve_product'][0] for x in lines if x['reserve_product']]
         return ret
-    
-    """
-    @note: method for OpenERP functionnal field
-    @return: actions authorized for current user (uid) by evaluating '_actions' attribute """
-    def _get_actions(self, cr, uid, ids, myFields ,arg, context=None):
-        #default value: empty string for each id
-        ret = {}.fromkeys(ids,'')
-        groups_code = []
-        groups_code = [group.code for group in self.pool.get("res.users").browse(cr, uid, uid, context=context).groups_id if group.code]
-        #evaluation of each _actions item, if test returns True, adds key to actions possible for this record
-        for record in self.browse(cr, uid, ids, context=context):
-            #ret.update({inter['id']:','.join([key for key,func in self._actions.items() if func(self,cr,uid,inter)])})
-            ret.update({record.id:[key for key,func in self._actions.items() if func(self,cr,uid,record,groups_code)]})
-        return ret
-    
+        
     def generate_html_plannings_for(self, cr, uid, bookable_ids, start_date, end_date):
         for planning in self.generate_plannings_for(cr, uid, bookable_ids, start_date, end_date):
             html_planning = self.format_plannings_with(planning, 'html')
@@ -464,7 +450,6 @@ class hotel_reservation(OpenbaseCore):
         'date_choices': fields.one2many('openresa.reservation.choice', 'reservation_id', 'Choices of dates'),
         'recurrence_id': fields.many2one('openresa.reservation.recurrence', 'From recurrence'),
         'is_template': fields.boolean('Is Template', help='means that this reservation is a template for a recurrence'),
-        'actions': fields.function(_get_actions, method=True, string="Actions possibles", type="char", store=False),
         
         'partner_type': fields.related('partner_id', 'type_id', type='many2one', relation='openstc.partner.type',
                                        string='Type du demandeur', help='...'),
