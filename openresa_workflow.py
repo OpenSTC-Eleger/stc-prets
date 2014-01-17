@@ -27,6 +27,7 @@ import netsvc
 
 class hotel_reservation(OpenbaseCore):
     _inherit = "hotel.reservation"
+
     
     """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 
         and add it to email if 'send_invoicing' field is True """
@@ -73,8 +74,9 @@ class hotel_reservation(OpenbaseCore):
         raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
         return False
     
-    """@note: OpenERP Workflow method, send mail notification"""
+    """@note: OpenERP Workflow method, send mail notification """
     def cancelled_reservation(self, cr, uid, ids):
+        
         self.envoyer_mail(cr, uid, ids, {'state':'error'})
         self.write(cr, uid, ids, {'state':'cancel'})
         return True

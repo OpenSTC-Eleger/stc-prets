@@ -592,10 +592,16 @@ class hotel_reservation(OpenbaseCore):
         if not isinstance(ids, list):
             ids = [ids]
         line_ids = []
+        uid_is_manager = self.pool.get('res.users').browse(cr, uid, uid, context=context).isResaManager
+        ret = True
         for resa in self.browse(cr, uid, ids, context):
+            #if uid is manager, send mail if 'send_mail' field is set
+            if uid_is_manager and resa.send_email:
+                self.envoyer_mail(cr, uid, [resa.id], vals={'state':'deleted'},context=context)
             line_ids.extend([x.id for x in resa.reservation_line])
-        self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
-        return super(hotel_reservation, self).unlink(cr, uid, ids, context)
+            self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
+            ret = super(hotel_reservation, self).unlink(cr, uid, [resa.id], context)
+        return ret
     
     """ OpenERP webclient onchange to bubble-up 'openstc_partner_id' to 'partner_id' """
     def onchange_openstc_partner_id(self, cr, uid, ids, openstc_partner_id=False):

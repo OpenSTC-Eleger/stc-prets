@@ -228,6 +228,8 @@ class hotel_reservation(OpenbaseCore):
         'done_note': fields.text('Note de clôture'),
         'send_invoicing': fields.boolean('Send invoicing by email'),
         'invoice_attachment_id': fields.integer('Attachment ID'),
+        'send_email':fields.boolean('Send Email', help='If set, authorize sending email until its unchecked'),
+
         }
     
     
@@ -349,6 +351,7 @@ class hotel_reservation(OpenbaseCore):
             email_obj = self.pool.get("email.template")
             email_tmpl_id = 0
             prod_attaches = {}
+            data_obj = self.pool.get('ir.model.data')
             #first, retrieve template_id according to 'state' parameter
             if 'state' in vals.keys():
                 if vals['state'] == "error":
@@ -357,6 +360,8 @@ class hotel_reservation(OpenbaseCore):
                     email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Attente')])
                 elif vals['state'] == 'done':
                     email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Termin')])
+                elif vals['state'] == 'deleted':
+                    email_tmpl_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_email_template_resa_deleted')[1]
                 elif vals['state'] == 'validated':
                     email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Valid%')])
                     #Search for product attaches to be added to email

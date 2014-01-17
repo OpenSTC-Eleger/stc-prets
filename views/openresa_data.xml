@@ -485,6 +485,99 @@
 	${object.shop_id.company_id.name or ''}
 		    ]]></field>
 		</record>
+		
+        <record id="openstc_pret_email_template_resa_deleted" model="email.template">
+	        <field name="name">Réservation supprimée</field>
+	        <field name="model_id" ref="model_hotel_reservation"/>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
+			<field name="email_to">${object.partner_mail or ''}</field>
+			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été refusée</field>
+			<field name="body_html"><![CDATA[
+	<h2>Madame, Monsieur,</h2>
+	<ul>
+	<p>Nous ne pouvons donner une suite favorable à votre demande de réservation de :</p>
+	<%
+	from datetime import datetime
+	import pytz
+	resas = []
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
+	endif
+	%>
+
+	<ul>
+	% for line in object.reservation_line:
+	<li>${line.reserve_product.name or ''} : ${line.qte_reserves or 0}</li>
+	% endfor
+	</ul>
+	<ul>
+	% for resa in resas:
+	<%
+	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkin_str = my_checkin_str.decode('utf-8')
+	my_checkout_str = my_checkout_str.decode('utf-8')
+	%>
+	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
+   % endfor
+   </ul>
+   </ul>
+	<br />
+	<p><b>afin d’organiser ${object.name or 'inconnu'}</b>  en raison de  : </br>
+		${object.cancel_note or ''}
+	</p>
+	<br />
+   <p>	   ${object.write_uid.signature or '' }<br />
+		   ${object.shop_id.company_id.name or ''} </p>
+			    ]]></field>
+			<field name="body_text"><![CDATA[
+	Madame, Monsieur,
+
+	Nous ne pouvons donner une suite favorable à votre demande de réservation de :
+	<%
+	from datetime import datetime
+	import pytz
+	resas = []
+	if object.recurrence_id:
+		for resa in object.recurrence_id.reservation_ids:
+			resas.append(resa)
+		endfor
+	else:
+		resas = [object]
+	endif
+
+	%>
+
+	% for line in object.reservation_line:
+	${line.reserve_product.name or ''} : ${line.qte_reserves or 0}
+	% endfor
+
+
+	% for resa in resas:
+	<%
+	my_checkin = datetime.strptime(str(resa.checkin),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkout = datetime.strptime(str(resa.checkout),"%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+	my_checkin_str = my_checkin.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
+	my_checkin_str = my_checkin_str.decode('utf-8')
+	my_checkout_str = my_checkout_str.decode('utf-8')
+	%>
+	du ${my_checkin_str} au ${my_checkout_str}
+   % endfor
+
+	afin d’organiser <b>${object.name or 'inconnu'}  en raison de :
+	${object.cancel_note or ''}
+
+	${object.write_uid.signature or ''}
+	${object.shop_id.company_id.name or ''}
+		    ]]></field>
+		</record>
 	</data>
 	<data>
 
