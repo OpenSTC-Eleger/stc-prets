@@ -62,11 +62,30 @@ class openresa_reservation_recurrence(OpenbaseCore):
     """
     def managerOnly(self, cr, uid, record, groups_code):
         return 'HOTEL_MANA' in groups_code
-
+    
+    """
+    @return: action rights for manager or owner of a record
+    @note:  - claimer can do these actions on its own records,
+            - officer can make these actions for claimer which does not have account,
+            - else, manager can also do it
+    """
+    def ownerOrOfficer(self, cr, uid, record, groups_code):
+        #if not rights, compute rights for offi/manager
+        ret = 'HOTEL_OFFI' in groups_code or 'HOTEL_MANA' in groups_code
+        if not ret:
+            #compute rights for owner
+            for contact in record.partner_id.address:
+                if uid == contact.user_id.id:
+                    ret = True
+                    break
+            ret = ret and 'HOTEL_USER' in groups_code
+        return ret
     _actions = {
-        'cancel': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir'),('deleted_at','=',False)]) > 0,
-        'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','confirm'),('deleted_at','=',False)]) > 0,
-        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir'),('deleted_at','=',False)]) > 0,
+        'refuse': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
+        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','confirm')]) > 0,
+        'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','confirm')]) > 0,
+        'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
+        'delete_recurrence': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and  self._check_rights(cr, uid, record, [('recurrence_id','=',record.id),('state','=','remplir')]) > 0,
     }
 
     """
@@ -393,7 +412,12 @@ class openresa_reservation_recurrence(OpenbaseCore):
                 recurrence.write({'date_confirm':now, 'recurrence_state':'in_use'})
         return True
 
-    """ override of OpenERP 'write' ORM method, to evolve wkf according to 'state_event' key from vals, and remove this key from vals to write in db
+    def create(self, cr, uid, vals, context=None):
+        ret = super(openresa_reservation_recurrence, self).create(cr, uid, vals,context=context)
+        super(openresa_reservation_recurrence, self).write(cr, uid, [ret], {'is_template':True}, context=context)
+        return ret 
+
+    """ @note: override of OpenERP 'write' ORM method, to evolve wkf according to 'state_event' key from vals, and remove this key from vals to write in db
     """
     def write(self, cr, uid, ids, vals, context=None):
         isList = isinstance(ids, types.ListType)
@@ -402,13 +426,29 @@ class openresa_reservation_recurrence(OpenbaseCore):
 
         state = None
         if vals.has_key('state_event') :
-            state = vals.get('state_event')
-            vals.pop('state_event')
+            state = vals.pop('state_event')
+            
         res = super(openresa_reservation_recurrence, self).write(cr, uid, ids, vals, context=context)
+        #after updating template, force is_template to True
+        super(openresa_reservation_recurrence, self).write(cr, uid, ids, {'is_template':True}, context=context)
         if state != None :
             vals.update( { 'state' : state } )
             self.validate(cr, uid, ids, vals, context)
 
         return res
-
+    
+    """@note: override of OpenERP 'unlink' method, to unlink non template reservation_ids, 
+        and only after, delete this one (which will also delete template_id thanks to _inherits).
+        send mail once for all the recurrence before making deletion """
+    def unlink(self, cr, uid, ids, context=None):
+        if not isinstance(ids, list):
+            ids = [ids]
+        resa_obj = self.pool.get('hotel.reservation')
+        for recurrence in self.read(cr, uid, ids, ['reservation_ids','template_id', 'send_email'], context=context):
+            if recurrence['send_email']:
+                resa_obj.envoyer_mail(cr, uid, [recurrence['template_id'][0]], vals={'state':'deleted'},context=context)
+            if recurrence['reservation_ids']:
+                resa_obj.unlink(cr, uid, recurrence['reservation_ids'], context=context)
+        return super(openresa_reservation_recurrence, self).unlink(cr, uid, ids, context=context)
+    
 openresa_reservation_recurrence()

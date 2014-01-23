@@ -223,9 +223,18 @@ class hotel_reservation(OpenbaseCore):
                 multi="resa",
                 help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
         'all_dispo': fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
+        
         'confirm_note': fields.text('Note de validation'),
-        'cancel_note': fields.text('Note de refus'),
-        'done_note': fields.text('Note de clôture'),
+        'cancel_note': fields.text('cancel note'),
+        'refuse_note': fields.text('Refusal note'),
+        'done_note': fields.text('Done note'),
+        
+        'deleted_at': fields.date('Deleted date'),
+        'confirm_at': fields.date('Confirm date'),
+        'done_at': fields.date('Done date'),
+        'cancel_at': fields.date('Cancel date'),
+        'refuse_at': fields.date('Refuse date'),
+        
         'send_invoicing': fields.boolean('Send invoicing by email'),
         'invoice_attachment_id': fields.integer('Attachment ID'),
         'send_email':fields.boolean('Send Email', help='If set, authorize sending email until its unchecked'),
@@ -338,7 +347,7 @@ class hotel_reservation(OpenbaseCore):
     @param vals: Dict containing "to" (deprecated) and "state" in ("error","waiting", "validated","done") (required)
     "state" is a shortcut to retrieve template_xml_id
     @param attach_ids: optionnal parameter to manually add attaches to mail
-    @note: send mail according to 'state' value
+    @note: send mail according to 'state' value, and send mail only for simple-booking or template-booking records
     """
     def envoyer_mail(self, cr, uid, ids, vals=None, attach_ids=[], context=None):
         #TODO: check if company wants to send email (info not(opt_out) in partner)
@@ -352,18 +361,18 @@ class hotel_reservation(OpenbaseCore):
             email_tmpl_id = 0
             prod_attaches = {}
             data_obj = self.pool.get('ir.model.data')
+            model_map = {'error':'openstc_pret_email_template_resa_refused',
+                         'cancel':'openstc_pret_email_template_resa_cancelled',
+                         'cancel_manager':'openstc_pret_email_template_resa_cancelled_manager',
+                         'waiting':'openstc_pret_email_template_resa_en_attente',
+                         'done':'openstc_pret_email_template_resa_done',
+                         'deleted':'openstc_pret_email_template_resa_deleted',
+                         'validated':'openstc_pret_email_template_resa_validee'}
             #first, retrieve template_id according to 'state' parameter
-            if 'state' in vals.keys():
-                if vals['state'] == "error":
-                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','annulée')])
-                elif vals['state'] == 'waiting':
-                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Attente')])
-                elif vals['state'] == 'done':
-                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Termin')])
-                elif vals['state'] == 'deleted':
-                    email_tmpl_id = data_obj.get_object_reference(cr, uid, 'openresa','openstc_pret_email_template_resa_deleted')[1]
-                elif vals['state'] == 'validated':
-                    email_tmpl_id = email_obj.search(cr, uid, [('model','=',self._name),('name','ilike','Réserv%Valid%')])
+            if vals.get('state','') in model_map.keys():
+                email_tmpl_id = data_obj.get_object_reference(cr, uid, 'openresa',model_map.get(vals.get('state')))[1]
+                #special behavior for confirm notifications
+                if vals['state'] == 'validated':
                     #Search for product attaches to be added to email
                     prod_ids = []
                     for resa in self.browse(cr, uid, ids):

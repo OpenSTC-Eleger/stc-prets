@@ -291,7 +291,8 @@ class hotel_reservation(OpenbaseCore):
 
     _actions = {
         'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
-        'cancel': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
+        'refuse': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
+        'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'confirm',
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
         'delete':lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'remplir',
         'update': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state == 'remplir',
@@ -428,10 +429,6 @@ class hotel_reservation(OpenbaseCore):
     _columns = {
         'create_uid': fields.many2one('res.users', 'Created by', readonly=True),
         'write_uid': fields.many2one('res.users', 'Writed by', readonly=True),
-        'deleted_at': fields.date('Deleted date'),
-        'confirm_at': fields.date('Confirm date'),
-        'done_at': fields.date('Done date'),
-        'cancel_at': fields.date('Cancel date'),
         'state': fields.selection(_get_state_values, 'Etat', readonly=True),
         'state_num': fields.function(_get_state_num, string='Current state', type='integer', method=True,
                                      store={'hotel.reservation': (get_resa_modified, ['state'], 20)}),
@@ -528,6 +525,7 @@ class hotel_reservation(OpenbaseCore):
                 raise osv.except_osv('Inconsistent Data', 'The default value for citizen Claimer is missing, please restart your server')
             else:
                 vals.update({'partner_id':partner_id})
+        
         #then, if contact is missing, retrieve first address linked with partner    
         partner = self.pool.get('res.partner').read(cr, uid, partner_id, ['address', 'property_product_pricelist'])
         addresses = partner['address']
@@ -537,7 +535,11 @@ class hotel_reservation(OpenbaseCore):
                          'partner_invoice_id':addresses[0]})
         elif not addresses:
             raise osv.except_osv('Inconsistent Data', 'The default value for citizen Claimer-Contact is missing, please restart your server')
-        vals.update({'pricelist_id':partner.get('property_product_pricelist',[False,'none'])[0]})
+        
+        #set partner_mail according to partner_order_id
+        contact = self.pool.get('res.partner.address').read(cr, uid, vals.get('partner_order_id')) 
+        vals.update({'pricelist_id':partner.get('property_product_pricelist',[False,'none'])[0],
+                     'partner_mail':contact.get('email',False)})
         return vals
 
     """ override of OpenERP 'create' ORM method to format data to store 
@@ -588,18 +590,18 @@ class hotel_reservation(OpenbaseCore):
 
         return res
     
-    """ override of OpenERP 'unlink' ORM method to make 'on_cascade' behaviour on one2many 'reservation_line' """
+    """ override of OpenERP 'unlink' ORM method to make 'on_cascade' behaviour on one2many 'reservation_line',
+        send mail notification if manager wants it, do not send mail if booking is from recurrence (openresa_reservation_recurrence makes it) """
     def unlink(self, cr, uid, ids, context=None):
         if not isinstance(ids, list):
             ids = [ids]
-        line_ids = []
         uid_is_manager = self.pool.get('res.users').browse(cr, uid, uid, context=context).isResaManager
         ret = True
         for resa in self.browse(cr, uid, ids, context):
-            #if uid is manager, send mail if 'send_mail' field is set
-            if uid_is_manager and resa.send_email:
+            #if uid is manager and if resa is not from recurrence, send mail if 'send_mail' field is set
+            if not resa.recurrence_id and uid_is_manager and resa.send_email:
                 self.envoyer_mail(cr, uid, [resa.id], vals={'state':'deleted'},context=context)
-            line_ids.extend([x.id for x in resa.reservation_line])
+            line_ids = [x.id for x in resa.reservation_line]
             self.pool.get("hotel_reservation.line").unlink(cr, uid, line_ids, context)
             ret = super(hotel_reservation, self).unlink(cr, uid, [resa.id], context)
         return ret

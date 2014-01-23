@@ -57,9 +57,9 @@ class hotel_reservation(OpenbaseCore):
                     if resa.send_invoicing:
                         attach_sale_id.append(attachment_id)
                 #send mail with optional attaches on products and the sale order pdf attached
-                self.envoyer_mail(cr, uid, ids, {'state':'validated'}, attach_ids=attach_sale_id)
-                self.write(cr, uid, ids, {'state':'confirm'})
-                return True
+                self.envoyer_mail(cr, uid, [resa.id], {'state':'validated'}, attach_ids=attach_sale_id)
+                self.write(cr, uid, [resa.id], {'state':'confirm'})
+                #return True
             else:
                 raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
                 return False
@@ -74,11 +74,28 @@ class hotel_reservation(OpenbaseCore):
         raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
         return False
     
-    """@note: OpenERP Workflow method, send mail notification """
-    def cancelled_reservation(self, cr, uid, ids):
-        
+        """@note: OpenERP Workflow method, send mail notification"""
+    def refused_reservation(self, cr, uid, ids):
         self.envoyer_mail(cr, uid, ids, {'state':'error'})
         self.write(cr, uid, ids, {'state':'cancel'})
+        return True
+    
+    """@note: OpenERP Workflow method, remove invoicing and send mail notification :
+        if user is a claimer, send mail to him and to manager,
+        else send mail to claimer if send_email is set """
+    def cancelled_reservation(self, cr, uid, ids):
+        user = self.pool.get('res.users').browse(cr, uid, uid)
+        is_manager = user.isResaManager
+        #for each resa, send mail according to cases, envoyer_mail send mail only for simple-booking or template-booking
+        for resa in self.browse(cr, uid, ids):
+            if is_manager:
+                if resa.send_email:
+                    self.envoyer_mail(cr, uid, [resa.id], {'state':'cancel'})
+            else:
+                self.envoyer_mail(cr, uid, [resa.id], {'state':'cancel'})
+                self.envoyer_mail(cr, uid, [resa.id], {'state':'cancel_manager'})
+        #and update bookings data (also remove invoicing attachment_id)
+        self.write(cr, uid, ids, {'state':'cancel','invoice_attachment_id':0})
         return True
 
     """@note: OpenERP Workflow method, send mail notification"""
