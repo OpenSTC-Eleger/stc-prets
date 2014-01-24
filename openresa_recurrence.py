@@ -391,7 +391,7 @@ class openresa_reservation_recurrence(OpenbaseCore):
     """
     @param ids: recurrence to validate
     @note: validate all VALIDABLE occurrences of the recurrence
-    an occurrence can be validated when all product(s) are 'dispo'
+    An occurrence can be validated when all product(s) are 'dispo'
     """
     def validate(self, cr, uid, ids, vals, context=None):
         wkf_service = netsvc.LocalService('workflow')
@@ -402,8 +402,14 @@ class openresa_reservation_recurrence(OpenbaseCore):
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
             resa_count = 0
             for resa in recurrence.reservation_ids:
-                if resa.all_dispo and resa.state in ['remplir','draft']:
-                    resa_count += 1
+                #for occurrences being validated, remove ones that are not validable from recurrence.reservation_ids 
+                if resa.state == 'remplir':
+                    if resa.all_dispo:
+                        resa_count += 1
+                    else:
+                        #TODO: check this is the treatment expected by product owner
+                        resa.write({'recurrence_id':False})
+                        continue
                 #update confirm, refused or closed note
                 date =   datetime.now().strftime('%Y-%m-%d')
                 resa.write({ state+'_note': vals[state+'_note'], state+'_at':  date })
