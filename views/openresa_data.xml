@@ -126,10 +126,16 @@
    <p><b> ${object.confirm_note or ''} </b></p>
 	% endif
    <p>Un contrat de location vous sera envoyé à l’adresse suivante : </br> </br>
+
+   % if object.is_citizen:
+   <b> ${object.people_name  or ''} </br>
+   ${object.people_street  or ''} ${object.people_zip  or ''} ${object.people_city  or ''} </b>
+	   
+   %else: 
    <b> ${object.partner_invoice_id.name  or ''} </br>
    ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b>
    </p>
-
+   %endif
    <p>${object.write_uid.signature or ''}<br />
    ${object.shop_id.company_id.name or ''} </p>
 
@@ -176,9 +182,13 @@
 		   ${object.confirm_note or ''} 
 		   % endif
  		   Un contrat de location vous sera envoyé à l’adresse suivante :  
-   		   ${object.partner_invoice_id.name  or ''} 
-   		   ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
-
+		   % if object.is_citizen:
+		   ${object.people_name  or ''}
+		   ${object.people_street  or ''} ${object.people_zip  or ''} ${object.people_city  or ''}
+		   %else: 
+		   ${object.partner_invoice_id.name  or ''}
+		   ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
+		   %endif
 		   ${object.write_uid.signature or ''}
 		   ${object.shop_id.company_id.name or ''}
 
@@ -592,7 +602,7 @@
 	        <field name="model_id" ref="model_hotel_reservation"/>
 	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
-			<field name="subject">Un demandeur a annulé sa réservation :${object.name or 'inconnu'}</field>
+			<field name="subject">Un demandeur a annulé sa réservation: ${object.name or 'inconnu'}</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
 	<ul>
@@ -636,7 +646,7 @@
    </ul>
    </ul>
 	<br />
-	<p><b>dans le cadre de lévènement ${object.name or 'inconnu'}</b> le ${my_cancel_at_str}  en raison de  : </br>
+	<p><b>dans le cadre de l'évènement ${object.name or 'inconnu'}</b> le ${my_cancel_at_str}  en raison de  : </br>
 		${object.cancel_note or 'Non saisie'}
 	</p>
 	<br />
