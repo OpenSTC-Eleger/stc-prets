@@ -445,7 +445,7 @@
    </ul>
 	<br />
 	<p><b>dans le cadre de l'évènement ${object.name or 'inconnu'}</b>, en raison de  : </br>
-		${object.refuse_note or 'Contactez la Mairie pour plus détail'}
+		${object.refuse_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
    <p>	   ${object.write_uid.signature or '' }<br />
@@ -487,7 +487,7 @@
    % endfor
 
 	dans le cadre de l'évènement ${object.name or 'inconnu'}, en raison de :
-	${object.refuse_note or 'Contactez la Mairie pour plus détail'}
+	${object.refuse_note or u'Contactez la Mairie pour plus détail'}
 
 	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
@@ -538,7 +538,7 @@
    </ul>
 	<br />
 	<p><b>dans le cadre de l'évènement ${object.name or 'inconnu'}</b>, en raison de  : </br>
-		${object.cancel_note or 'Contactez la Mairie pour plus détail'}
+		${object.cancel_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
    <p>	   ${object.write_uid.signature or '' }<br />
@@ -580,7 +580,7 @@
    % endfor
 
 	dans le cadre de l'évènement ${object.name or 'inconnu'}, en raison de :
-	${object.cancel_note or ''}
+	${object.cancel_note or u'Contactez la Mairie pour plus détail'}
 
 	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
