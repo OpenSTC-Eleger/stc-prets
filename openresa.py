@@ -249,7 +249,7 @@ class hotel_reservation(OpenbaseCore):
     
     """@return: available values for 'state' field, allows other module to add new available values by overriding this method """
     def return_state_values(self, cr, uid, context=None):
-        return [('draft', 'Saisie des infos personnelles'),('confirm','Reservation confirmée'),('cancel','Annulée'),('in_use','Reservation planifiée'),('done','Reservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
+        return [('draft', 'Draft'),('confirm','Reservation confirmée'),('cancel','Annulée'),('in_use','Reservation planifiée'),('done','Reservation Terminée'), ('remplir','Saisie de la réservation'),('wait_confirm','En Attente de Confirmation')]
     
     """@return: used in OpenERP to define 'state' field """
     def _get_state_values(self, cr, uid, context=None):

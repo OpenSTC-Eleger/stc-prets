@@ -99,8 +99,9 @@ class hotel_reservation(OpenbaseCore):
         return True
 
     """@note: OpenERP Workflow method, send mail notification"""
-    def redrafted_reservation(self, cr, uid, ids):
-        self.write(cr, uid, ids, {'state':'remplir'})
+    def drafted_reservation(self, cr, uid, ids):
+        self.write(cr, uid, ids, {'state':'draft','invoice_attachment_id':0})
+        #TODO: if there are folio_ids, cancel them
         return True
     
     """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 
