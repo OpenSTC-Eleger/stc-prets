@@ -538,8 +538,9 @@ class hotel_reservation(OpenbaseCore):
         
         #set partner_mail according to partner_order_id
         contact = self.pool.get('res.partner.address').read(cr, uid, vals.get('partner_order_id')) 
-        vals.update({'pricelist_id':partner.get('property_product_pricelist',[False,'none'])[0],
-                     'partner_mail':contact.get('email',False)})
+        vals.update({'pricelist_id':partner.get('property_product_pricelist',[False,'none'])[0]})
+        if not vals.get('is_citizen',False):
+            vals.update({'partner_mail':contact.get('email',False)})
         return vals
 
     """ override of OpenERP 'create' ORM method to format data to store 

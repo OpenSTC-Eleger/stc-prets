@@ -219,7 +219,7 @@
 				else:
 					resas = [object]
 				endif%>
-				<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
+				<li><u>Personne Responsable : </u>${object.is_citizen and object.people_name or object.partner_shipping_id.name}</li>
 				<li><u>Ressources Réservées :</u>
 				<ul>
 				% for line in object.reservation_line:
@@ -272,7 +272,7 @@
 				else:
 					resas = [object]
 				endif%>
-				Personne Responsable : ${object.partner_shipping_id.name or ''}
+				Personne Responsable : ${object.is_citizen and object.people_name or object.partner_shipping_id.name}
 				Ressources Réservées :
 
 				% for line in object.reservation_line:
