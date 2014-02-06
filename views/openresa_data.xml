@@ -419,7 +419,7 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été refusée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
-	<p>Nous ne pouvons donner une suite favorable à votre demande de réservation de :</p>
+	<p>Nous ne pouvons donner une suite favorable à votre demande de réservation, dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b> :</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -452,7 +452,7 @@
    % endfor
    </ul>
 	<br />
-	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>, en raison de  : </br>
+	<p>La raison de ce refus : </br>
 		${object.refuse_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
@@ -462,7 +462,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Nous ne pouvons donner une suite favorable à votre demande de réservation de :
+	Nous ne pouvons donner une suite favorable à votre demande de réservation, dans le cadre de l'évènement ${object.name or 'inconnu'}:
 	<%
 	from datetime import datetime
 	import pytz
@@ -494,7 +494,7 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	dans le cadre de l'évènement ${object.name or 'inconnu'}, en raison de :
+	La raison de ce refus :
 	${object.refuse_note or u'Contactez la Mairie pour plus détail'}
 
 	${object.write_uid.signature or ''}
@@ -510,7 +510,7 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été annulée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
-	<p> Votre demande de réservation a été annulée :</p>
+	<p> Votre demande de réservation, dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b> a été annulée :</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -543,7 +543,7 @@
    % endfor
    </ul>
 	<br />
-	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>, en raison de  : </br>
+	<p>La raison de cette annulation  : </br>
 		${object.cancel_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
@@ -553,7 +553,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Votre réservation a été annulée:
+	Votre réservation, dans le cadre de l'évènement ${object.name or 'inconnu'}, a été annulée:
 	<%
 	from datetime import datetime
 	import pytz
@@ -585,7 +585,7 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	dans le cadre de l'évènement ${object.name or 'inconnu'}, en raison de :
+	La raison de cette annulation :
 	${object.cancel_note or u'Contactez la Mairie pour plus détail'}
 
 	${object.write_uid.signature or ''}
@@ -601,7 +601,7 @@
 			<field name="subject">Un demandeur a annulé sa réservation: ${object.name or 'inconnu'}</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
-	<p>Un demandeur a annulé sa réservation :</p>
+	<p>Un demandeur a annulé sa réservation <b>${object.name or 'inconnu'}</b>:</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -640,7 +640,7 @@
    %>
    </ul>
 	<br />
-	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b> le ${my_cancel_at_str}  en raison de  : </br>
+	<p>Cela a été fait le ${my_cancel_at_str}, pour la raison suivante  : </br>
 		${object.cancel_note or 'Non saisie'}
 	</p>
 	<br />
@@ -650,7 +650,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Un demandeur a annulé sa réservation:
+	Un demandeur a annulé sa réservation ${object.name or 'inconnu'}:
 	<%
 	from datetime import datetime
 	import pytz
@@ -686,8 +686,8 @@
    if object.cancel_at :
        my_cancel_at_str = datetime.strptime(str(object.cancel_at),"%Y-%m-%d").replace(tzinfo=pytz.utc).strftime("%x")
    %>
-	dans le cadre de l'évènement ${object.name or 'inconnu'} le ${my_cancel_at_str}  en raison de :
-	${object.cancel_note or ''}
+	Cela a été fait le ${my_cancel_at_str}, pour la raison suivante :
+	${object.cancel_note or 'Non saisie'}
 
 	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
@@ -702,7 +702,7 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été supprimée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
-	<p>Votre demande de réservation a été supprimée :</p>
+	<p>Votre demande de réservation, dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>, a été supprimée :</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -735,7 +735,7 @@
    % endfor
    </ul>
 	<br />
-	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>,  en raison de  : </br>
+	<p>la raison de cette suppression : </br>
 		${object.refuse_note or u'Contactez la Mairie pour plus de détails'}
 	</p>
 	<br />
@@ -745,7 +745,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Nous ne pouvons donner une suite favorable à votre demande de réservation de :
+	Votre demande de réservation, dans le cadre de l'évènement ${object.name or 'inconnu'}, a été supprimée :
 	<%
 	from datetime import datetime
 	import pytz
@@ -777,7 +777,7 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	dans le cadre de l'évènement ${object.name or 'inconnu'},  en raison de :
+	La raison de cette suppression :
 	${object.refuse_note or u'Contactez la Mairie pour plus de détails'}
 
 	${object.write_uid.signature or ''}
