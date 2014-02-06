@@ -452,7 +452,7 @@
    % endfor
    </ul>
 	<br />
-	<p><b>dans le cadre de l'évènement ${object.name or 'inconnu'}</b>, en raison de  : </br>
+	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>, en raison de  : </br>
 		${object.refuse_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
@@ -543,7 +543,7 @@
    % endfor
    </ul>
 	<br />
-	<p><b>dans le cadre de l'évènement ${object.name or 'inconnu'}</b>, en raison de  : </br>
+	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>, en raison de  : </br>
 		${object.cancel_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
@@ -640,7 +640,7 @@
    %>
    </ul>
 	<br />
-	<p><b>dans le cadre de l'évènement ${object.name or 'inconnu'}</b> le ${my_cancel_at_str}  en raison de  : </br>
+	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b> le ${my_cancel_at_str}  en raison de  : </br>
 		${object.cancel_note or 'Non saisie'}
 	</p>
 	<br />
@@ -735,7 +735,7 @@
    % endfor
    </ul>
 	<br />
-	<p><b>dans le cadre de l'évènement ${object.name or 'inconnu'}</b>,  en raison de  : </br>
+	<p>dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>,  en raison de  : </br>
 		${object.refuse_note or u'Contactez la Mairie pour plus de détails'}
 	</p>
 	<br />
