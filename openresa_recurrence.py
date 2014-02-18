@@ -412,7 +412,10 @@ class openresa_reservation_recurrence(OpenbaseCore):
                         continue
                 #update confirm, refused or closed note
                 date =   datetime.now().strftime('%Y-%m-%d')
-                resa.write({ state+'_note': vals[state+'_note'], state+'_at':  date })
+                vals = {state+'_at':  date}
+                if hasattr(resa, state+'_note'):
+                    vals.update({ state+'_note': vals[state+'_note']})
+                resa.write(vals)
                 wkf_service.trg_validate(uid, 'hotel.reservation', resa.id, state, cr)
             if resa_count > 0:
                 recurrence.write({'date_confirm':now, 'recurrence_state':'in_use'})

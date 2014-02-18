@@ -294,8 +294,9 @@ class hotel_reservation(OpenbaseCore):
         'refuse': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
         'cancel': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'confirm',
         'done': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code) and record.state == 'confirm',
-        'delete':lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state == 'remplir',
-        'update': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state == 'remplir',
+        'delete':lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state in ('remplir','draft'),
+        'update': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state in ('remplir','draft'),
+        'post': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state == 'draft',
     }
 
     """
@@ -467,6 +468,7 @@ class hotel_reservation(OpenbaseCore):
     _defaults = {
                  'state': lambda *a: 'remplir',
                  'reservation_no': lambda self,cr,uid,ctx=None:self._custom_sequence(cr, uid, ctx),
+                 'shop_id': lambda self,cr,uid,context=None: self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
         }
     
     """@return: override of OpenERP 'search' ORM method to force retrieving records with deleted_at is False when 'deleted_at' is on the domain """
@@ -545,8 +547,6 @@ class hotel_reservation(OpenbaseCore):
     """ override of OpenERP 'create' ORM method to format data to store 
         and to put default values for partner,partner_address and pricelist (when using other client than openerp-web) """
     def create(self, cr, uid, values, context=None):
-        if not 'state' in values or values['state'] == 'remplir':
-            values['shop_id'] = self.pool.get("sale.shop").search(cr, uid, [], limit=1)[0]
         self.format_vals(cr, uid, values, context=context)
         values = self.resolve_default_partner_values(cr, uid, values)
 

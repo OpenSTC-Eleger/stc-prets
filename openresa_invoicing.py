@@ -234,6 +234,7 @@ class hotel_reservation(OpenbaseCore):
         'done_at': fields.date('Done date'),
         'cancel_at': fields.date('Cancel date'),
         'refuse_at': fields.date('Refuse date'),
+        'save_at':fields.date('Saved at'),
         
         'send_invoicing': fields.boolean('Send invoicing by email'),
         'invoice_attachment_id': fields.integer('Attachment ID'),
