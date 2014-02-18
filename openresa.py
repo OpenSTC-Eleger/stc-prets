@@ -409,7 +409,7 @@ class hotel_reservation(OpenbaseCore):
                             'confirm_note'])
 
         user_context = self.pool.get('res.users').browse(cr, uid, uid).context_get()
-        apply_tz = lambda date: fields.datetime.context_timestamp(date,user_context)
+        apply_tz = lambda date: fields.datetime.context_timestamp(cr,uid,date,user_context)
         
         events_dictionaries = map(lambda event:
                                   {
