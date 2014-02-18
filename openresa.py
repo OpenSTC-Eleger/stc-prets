@@ -377,6 +377,7 @@ class hotel_reservation(OpenbaseCore):
         """
         first_day = datetime.strftime(week[0], '%Y-%m-%d %H:%M:%S')
         last_day = datetime.strftime(week[1], '%Y-%m-%d %H:%M:%S')
+        
 
         week_events_ids = self.search(cr, uid,
                                       [('reservation_line.reserve_product.id', '=', bookable_id),
@@ -407,11 +408,14 @@ class hotel_reservation(OpenbaseCore):
                            ['name', 'checkin', 'checkout', 'partner_id', 'partner_order_id', 'resources',
                             'confirm_note'])
 
+        user_context = self.pool.get('res.user').browse(cr, uid, uid).context_get()
+        apply_tz = lambda date: fields.datetime.context_timestamp(date,user_context)
+        
         events_dictionaries = map(lambda event:
                                   {
                                       'name': event.get('name'),
-                                      'start_hour': datetime.strptime(event.get('checkin'), "%Y-%m-%d %H:%M:%S"),
-                                      'end_hour':  datetime.strptime(event.get('checkout'), "%Y-%m-%d %H:%M:%S"),
+                                      'start_hour': apply_tz(datetime.strptime(event.get('checkin'), "%Y-%m-%d %H:%M:%S")),
+                                      'end_hour':  apply_tz(datetime.strptime(event.get('checkout'), "%Y-%m-%d %H:%M:%S")),
                                       'booker_name': event.get('partner_id')[1],
                                       'contact_name': event.get('partner_order_id')[1],
                                       'resources': map(lambda r: {'name': r.get('name'), 'quantity': r.get('quantity')},
