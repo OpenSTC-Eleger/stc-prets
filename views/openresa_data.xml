@@ -189,8 +189,14 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est en attente de Validation</field>
 			<field name="body_html"><![CDATA[
 			    <h2>Message Automatique</h2>
-
-			    <p>Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. </p>
+				% if object.modified:
+					<p>Votre réservation a été modifiée, mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée.</p>
+					% if object.confirm_at: 
+						<p>Vous recevrez une nouvelle facture pour remplacer l'ancienne, quand votre réservation sera de nouveau validée.</p>
+					% endif 
+				% else: 
+					<p>Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée. </p>
+				% endif
 				<p>Récapitulatif de votre Réservation : </p>
 				<ul>
 				<li>Libellé : ${object.name or ''}</li>
@@ -243,7 +249,14 @@
 			<field name="body_text"><![CDATA[
 			    Message Automatique
 
-			    Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée.
+			    % if object.modified:
+					Votre réservation a été modifiée, mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée.
+					% if object.confirm_at:
+						Vous recevrez une nouvelle facture pour remplacer l'ancienne, quand votre réservation sera de nouveau validée.
+					% endif
+				% else:
+					Votre Réservation a été prise en compte mais est en attente de validation. Vous recevrez une autre notification (à cette même adresse mail) lorsqu'elle aura été traitée.
+				% endif
 				Récapitulatif de votre Réservation :
 
 				Libellé : ${object.name or ''}

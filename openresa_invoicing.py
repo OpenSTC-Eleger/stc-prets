@@ -224,18 +224,6 @@ class hotel_reservation(OpenbaseCore):
                 help='Optionnal, if positive, a sale order will be created once resa validated and invoice will be created once resa done.'),
         'all_dispo': fields.function(_get_amount_total, type="boolean", string="All Dispo", method=True, multi="resa"),
         
-        'confirm_note': fields.text('Note de validation'),
-        'cancel_note': fields.text('cancel note'),
-        'refuse_note': fields.text('Refusal note'),
-        'done_note': fields.text('Done note'),
-        
-        'deleted_at': fields.date('Deleted date'),
-        'confirm_at': fields.date('Confirm date'),
-        'done_at': fields.date('Done date'),
-        'cancel_at': fields.date('Cancel date'),
-        'refuse_at': fields.date('Refuse date'),
-        'save_at':fields.date('Saved at'),
-        
         'send_invoicing': fields.boolean('Send invoicing by email'),
         'invoice_attachment_id': fields.integer('Attachment ID'),
         'send_email':fields.boolean('Send Email', help='If set, authorize sending email until its unchecked'),

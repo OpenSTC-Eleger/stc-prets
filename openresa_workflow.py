@@ -27,44 +27,27 @@ import netsvc
 
 class hotel_reservation(OpenbaseCore):
     _inherit = "hotel.reservation"
-
     
-    """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 
-        and add it to email if 'send_invoicing' field is True """
-    def confirmed_reservation(self,cr,uid,ids):
-        for resa in self.browse(cr, uid, ids):
-            if self.is_all_dispo(cr, uid, ids[0]):
-                attach_sale_id = []
-                line_ids = []
-                if not resa.recurrence_id or resa.is_template:
-                    folio_id = self.create_folio(cr, uid, [resa.id])
-
-                    attachment_id = self._create_report_folio_attach(cr, uid, resa)
-                    wf_service = netsvc.LocalService('workflow')
-                    wf_service.trg_validate(uid, 'hotel.folio', folio_id, 'order_confirm', cr)
-                    folio = self.pool.get("hotel.folio").browse(cr, uid, folio_id)
-                    #move_ids store moves created by folio and reverse moves created to reset stock moves
-                    move_ids = []
-                    for picking in folio.order_id.picking_ids:
-                        for move in picking.move_lines:
-                            move_ids.append(move.id)
-                            #On crée les mvts stocks inverses pour éviter que les stocks soient impactés
-                            new_move_id = self.pool.get("stock.move").copy(cr, uid, move.id, {'picking_id':move.picking_id.id,'location_id':move.location_dest_id.id,'location_dest_id':move.location_id.id,'state':'draft'})
-                            move_ids.append(new_move_id)
-
-                    self.pool.get("stock.move").action_done(cr, uid, move_ids)
-                    #Send invoicing only if user wants to
-                    if resa.send_invoicing:
-                        attach_sale_id.append(attachment_id)
-                #send mail with optional attaches on products and the sale order pdf attached
-                self.envoyer_mail(cr, uid, [resa.id], {'state':'validated'}, attach_ids=attach_sale_id)
-                self.write(cr, uid, [resa.id], {'state':'confirm'})
-                #return True
-            else:
-                raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
-                return False
-        return True
+    _columns = {
+        'confirm_note': fields.text('Note de validation'),
+        'cancel_note': fields.text('cancel note'),
+        'refuse_note': fields.text('Refusal note'),
+        'done_note': fields.text('Done note'),
+        
+        'deleted_at': fields.date('Deleted date'),
+        'confirm_at': fields.date('Confirm date'),
+        'done_at': fields.date('Done date'),
+        'cancel_at': fields.date('Cancel date'),
+        'refuse_at': fields.date('Refuse date'),
+        'save_at':fields.date('Saved at'),
+        
+        'modified':fields.boolean('Posted'),
+        }
     
+    _defaults = {
+        'modified': lambda *a: False,    
+        }
+        
     """@note: OpenERP Workflow method, send mail notification"""
     def waiting_confirm(self, cr, uid, ids):
         if self.is_all_dispo(cr, uid, ids[0]):
@@ -101,7 +84,56 @@ class hotel_reservation(OpenbaseCore):
     """@note: OpenERP Workflow method, send mail notification"""
     def drafted_reservation(self, cr, uid, ids):
         self.write(cr, uid, ids, {'state':'draft','invoice_attachment_id':0})
-        #TODO: if there are folio_ids, cancel them
+        return True
+    
+    """ @note: OpenERP Workflow method, remove old invoicing and set booking as modified (for mail notifications)"""
+    def redrafted_reservation(self, cr, uid, ids):
+        self.write(cr, uid, ids, {'invoice_attachment_id':0, 'modified':True})
+        #TODO: redraft folio_id, and update it's data with new ones
+        return True
+            
+    """@note: OpenERP Workflow method, send mail notification"""
+    def ARemplir_reservation(self, cr, uid, ids):
+        for resa in self.browse(cr, uid, ids):
+            if resa.is_template or not resa.recurrence_id:
+                self.envoyer_mail(cr, uid, ids, {'state': 'waiting'})
+        self.write(cr, uid, ids, {'state':'remplir'})
+        return True
+    
+    """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 
+        and add it to email if 'send_invoicing' field is True """
+    def confirmed_reservation(self,cr,uid,ids):
+        for resa in self.browse(cr, uid, ids):
+            if self.is_all_dispo(cr, uid, ids[0]):
+                attach_sale_id = []
+                line_ids = []
+                if not resa.recurrence_id or resa.is_template:
+                    folio_id = self.create_folio(cr, uid, [resa.id])
+
+                    attachment_id = self._create_report_folio_attach(cr, uid, resa)
+                    wf_service = netsvc.LocalService('workflow')
+                    wf_service.trg_validate(uid, 'hotel.folio', folio_id, 'order_confirm', cr)
+                    folio = self.pool.get("hotel.folio").browse(cr, uid, folio_id)
+                    #move_ids store moves created by folio and reverse moves created to reset stock moves
+                    move_ids = []
+                    for picking in folio.order_id.picking_ids:
+                        for move in picking.move_lines:
+                            move_ids.append(move.id)
+                            #On crée les mvts stocks inverses pour éviter que les stocks soient impactés
+                            new_move_id = self.pool.get("stock.move").copy(cr, uid, move.id, {'picking_id':move.picking_id.id,'location_id':move.location_dest_id.id,'location_dest_id':move.location_id.id,'state':'draft'})
+                            move_ids.append(new_move_id)
+
+                    self.pool.get("stock.move").action_done(cr, uid, move_ids)
+                    #Send invoicing only if user wants to
+                    if resa.send_invoicing:
+                        attach_sale_id.append(attachment_id)
+                #send mail with optional attaches on products and the sale order pdf attached
+                self.envoyer_mail(cr, uid, [resa.id], {'state':'validated'}, attach_ids=attach_sale_id)
+                self.write(cr, uid, [resa.id], {'state':'confirm'})
+                #return True
+            else:
+                raise osv.except_osv(_("""Not available"""),_("""Not all of your products are available on those quantities for this period"""))
+                return False
         return True
     
     """ @note: OpenERP Workflow method, send email notification, generate 'invoicing' report 
@@ -152,14 +184,6 @@ class hotel_reservation(OpenbaseCore):
                         etape_validation = True
         return etape_validation
         #return True
-        
-    """@note: OpenERP Workflow method, send mail notification"""
-    def ARemplir_reservation(self, cr, uid, ids):
-        for resa in self.browse(cr, uid, ids):
-            if resa.is_template or not resa.recurrence_id:
-                self.envoyer_mail(cr, uid, ids, {'state':'waiting'})
-        self.write(cr, uid, ids, {'state':'remplir'})
-        return True
     
     """ OpenERP workflow transition method to know if resa can be validated or not.
     booking can be validated if lines.dispo is True or if lines.block_booking is False """
