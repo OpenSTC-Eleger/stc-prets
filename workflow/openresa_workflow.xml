@@ -46,6 +46,14 @@
 			<field name="action">drafted_reservation()</field>
 		</record>
 
+		<record model="workflow.activity" id="act_redraft">
+			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
+			<field name="flow_start" eval="True" />
+			<field name="name">redraft</field>
+			<field name="kind">function</field>
+			<field name="action">redrafted_reservation()</field>
+		</record>
+		
 		<record model="workflow.activity" id="act_waiting_confirm">
 			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
 			<field name="name">waiting confirm</field>
@@ -118,24 +126,26 @@
 		    <field name="signal">save</field>
 		</record>
 		
-		<record model="workflow.transition" id="trans_openresa_remplir_draft">
+		<record model="workflow.transition" id="trans_openresa_remplir_redraft">
 			<field name="act_from" ref="act_remplir" />
-			<field name="act_to" ref="hotel_reservation.act_draft" />
+			<field name="act_to" ref="act_redraft" />
 			<field name="signal">redraft</field>
 		</record>
 		
-		<record model="workflow.transition" id="trans_openresa_confirm_draft">
+		<record model="workflow.transition" id="trans_openresa_confirm_redraft">
 			<field name="act_from" ref="hotel_reservation.act_confirm" />
-			<field name="act_to" ref="hotel_reservation.act_draft" />
+			<field name="act_to" ref="act_redraft" />
 			<field name="signal">redraft</field>
 		</record>
 		
+		<record model="workflow.transition" id="trans_openresa_redraft_draft">
+			<field name="act_from" ref="act_redraft" />
+			<field name="act_to" ref="hotel_reservation.act_draft" />
+		</record>
 		
 	</data>
 
-
 				<!-- Override of existing workfows to disable auto mailing-->
-
 
 	<data>
 		<record id="sale.act_wait_ship" model="workflow.activity">
