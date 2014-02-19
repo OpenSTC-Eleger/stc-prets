@@ -260,8 +260,10 @@ class hotel_reservation(OpenbaseCore):
     @return: integer (according to state) to order lists """
     def _get_state_num(self, cr, uid, ids,  name, args, context=None):
         res={}
+        state_order = ['draft', 'remplir', 'confirm', 'done']
+        default = len(state_order)
         for obj in self.browse(cr, uid, ids, context):
-            res[obj.id] = (obj.state=='remplir' and 1) or (obj.state=='draft' and 2) or (obj.state=='confirm' and 3) or (obj.state=='done' and 4) or 5
+            res[obj.id] = state_order.index(obj.state) if obj.state in state_order else default
         return res
 
     """
@@ -297,6 +299,7 @@ class hotel_reservation(OpenbaseCore):
         'delete':lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code)  and record.state in ('remplir','draft'),
         'update': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state in ('remplir','draft'),
         'post': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state == 'draft',
+        'redraft': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state in ('remplir','confirm'),
     }
 
     """
