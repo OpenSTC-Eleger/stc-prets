@@ -45,6 +45,7 @@ class product_product(OpenbaseCore):
         "checkout_lines":fields.one2many('openstc.pret.checkout.line', 'product_id', string="Lignes Etat des Lieux"),
         'need_infos_supp':fields.boolean('Nécessite Infos Supp ?', help="Indiquer si, pour une Réservation, cette ressource nécessite des infos supplémentaires A saisir par le demandeur."),
         'max_bookable_qty':fields.integer('Max Bookable qty', help='Qty max of this bookable authorized for one booking'),
+        'openresa_property_manager_id': fields.property('res.users', type='many2one', relation='res.users', view_load=True, string='Gestionnaire'),
         }
 
     _defaults = {
@@ -138,6 +139,13 @@ class product_category(OpenbaseCore):
         'isroomtype': lambda *a: 1,
     }
 product_category()
+
+class hotel_reservation(OpenbaseCore):
+    _inherit = "hotel.reservation"
+    _columns = {
+        'manager_id':fields.related('reservation_line','reserve_product','openresa_property_manager_id', type='many2one', relation='res.users', string='Gestionnaire',store=False),
+        }
+hotel_reservation()
 
 class res_partner(OpenbaseCore):
     _inherit = "res.partner"

@@ -75,7 +75,7 @@
 	    <record id="openstc_pret_email_template_resa_validee" model="email.template">
 	        <field name="name">Réservation Validée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
-	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est validée</field>
 			<field name="body_html"><![CDATA[
@@ -184,7 +184,7 @@
 	<record id="openstc_pret_email_template_resa_en_attente" model="email.template">
 	        <field name="name">Réservation En Attente</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
-	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} est en attente de Validation</field>
 			<field name="body_html"><![CDATA[
@@ -306,7 +306,7 @@
     <record id="openstc_pret_email_template_resa_done" model="email.template">
 	        <field name="name">Réservation Terminée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
-	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Facture concernant votre Réservation: ${object.name or 'inconnu'}</field>
 			<field name="body_html"><![CDATA[
@@ -409,7 +409,7 @@
         <record id="openstc_pret_email_template_resa_refused" model="email.template">
 	        <field name="name">Réservation refusée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
-	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été refusée</field>
 			<field name="body_html"><![CDATA[
@@ -502,7 +502,7 @@
                 <record id="openstc_pret_email_template_resa_cancelled" model="email.template">
 	        <field name="name">Réservation annulée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
-	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été annulée</field>
 			<field name="body_html"><![CDATA[
@@ -595,8 +595,8 @@
                 <record id="openstc_pret_email_template_resa_cancelled_manager" model="email.template">
 	        <field name="name">Un demandeur a annulé sa réservation</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
-	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
-			<field name="email_to">${object.partner_mail or ''}</field>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
+			<field name="email_to">${object.manager_id and object.manager_id.email or ''}</field>
 			<field name="subject">Un demandeur a annulé sa réservation :${object.name or 'inconnu'}</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
@@ -688,7 +688,7 @@
         <record id="openstc_pret_email_template_resa_deleted" model="email.template">
 	        <field name="name">Réservation supprimée</field>
 	        <field name="model_id" ref="model_hotel_reservation"/>
-	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or 'bruno.plancher@siclic.fr'}</field>
+	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été refusée</field>
 			<field name="body_html"><![CDATA[
@@ -841,18 +841,12 @@
 	    <field name="partner_id" ref="openresa_partner_part"/>
 	</record>
 
-
-    <record model="ir.rule" id="openresa_partner_type_rule">
-        <field name="name">Partner Type Rule</field>
-        <field name="model_id" ref="openbase.model_openstc_partner_type"/>
-        <field name="domain_force">[('code','in',['PARTICULIER','ASSOCIATION'])]</field>
-        <field eval="[(6,0,[ref('openresa_api_group')])]" name="groups"/>
-        <field eval="1" name="perm_unlink"/>
-        <field eval="1" name="perm_write"/>
-        <field eval="1" name="perm_read"/>
-        <field eval="1" name="perm_create"/>
-    </record>
-
-
+	<record id="property_bookable_openresa_manager" model="ir.property">
+ 	    <field name="name">Gestionnaire des Ressources</field>
+	    <field name="fields_id" search="[('model','=','product.product'),
+ 	      ('name','=','openresa_property_manager_id')]"/>
+	    <field name="value" eval="'res.users,'+str(ref('base.user_root'))"/>
+ 	</record>
+    
 	</data>
 </openerp>
