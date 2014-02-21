@@ -79,8 +79,8 @@ class openresa_folio_report(report_sxw.rml_parse):
         ret = '%s\n%s\n' % (resa.people_name, postal_infos)
         return ret
     
-    def __init__(self, cr, uid, name, context):
-        super(openresa_folio_report, self).__init__(cr, uid, name, context)
+    def __init__(self, cr, uid, name, context=None):
+        super(openresa_folio_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
             'datetime':datetime,
@@ -94,8 +94,8 @@ report_sxw.report_sxw('report.openresa.folio.report', 'hotel.folio',
 
 class openresa_booking_report(report_sxw.rml_parse):
     
-    def __init__(self, cr, uid, name, context):
-        super(openresa_booking_report, self).__init__(cr, uid, name, context)
+    def __init__(self, cr, uid, name, context=None):
+        super(openresa_booking_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
             'datetime':datetime,
