@@ -89,7 +89,10 @@ class hotel_reservation(OpenbaseCore):
     """ @note: OpenERP Workflow method, remove old invoicing and set booking as modified (for mail notifications)"""
     def redrafted_reservation(self, cr, uid, ids):
         self.write(cr, uid, ids, {'invoice_attachment_id':0, 'modified':True})
-        #TODO: redraft folio_id, and update it's data with new ones
+        #cancel current folio(s)
+        for resa in self.browse(cr, uid, ids, context=None):
+            for folio in resa.folio_id:
+                folio.action_cancel()
         return True
             
     """@note: OpenERP Workflow method, send mail notification"""
