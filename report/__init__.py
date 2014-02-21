@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
+
 ##############################################################################
 #
-#    ModuleName module for OpenERP, Description
-#    Copyright (C) 200X Company (<http://website>) author
+#    OpenResa module for OpenERP, module OpenResa
+#    Copyright (C) 2012 SICLIC http://siclic.fr
 #
-#    This file is a part of ModuleName
+#    This file is a part of OpenResa
 #
-#    ModuleName is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
 #
-#    ModuleName is distributed in the hope that it will be useful,
+#    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#    GNU Affero General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-##############################################################################
+#############################################################################
 
 import openresa_reports
 

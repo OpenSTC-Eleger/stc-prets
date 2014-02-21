@@ -3,25 +3,24 @@
 ##############################################################################
 #
 #    OpenResa module for OpenERP, module OpenResa
-#    Copyright (C) 200X Company (<http://website>) pyf
+#    Copyright (C) 2012 SICLIC http://siclic.fr
 #
 #    This file is a part of OpenResa
 #
-#    OpenResa is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
 #
-#    OpenResa is distributed in the hope that it will be useful,
+#    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#    GNU Affero General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 #############################################################################
-from openbase.openbase_core import OpenbaseCore
 from osv import fields, osv
 import netsvc
 import time
