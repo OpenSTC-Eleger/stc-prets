@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ##############################################################################
-#
-#    OpenResa module for OpenERP, module OpenResa
 #    Copyright (C) 2012 SICLIC http://siclic.fr
-#
-#    This file is a part of OpenResa
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
