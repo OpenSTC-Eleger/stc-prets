@@ -189,21 +189,20 @@ class hotel_reservation(OpenbaseCore):
             service = netsvc.LocalService(report_service)
             (result, format) = service.create(cr, uid, [folio.id for folio in record.folio_id], {'model': self._name}, context=context)
             eval_context = {'time': time, 'object': record}
-            if not report.attachment or not eval(report.attachment, eval_context):
-                # no auto-saving of report as attachment, need to do it manually
-                result = base64.b64encode(result)
-                file_name = 'Facturation_' + record.reservation_no
-                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
-                file_name += ".pdf"
-                ir_attachment = self.pool.get('ir.attachment').create(cr, uid,
-                                                                      {'name': file_name,
-                                                                       'datas': result,
-                                                                       'datas_fname': file_name,
-                                                                       'res_model': self._name,
-                                                                       'res_id': record.id},
-                                                                      context=context)
-                ret = ir_attachment
-                record.write({'invoice_attachment_id': ret})
+            # no auto-saving of report as attachment, need to do it manually
+            result = base64.b64encode(result)
+            file_name = 'Facturation_' + record.reservation_no
+            file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+            file_name += ".pdf"
+            ir_attachment = self.pool.get('ir.attachment').create(cr, uid,
+                                                                  {'name': file_name,
+                                                                   'datas': result,
+                                                                   'datas_fname': file_name,
+                                                                   'res_model': self._name,
+                                                                   'res_id': record.id},
+                                                                  context=context)
+            ret = ir_attachment
+            record.write({'invoice_attachment_id': ret})
         return ret
     
     def _get_amount_total(self, cr, uid, ids, name, args, context=None):
