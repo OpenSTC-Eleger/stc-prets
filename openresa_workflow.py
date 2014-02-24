@@ -41,7 +41,7 @@ class hotel_reservation(OpenbaseCore):
         }
     
     _defaults = {
-        'modified': lambda *a: False,    
+        'modified': lambda *a: 0,    
         }
         
     """@note: OpenERP Workflow method, send mail notification"""
@@ -79,7 +79,7 @@ class hotel_reservation(OpenbaseCore):
 
     """@note: OpenERP Workflow method, send mail notification"""
     def drafted_reservation(self, cr, uid, ids):
-        self.write(cr, uid, ids, {'state':'draft','invoice_attachment_id':0})
+        self.write(cr, uid, ids, {'state':'draft'})
         return True
     
     """ @note: OpenERP Workflow method, remove old invoicing and set booking as modified (for mail notifications)"""
@@ -91,11 +91,15 @@ class hotel_reservation(OpenbaseCore):
                 folio.action_cancel()
         return True
             
-    """@note: OpenERP Workflow method, send mail notification"""
+    """@note: OpenERP Workflow method, send mail notification to claimer and for manager (if user is not itself the manager)"""
     def ARemplir_reservation(self, cr, uid, ids):
+        user = self.pool.get('res.users').browse(cr, uid, uid)
+        is_not_manager = not user.isResaManager
         for resa in self.browse(cr, uid, ids):
             if resa.is_template or not resa.recurrence_id:
-                self.envoyer_mail(cr, uid, ids, {'state': 'waiting'})
+                self.envoyer_mail(cr, uid, [resa.id], {'state': 'waiting'})
+                if is_not_manager and resa.modified:
+                    self.envoyer_mail(cr, uid, [resa.id], {'state': 'modified_manager'})
         self.write(cr, uid, ids, {'state':'remplir'})
         return True
     
