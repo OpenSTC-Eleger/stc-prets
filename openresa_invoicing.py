@@ -25,6 +25,7 @@ import re
 from datetime import datetime,timedelta
 from datetime import datetime
 from mx.DateTime.mxDateTime import strptime
+from openbase.openbase_core import OpenbaseCore
 
 class sale_order(OpenbaseCore):
     _inherit = "sale.order"
@@ -350,7 +351,8 @@ class hotel_reservation(OpenbaseCore):
                          'waiting':'openstc_pret_email_template_resa_en_attente',
                          'done':'openstc_pret_email_template_resa_done',
                          'deleted':'openstc_pret_email_template_resa_deleted',
-                         'validated':'openstc_pret_email_template_resa_validee'}
+                         'validated':'openstc_pret_email_template_resa_validee',
+                         'modified_manager':'openstc_pret_email_template_resa_modified_manager'}
             #first, retrieve template_id according to 'state' parameter
             if vals.get('state','') in model_map.keys():
                 email_tmpl_id = data_obj.get_object_reference(cr, uid, 'openresa',model_map.get(vals.get('state')))[1]
