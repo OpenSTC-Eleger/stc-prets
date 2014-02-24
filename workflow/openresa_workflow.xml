@@ -48,7 +48,7 @@
 
 		<record model="workflow.activity" id="act_redraft">
 			<field name="wkf_id" ref="hotel_reservation.wkf_reservation" />
-			<field name="flow_start" eval="True" />
+			<field name="flow_start" eval="False" />
 			<field name="name">redraft</field>
 			<field name="kind">function</field>
 			<field name="action">redrafted_reservation()</field>
