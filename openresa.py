@@ -310,7 +310,7 @@ class hotel_reservation(OpenbaseCore):
             res[obj['id']] = {}
             val = []
             for item in line_obj.read(cr, uid, obj['reservation_line'], ['qte_reserves','qte_dispo','reserve_product'], context=context):
-                if obj['state'] in ('remplir','cancel'):
+                if obj['state'] in ('draft','remplir','cancel'):
                     tooltip = " souhaitée: " + str(int(item['qte_reserves']))
                     if item['qte_dispo'] and obj['state']!='cancel' :
                         tooltip += " ,disponible: " + str(int(item['qte_dispo']))
