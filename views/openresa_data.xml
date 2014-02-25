@@ -121,13 +121,21 @@
    </ul>
    </ul>
    <p>afin d'organiser <b> ${object.name or ''} </b></p>
-   <p>Nous avons bien pris en considération votre note : <p>
+   % if object.confirm_note:
+   <p>Informations supplémentaires : <p>
    <p><b> ${object.confirm_note or ''} </b></p>
+	% endif
+   <p>Un contrat de location vous sera envoyé à l’adresse suivante : </br> </br>
 
-   <p>Un contrat de location a été envoyé à l’adresse suivante : </br> </br>
-   <b> ${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b>
+   % if object.is_citizen:
+   <b> ${object.people_name  or ''} </br>
+   ${object.people_street  or ''} ${object.people_zip  or ''} ${object.people_city  or ''} </b>
+	   
+   %else: 
+   <b> ${object.partner_invoice_id.name  or ''} </br>
+   ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''} </b>
    </p>
-
+   %endif
    <p>${object.write_uid.signature or ''}<br />
    ${object.shop_id.company_id.name or ''} </p>
 
@@ -168,13 +176,19 @@
 			%>
 			du ${my_checkin_str} au ${my_checkout_str}
 		   % endfor
-
-		    afin d'organiser  ${object.name or ''}
-   			Nous avons bien pris en considération votre note : ${object.confirm_note or ''}
-
-   			Un contrat de location a été envoyé à l’adresse suivante :
-   			${object.partner_invoice_id.name  or ''} ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
-
+		   afin d'organiser ${object.name or ''}
+		   % if object.confirm_note:
+		   Informations supplémentaires : 
+		   ${object.confirm_note or ''} 
+		   % endif
+ 		   Un contrat de location vous sera envoyé à l’adresse suivante :  
+		   % if object.is_citizen:
+		   ${object.people_name  or ''}
+		   ${object.people_street  or ''} ${object.people_zip  or ''} ${object.people_city  or ''}
+		   %else: 
+		   ${object.partner_invoice_id.name  or ''}
+		   ${object.partner_invoice_id.street  or ''} ${object.partner_invoice_id.city  or ''}
+		   %endif
 		   ${object.write_uid.signature or ''}
 		   ${object.shop_id.company_id.name or ''}
 
@@ -211,7 +225,7 @@
 				else:
 					resas = [object]
 				endif%>
-				<li><u>Personne Responsable : </u>${object.partner_shipping_id.name or ''}</li>
+				<li><u>Personne Responsable : </u>${object.is_citizen and object.people_name or object.partner_shipping_id.name}</li>
 				<li><u>Ressources Réservées :</u>
 				<ul>
 				% for line in object.reservation_line:
@@ -271,7 +285,7 @@
 				else:
 					resas = [object]
 				endif%>
-				Personne Responsable : ${object.partner_shipping_id.name or ''}
+				Personne Responsable : ${object.is_citizen and object.people_name or object.partner_shipping_id.name}
 				Ressources Réservées :
 
 				% for line in object.reservation_line:
@@ -422,7 +436,7 @@
 	        <field name="model_id" ref="model_hotel_reservation"/>
 	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
-			<field name="subject">Facture concernant votre Réservation: ${object.name or 'inconnu'}</field>
+			<field name="subject">votre Réservation: ${object.name or 'inconnu'} est terminée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
 
@@ -463,9 +477,11 @@
 	%>
 	% endfor
 
-	<p>Suite à l'événement <b>${object.name}</b> qui s'est tenu du ${my_checkin_str} au ${my_last_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant : </br></br>
+	<p>Suite à l'événement <b>${object.name}</b> qui s'est tenu du ${my_checkin_str} au ${my_last_checkout_str}, nous avons procédé à un état des lieux. 
+	% if object.done_note:
+	Le résultat est le suivant : </br></br>
 	<b>${object.done_note or ''}</b>.</br></br>
-
+	% endif
 	Cette réservation est clôturée.</p>
 
    <br />
@@ -510,10 +526,12 @@
 	%>
 	% endfor
 
-	Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_last_checkout_str}, nous avons procédé à un état des lieux. Le résultat est le suivant :
+	Suite à l'événement ${object.name} qui s'est tenu du ${my_checkin_str} au ${my_last_checkout_str}, nous avons procédé à un état des lieux. 
+	% if object.done_note:
+	Le résultat est le suivant :
 
 	${object.done_note or ''}.
-
+	%endif
 	Cette réservation est clôturée.
 
    ${object.write_uid.signature or ''}
@@ -528,8 +546,7 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été refusée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
-	<ul>
-	<p>Nous ne pouvons donner une suite favorable à votre demande de réservation de :</p>
+	<p>Nous ne pouvons donner une suite favorable à votre demande de réservation, dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b> :</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -561,10 +578,9 @@
 	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
    % endfor
    </ul>
-   </ul>
 	<br />
-	<p><b>afin d’organiser ${object.name or 'inconnu'}</b>  en raison de  : </br>
-		${object.cancel_note or ''}
+	<p>La raison de ce refus : </br>
+		${object.refuse_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
    <p>	   ${object.write_uid.signature or '' }<br />
@@ -573,7 +589,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Nous ne pouvons donner une suite favorable à votre demande de réservation de :
+	Nous ne pouvons donner une suite favorable à votre demande de réservation, dans le cadre de l'évènement ${object.name or 'inconnu'}:
 	<%
 	from datetime import datetime
 	import pytz
@@ -605,8 +621,8 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	afin d’organiser <b>${object.name or 'inconnu'}  en raison de :
-	${object.cancel_note or ''}
+	La raison de ce refus :
+	${object.refuse_note or u'Contactez la Mairie pour plus détail'}
 
 	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
@@ -621,8 +637,7 @@
 			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été annulée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
-	<ul>
-	<p> Votre demande de réservation a été annulée :</p>
+	<p> Votre demande de réservation, dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b> a été annulée :</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -654,10 +669,9 @@
 	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
    % endfor
    </ul>
-   </ul>
 	<br />
-	<p><b>afin d’organiser ${object.name or 'inconnu'}</b>  en raison de  : </br>
-		${object.cancel_note or ''}
+	<p>La raison de cette annulation  : </br>
+		${object.cancel_note or u'Contactez la Mairie pour plus détail'}
 	</p>
 	<br />
    <p>	   ${object.write_uid.signature or '' }<br />
@@ -666,7 +680,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Votre réservation a été annulée:
+	Votre réservation, dans le cadre de l'évènement ${object.name or 'inconnu'}, a été annulée:
 	<%
 	from datetime import datetime
 	import pytz
@@ -698,8 +712,8 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	afin d’organiser <b>${object.name or 'inconnu'}  en raison de :
-	${object.cancel_note or ''}
+	La raison de cette annulation :
+	${object.cancel_note or u'Contactez la Mairie pour plus détail'}
 
 	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
@@ -714,7 +728,7 @@
 			<field name="subject">Un demandeur a annulé sa réservation :${object.name or 'inconnu'}</field>
 			<field name="body_html"><![CDATA[
 	<ul>
-	<p>Un demandeur a annulé sa réservation :</p>
+	<p>Un demandeur a annulé sa réservation <b>${object.name or 'inconnu'}</b>:</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -742,14 +756,19 @@
 	my_checkout_str = my_checkout.astimezone(pytz.timezone("Europe/Paris")).strftime(("%x %Hh%M").encode('utf-8'))
 	my_checkin_str = my_checkin_str.decode('utf-8')
 	my_checkout_str = my_checkout_str.decode('utf-8')
+	
 	%>
 	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
    % endfor
-   </ul>
+   <%
+   my_cancel_at_str = "'Date inconnue'"
+   if object.cancel_at :
+       my_cancel_at_str = datetime.strptime(str(object.cancel_at),"%Y-%m-%d").replace(tzinfo=pytz.utc).strftime("%x")
+   %>
    </ul>
 	<br />
-	<p><b>afin d’organiser ${object.name or 'inconnu'}</b>  en raison de  : </br>
-		${object.cancel_note or ''}
+	<p>Cela a été fait le ${my_cancel_at_str}, pour la raison suivante  : </br>
+		${object.cancel_note or 'Non saisie'}
 	</p>
 	<br />
    <p>	   ${object.write_uid.signature or '' }<br />
@@ -758,7 +777,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Un demandeur a annulé sa réservation:
+	Un demandeur a annulé sa réservation ${object.name or 'inconnu'}:
 	<%
 	from datetime import datetime
 	import pytz
@@ -789,9 +808,13 @@
 	%>
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
-
-	afin d’organiser <b>${object.name or 'inconnu'}  en raison de :
-	${object.cancel_note or ''}
+   <%
+   my_cancel_at_str = "'Date inconnue'"
+   if object.cancel_at :
+       my_cancel_at_str = datetime.strptime(str(object.cancel_at),"%Y-%m-%d").replace(tzinfo=pytz.utc).strftime("%x")
+   %>
+	Cela a été fait le ${my_cancel_at_str}, pour la raison suivante :
+	${object.cancel_note or 'Non saisie'}
 
 	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
@@ -803,11 +826,10 @@
 	        <field name="model_id" ref="model_hotel_reservation"/>
 	    	<field name="email_from">${object.shop_id.company_id.partner_id.address[0].email or ''}</field>
 			<field name="email_to">${object.partner_mail or ''}</field>
-			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été refusée</field>
+			<field name="subject">Votre Réservation: ${object.name or 'inconnu'} a été supprimée</field>
 			<field name="body_html"><![CDATA[
 	<h2>Madame, Monsieur,</h2>
-	<ul>
-	<p>Nous ne pouvons donner une suite favorable à votre demande de réservation de :</p>
+	<p>Votre demande de réservation, dans le cadre de l'évènement <b>${object.name or 'inconnu'}</b>, a été supprimée :</p>
 	<%
 	from datetime import datetime
 	import pytz
@@ -839,10 +861,9 @@
 	<li>du ${my_checkin_str} au ${my_checkout_str}<br /></li>
    % endfor
    </ul>
-   </ul>
 	<br />
-	<p><b>afin d’organiser ${object.name or 'inconnu'}</b>  en raison de  : </br>
-		${object.cancel_note or ''}
+	<p>la raison de cette suppression : </br>
+		${object.refuse_note or u'Contactez la Mairie pour plus de détails'}
 	</p>
 	<br />
    <p>	   ${object.write_uid.signature or '' }<br />
@@ -851,7 +872,7 @@
 			<field name="body_text"><![CDATA[
 	Madame, Monsieur,
 
-	Nous ne pouvons donner une suite favorable à votre demande de réservation de :
+	Votre demande de réservation, dans le cadre de l'évènement ${object.name or 'inconnu'}, a été supprimée :
 	<%
 	from datetime import datetime
 	import pytz
@@ -883,8 +904,8 @@
 	du ${my_checkin_str} au ${my_checkout_str}
    % endfor
 
-	afin d’organiser <b>${object.name or 'inconnu'}  en raison de :
-	${object.cancel_note or ''}
+	La raison de cette suppression :
+	${object.refuse_note or u'Contactez la Mairie pour plus de détails'}
 
 	${object.write_uid.signature or ''}
 	${object.shop_id.company_id.name or ''}
