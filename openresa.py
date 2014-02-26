@@ -23,7 +23,6 @@ from datetime import datetime,timedelta
 from osv import fields, osv
 import netsvc
 from tools.translate import _
-from mx.DateTime.mxDateTime import strptime
 import time
 import types
 import base64
@@ -286,7 +285,11 @@ class hotel_reservation(OpenbaseCore):
                     break
             ret = ret and 'HOTEL_USER' in groups_code
         return ret
-
+    """ @return: True if checkin is less than 'x' hours from now (where x is a property of the object) else False"""
+    def bookingLocked(self, cr, uid, record, groups_code):
+        return float((datetime.strptime(record.checkin, '%Y-%m-%d %H:%M:%S') - datetime.now()).seconds) / 3600.0 < record.property_openresa_delay_before_locking
+        
+    
     _actions = {
         'confirm': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
         'refuse': lambda self,cr,uid,record, groups_code: self.managerOnly(cr, uid, record, groups_code)  and record.state == 'remplir',
@@ -296,7 +299,10 @@ class hotel_reservation(OpenbaseCore):
         'update': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state == 'draft' or 
         self.managerOnly(cr, uid, record, groups_code) and record.state == 'remplir',
         'post': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state == 'draft',
-        'redraft': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state in ('remplir','confirm'),
+        'redraft': lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state in ('remplir','confirm')
+            and not self.bookingLocked(cr, uid, record, groups_code),
+        'redraft_unauthorized':lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state in ('remplir','confirm')
+            and self.bookingLocked(cr, uid, record, groups_code),
     }
 
     """
@@ -468,6 +474,7 @@ class hotel_reservation(OpenbaseCore):
 
         'note': fields.text('Note de validation'),
         'whole_day':fields.boolean('Whole day'),
+        'property_openresa_delay_before_locking': fields.property('res.users', type='float', view_load=True, string='Gestionnaire'),
     }
     _defaults = {
                  'state': lambda *a: 'remplir',

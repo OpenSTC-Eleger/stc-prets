@@ -952,7 +952,7 @@
     	<field name="category_id" ref="module_category_openresa"/>
 	 </record>
 	
-	 <!-- @deprecated: for new dev, do not use this group anymore, use agent_user group -->
+	 
 	<record model="res.groups" id="openresa_api_group">
         <field name="name">OpenResa / API</field>
         <field name="code">APIRESA</field>
@@ -980,6 +980,13 @@
 	    <field name="fields_id" search="[('model','=','product.product'),
  	      ('name','=','openresa_property_manager_id')]"/>
 	    <field name="value" eval="'res.users,'+str(ref('base.user_root'))"/>
+ 	</record>
+ 		<record id="property_openresa_delay_before_locking" model="ir.property">
+ 	    <field name="name">Delai (heures) avant impossibilité de modfication d'une réservatoin</field>
+ 	    <field name="type">float</field>
+	    <field name="fields_id" search="[('model','=','hotel.reservation'),
+ 	      ('name','=','property_openresa_delay_before_locking')]"/>
+	    <field name="value_float" eval="24.0"/>
  	</record>
     
 	</data>
