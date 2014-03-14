@@ -287,7 +287,7 @@ class hotel_reservation(OpenbaseCore):
         return ret
     """ @return: True if checkin is less than 'x' hours from now (where x is a property of the object) else False"""
     def bookingLocked(self, cr, uid, record, groups_code):
-        return float((datetime.strptime(record.checkin, '%Y-%m-%d %H:%M:%S') - datetime.now()).seconds) / 3600.0 < record.property_openresa_delay_before_locking
+        return float((datetime.strptime(record.checkin, '%Y-%m-%d %H:%M:%S') - datetime.now()).total_seconds()) / 3600.0 < record.property_openresa_delay_before_locking
         
     
     _actions = {
