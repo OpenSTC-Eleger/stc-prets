@@ -971,7 +971,7 @@
 	<!-- I create default contact to be able to display res_partner in openerp, and i create it separetly from res_partner
 	to be sure that is created only once, and always present -->
 	<record model="res.partner.address" id="openresa_partner_contact_default_part">
-	    <field name="name"></field>
+	    <field name="name">Defaut</field>
 	    <field name="partner_id" ref="openresa_partner_part"/>
 	</record>
 
