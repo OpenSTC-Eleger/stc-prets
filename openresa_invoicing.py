@@ -223,8 +223,7 @@ class hotel_reservation(OpenbaseCore):
         'invoice_attachment_id': fields.integer('Attachment ID'),
         'send_email':fields.boolean('Send Email', help='If set, authorize sending email until its unchecked'),
 
-        }
-    
+        }   
     
     """polymorphism of _create_folio
     @note: manage both individual resa and recurrente resa (1 line = 1 occurrence)
@@ -310,6 +309,9 @@ class hotel_reservation(OpenbaseCore):
     """
     def compute_lines_price(self, cr, uid, ids, context=None):
         values = []
+        api_group = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openresa', 'openresa_api_group')[1]
+        user_is_api = api_group in self.pool.get('res.users').read(cr, uid, uid, ['groups_id'])['groups_id']
+        
         #get lentgh resa in hours
         for resa in self.browse(cr, uid, ids, context):
             partner_id = resa.partner_id.id
@@ -317,14 +319,16 @@ class hotel_reservation(OpenbaseCore):
             length_resa = self.get_length_resa(cr, uid, resa.checkin, resa.checkout, context=None)
             prod_obj = self.pool.get('product.product')
             for line in resa.reservation_line:
-                uom_qty = prod_obj.get_temporal_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
-                unit_price = self.get_prod_price(cr, uid, line.reserve_product.id,
-                                          uom_qty,
-                                          partner_id,
-                                          pricelist_id,
-                                          context=context)
-                values.append((1,line.id,{'uom_qty':uom_qty,'pricelist_amount':unit_price}))
-            self.write(cr, uid, [resa.id], {'reservation_line':values}, context=context)
+                if line.pricelist_amount <= 0.0 and user_is_api:
+                    uom_qty = prod_obj.get_temporal_uom_qty(cr, uid, line.reserve_product.id, length_resa, context)
+                    unit_price = self.get_prod_price(cr, uid, line.reserve_product.id,
+                                              uom_qty,
+                                              partner_id,
+                                              pricelist_id,
+                                              context=context)
+                    values.append((1,line.id,{'uom_qty':uom_qty,'pricelist_amount':unit_price}))
+            if values:
+                self.write(cr, uid, [resa.id], {'reservation_line':values}, context=context)
         return True
     
     """

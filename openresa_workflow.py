@@ -94,6 +94,7 @@ class hotel_reservation(OpenbaseCore):
     """@note: OpenERP Workflow method, send mail notification to claimer and for manager (if user is not itself the manager)"""
     def ARemplir_reservation(self, cr, uid, ids):
         user = self.pool.get('res.users').browse(cr, uid, uid)
+        self.compute_lines_price(cr, uid, ids)
         is_not_manager = not user.isResaManager
         for resa in self.browse(cr, uid, ids):
             if resa.is_template or not resa.recurrence_id:
