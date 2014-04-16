@@ -392,7 +392,7 @@ class openresa_reservation_recurrence(OpenbaseCore):
     def validate(self, cr, uid, ids, vals, context=None):
         wkf_service = netsvc.LocalService('workflow')
         now = datetime.now().strftime('%Y-%m-%d')
-        state = vals['state']
+        state = vals.pop('state')
         for recurrence in self.browse(cr, uid, ids, context=context):
             #count to know how many resa have been requested to be confirmed,
             #recurrence is updated to confirmed only if one or more recurrence has been requested to be confirmed
