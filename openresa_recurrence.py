@@ -408,7 +408,7 @@ class openresa_reservation_recurrence(OpenbaseCore):
                         continue
                 #update confirm, refused or closed note
                 date =   datetime.now().strftime('%Y-%m-%d')
-                vals = {state+'_at':  date}
+                vals.update({state+'_at':  date})
                 if hasattr(resa, state+'_note'):
                     vals.update({ state+'_note': vals[state+'_note']})
                 resa.write(vals)
