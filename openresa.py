@@ -656,7 +656,7 @@ class hotel_reservation(OpenbaseCore):
     @param states: list of string containing states to exclude from the search
     @note: main method to control availability of products
     @return: availability of each prod : {prod_id:qty} matching dates"""
-    def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', states=['cancel','done','remplir'], context=None):
+    def get_prods_available_and_qty(self, cr, uid, checkin, checkout, prod_ids=[], where_optionnel='', states=['cancel','done','remplir', 'draft'], context=None):
         #if no prod_ids put, we check all prods
         if not prod_ids:
             prod_ids = self.pool.get("product.product").search(cr, uid, [])
