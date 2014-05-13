@@ -303,6 +303,7 @@ class hotel_reservation(OpenbaseCore):
             and not self.bookingLocked(cr, uid, record, groups_code),
         'redraft_unauthorized':lambda self,cr,uid,record, groups_code: self.ownerOrOfficer(cr, uid, record, groups_code) and record.state in ('remplir','confirm')
             and self.bookingLocked(cr, uid, record, groups_code),
+        'read': lambda self,cr,uid,record, groups_code: 'HOTEL_MANA' in groups_code or 'HOTEL_USER_AGENT' in groups_code
     }
 
     """
