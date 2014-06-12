@@ -89,7 +89,7 @@ class openresa_folio_report(report_sxw.rml_parse):
         })
 
 report_sxw.report_sxw('report.openresa.folio.report', 'hotel.folio',
-      'addons/openresa/report/openresa_folio_report.rml', parser=openresa_folio_report, header='internal')
+      'addons/openresa/report/openresa_folio_report.rml', parser=openresa_folio_report, header='external')
 
 class openresa_booking_report(report_sxw.rml_parse):
     
